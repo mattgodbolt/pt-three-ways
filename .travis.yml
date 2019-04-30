@@ -1,14 +1,14 @@
+os: linux
+language: python
+python: "3.7"
 dist: xenial
-language: cpp
 compiler:
   - gcc
 install:
-  - pip install --user conan
+  - pip install conan
   - conan user
 script:
-  - set -e
-  - export PY_USER_BIN=$(python -c 'import site; print(site.USER_BASE + "/bin")')
-  - export PATH=$PY_USER_BIN:$PATH
+  - conan install .
   - cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
   - cmake -j$(nproc) --build .
   - ctest .
