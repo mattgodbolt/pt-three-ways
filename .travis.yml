@@ -8,6 +8,6 @@ install:
 script:
   - export PY_USER_BIN=$(python -c 'import site; print(site.USER_BASE + "/bin")')
   - export PATH=$PY_USER_BIN:$PATH
-  - cmake . -G "Unix makefiles"
+  - cmake . -G "Unix Makefiles"
   - cmake --build .
   - ctest
