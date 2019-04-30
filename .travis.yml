@@ -6,8 +6,9 @@ install:
   - pip install --user conan
   - conan user
 script:
+  - set -e
   - export PY_USER_BIN=$(python -c 'import site; print(site.USER_BASE + "/bin")')
   - export PATH=$PY_USER_BIN:$PATH
-  - cmake . -G "Unix Makefiles"
-  - cmake --build .
+  - cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
+  - cmake --build . -j$(nproc)
   - ctest .
