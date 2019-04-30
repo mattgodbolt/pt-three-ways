@@ -10,4 +10,4 @@ script:
   - export PATH=$PY_USER_BIN:$PATH
   - cmake . -G "Unix Makefiles"
   - cmake --build .
-  - ctest
+  - ctest .
