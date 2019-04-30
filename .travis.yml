@@ -3,7 +3,7 @@ language: cpp
 compiler:
   - gcc
 install:
-  - pip install conan
+  - sudo pip install conan
   - conan user
 script:
   - cmake . -G "Unix makefiles"
