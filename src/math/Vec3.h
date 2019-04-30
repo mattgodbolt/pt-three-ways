@@ -53,6 +53,13 @@ public:
                 x_ * b.y_ - y_ * b.x_);
   }
 
+  constexpr bool operator == (const Vec3 &b) const noexcept {
+    return x_ == b.x_ && y_ == b.y_ && z_ == b.z_;
+  }
+  constexpr bool operator != (const Vec3 &b) const noexcept {
+    return x_ != b.x_ || y_ != b.y_ || z_ != b.z_;
+  }
+
   constexpr double x() const noexcept { return x_; }
   constexpr double y() const noexcept { return y_; }
   constexpr double z() const noexcept { return z_; }

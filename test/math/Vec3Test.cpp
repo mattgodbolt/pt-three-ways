@@ -16,6 +16,19 @@ TEST_CASE("Vectors", "[math]") {
     CHECK(vec.y() == 2.);
     CHECK(vec.z() == 3.);
   }
+  SECTION("comparison") {
+    CHECK(Vec3() == Vec3());
+    CHECK(Vec3() != Vec3(1, 2, 3));
+    CHECK(Vec3(1, 2, 3) == Vec3(1, 2, 3));
+    CHECK(Vec3(1, 2, 3) != Vec3(3, 2, 1));
+  }
+  SECTION("adding") {
+    CHECK(Vec3() + Vec3() == Vec3());
+    CHECK(Vec3(1, 1, 1) + Vec3(2, 2, 2) == Vec3(3, 3, 3));
+    auto vec = Vec3(1, 2, 3);
+    CHECK((vec += Vec3(2, 4, 6)) == Vec3(3, 6, 9));
+    CHECK(vec == Vec3(3, 6, 9));
+  }
 }
 
 }
