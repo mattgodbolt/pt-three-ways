@@ -3,9 +3,11 @@ language: cpp
 compiler:
   - gcc
 install:
-  - sudo pip install conan
+  - pip install --user conan
   - conan user
 script:
+  - export PY_USER_BIN=$(python -c 'import site; print(site.USER_BASE + "/bin")')
+  - export PATH=$PY_USER_BIN:$PATH
   - cmake . -G "Unix makefiles"
   - cmake --build .
   - ctest
