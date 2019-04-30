@@ -8,7 +8,6 @@ install:
   - pip install conan
   - conan user
 script:
-  - conan install .
   - cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
-  - cmake -j$(nproc) --build .
+  - cmake --build . -j $(nproc)
   - ctest .
