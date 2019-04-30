@@ -1,0 +1,11 @@
+sudo: false
+language: cpp
+compiler:
+  - gcc
+install:
+  - pip install conan
+  - conan user
+script:
+  - cmake . -G "Unix makefiles"
+  - cmake --build .
+  - ctest
