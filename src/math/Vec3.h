@@ -64,8 +64,10 @@ public:
   }
 
   constexpr Vec3 cross(const Vec3 &b) noexcept {
-    return Vec3(y_ * b.z_ - z_ * b.y_, z_ * b.x_ - x_ * b.z_,
-                x_ * b.y_ - y_ * b.x_);
+    auto x = y_ * b.z_ - z_ * b.y_;
+    auto y = z_ * b.x_ - x_ * b.z_;
+    auto z = x_ * b.y_ - y_ * b.x_;
+    return Vec3(x, y, z);
   }
 
   constexpr bool operator==(const Vec3 &b) const noexcept {
