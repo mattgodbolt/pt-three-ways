@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CeSupt.h"
 #include <cmath>
 #include <iosfwd>
 
@@ -50,11 +51,16 @@ public:
     return *this;
   }
 
-  constexpr double lengthSquared() const noexcept { return dot(*this); }
-  double length() const noexcept { return sqrt(lengthSquared()); }
 
-  Vec3 normalised() const noexcept { return *this * (1.0 / length()); }
-  Vec3 &normalise() noexcept {
+  constexpr double lengthSquared() const noexcept { return dot(*this); }
+  constexpr double length() const noexcept {
+    return ce_supt::sqrt(lengthSquared());
+  }
+
+  constexpr Vec3 normalised() const noexcept {
+    return *this * (1.0 / length());
+  }
+  constexpr Vec3 &normalise() noexcept {
     *this = normalised();
     return *this;
   }
