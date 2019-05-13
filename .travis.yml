@@ -22,15 +22,6 @@ matrix:
             - g++-8
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-xenial-8.0
-          packages:
-            - clang-8.0
-      env:
-        - MATRIX_EVAL="CC=clang-8.0 && CXX=clang++-8.0"
 
 before_install:
   - export CC
