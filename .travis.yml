@@ -33,6 +33,8 @@ matrix:
         - MATRIX_EVAL="CC=clang-8.0 && CXX=clang++-8.0"
 
 before_install:
+  - export CC
+  - export CXX
   - eval "${MATRIX_EVAL}"
 install:
   - pip install conan
