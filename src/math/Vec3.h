@@ -63,7 +63,7 @@ public:
     return x_ * b.x_ + y_ * b.y_ + z_ * b.z_;
   }
 
-  constexpr Vec3 cross(const Vec3 &b) noexcept {
+  constexpr Vec3 cross(const Vec3 &b) const noexcept {
     auto x = y_ * b.z_ - z_ * b.y_;
     auto y = z_ * b.x_ - x_ * b.z_;
     auto z = x_ * b.y_ - y_ * b.x_;

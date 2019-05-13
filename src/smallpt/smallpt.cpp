@@ -72,7 +72,7 @@ Sphere spheres[] = {
 
 inline double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 
-inline int toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+inline int componentToInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
 
 inline bool intersect(const Ray &r, double &t, int &id) {
   double n = sizeof(spheres) / sizeof(Sphere), d, inf = t = 1e20;
@@ -160,5 +160,6 @@ int main(int argc, char *argv[]) {
   FILE *f = fopen("image.ppm", "w"); // Write image to PPM file.
   fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
   for (int i = 0; i < w * h; i++)
-    fprintf(f, "%d %d %d ", toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
+    fprintf(f, "%d %d %d ", componentToInt(c[i].x), componentToInt(c[i].y),
+            componentToInt(c[i].z));
 }
