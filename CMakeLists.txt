@@ -21,5 +21,6 @@ add_compile_options(-Wall -Werror -Wextra)
 add_subdirectory(src)
 add_subdirectory(test)
 
+find_package(Threads)
 add_executable(pt_three_ways main.cpp)
-target_link_libraries(pt_three_ways math oo)
+target_link_libraries(pt_three_ways math oo ${CMAKE_THREAD_LIBS_INIT})

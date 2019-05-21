@@ -7,8 +7,11 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <random>
+#include <thread>
 #include <vector>
 
 namespace {
@@ -80,22 +83,80 @@ void render(const Scene &scene, OutputBuffer &output, const Vec3 &camPos,
   constexpr Vec3 camX(1, 0, 0);
   auto camY = camX.cross(camDir).normalised();
 
-  for (int y = 0; y < height; ++y) {
+  auto renderPixel = [&](int x, int y) {
+    std::minstd_rand rng(x + y * width);
     auto yy = (static_cast<double>(y) / height) * 2 - 1.0;
-    for (int x = 0; x < width; ++x) {
-      std::minstd_rand rng(x + y * width);
-      auto xx = (static_cast<double>(x) / width) * 2 - 1.0;
-      auto dir =
-          (camX * xx * xExtent + camY * yy * yExtent + camDir * screenDistance)
-              .normalised();
-      Vec3 colour;
-      for (int sample = 0; sample < numSamples; ++sample) {
-        colour +=
-            radiance(scene, rng, Ray::fromOriginAndDirection(camPos, dir), 0);
-      }
-      output.plot(x, height - y - 1, colour * (1.0 / numSamples));
+    auto xx = (static_cast<double>(x) / width) * 2 - 1.0;
+    auto dir =
+        (camX * xx * xExtent + camY * yy * yExtent + camDir * screenDistance)
+            .normalised();
+    Vec3 colour;
+    for (int sample = 0; sample < numSamples; ++sample) {
+      colour +=
+          radiance(scene, rng, Ray::fromOriginAndDirection(camPos, dir), 0);
     }
+    return colour * (1.0 / numSamples);
+  };
+
+  struct Tile {
+    int xBegin;
+    int xEnd;
+    int yBegin;
+    int yEnd;
+  };
+
+  struct TileQueue {
+    std::mutex mutex;
+    size_t numTiles{};
+    std::vector<Tile> todo;
+
+    TileQueue(int width, int height, int xSize, int ySize) {
+      for (int y = 0; y < height; y += ySize) {
+        int yBegin = y;
+        int yEnd = std::min(y + ySize, height);
+        for (int x = 0; x < width; x += xSize) {
+          int xBegin = x;
+          int xEnd = std::min(x + xSize, width);
+          todo.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd});
+        }
+      }
+      numTiles = todo.size();
+    }
+
+    bool pop(std::function<void(const Tile &)> func) {
+      std::unique_lock lock(mutex);
+      if (todo.empty())
+        return false;
+      auto tile = todo.back();
+      todo.pop_back();
+      printf("%.2f%%\n",
+             static_cast<double>(numTiles - todo.size()) / numTiles * 100);
+      lock.unlock();
+      func(tile);
+      return true;
+    }
+  };
+
+  TileQueue queue(width, height, 32, 32);
+
+  auto worker = [&] {
+    while (queue.pop([&](const Tile &tile) {
+      for (int y = tile.yBegin; y < tile.yEnd; ++y) {
+        for (int x = tile.xBegin; x < tile.xEnd; ++x) {
+          output.plot(x, height - y - 1, renderPixel(x, y));
+        }
+      }
+    })) {
+      // Do nothing...
+    }
+  };
+  std::vector<std::thread> threads;
+  threads.reserve(std::thread::hardware_concurrency());
+  for (auto i = 0u; i < std::thread::hardware_concurrency(); ++i) {
+    threads.emplace_back(worker);
   }
+  for (auto &t : threads)
+    t.join();
 }
 
 namespace {
@@ -186,10 +247,6 @@ int main() {
   auto height = output.height();
   fprintf(f.get(), "P3\n%d %d\n%d\n", width, height, 255);
   for (int y = 0; y < height; ++y) {
-    if ((y & 7) == 0) {
-      printf("%.2f%%\n", static_cast<double>(y) / height * 100);
-      fflush(stdout);
-    }
     for (int x = 0; x < width; ++x) {
       auto &colour = output.pixelAt(x, y);
       fprintf(f.get(), "%d %d %d ", componentToInt(colour.x()),
