@@ -3,5 +3,5 @@
 #include <iostream>
 
 std::ostream &operator<<(std::ostream &o, const ApproxVec3 &v) {
-  return o << "Approx" << v;
+  return o << "Approx" << v.vec_;
 }

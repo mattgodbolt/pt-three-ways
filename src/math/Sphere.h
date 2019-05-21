@@ -36,6 +36,8 @@ public:
     auto t = minusT > epsilon ? minusT : plusT;
     auto hitPosition = ray.positionAlong(t);
     auto normal = (hitPosition - centre_).normalised();
+    if (normal.dot(ray.direction()) > 0)
+      normal = normal * -1;
     return Hit{t, hitPosition, normal};
   }
 };

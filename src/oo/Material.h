@@ -5,4 +5,7 @@
 struct Material {
   Vec3 emission;
   Vec3 diffuse;
+  static Material makeDiffuse(const Vec3 &colour) {
+    return Material{Vec3(), colour};
+  }
 };

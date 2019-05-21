@@ -13,17 +13,19 @@
 
 namespace {
 int componentToInt(double x) {
-  return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255 + 0.5);
+  return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255);
 }
 } // namespace
 
 template <typename Scene, typename Rng>
-Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth) {
+Vec3 radiance(const Scene &scene, [[maybe_unused]] Rng &rng, const Ray &ray,
+              [[maybe_unused]] int depth) {
   auto intersectionRecord = scene.intersect(ray);
   if (!intersectionRecord)
     return Vec3();
 
   Material &mat = intersectionRecord->material;
+  //  return mat.diffuse;
   Hit &hit = intersectionRecord->hit;
 
   if (++depth > 5) {
@@ -51,7 +53,8 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth) {
 }
 
 template <typename Scene, typename OutputBuffer>
-void render(const Scene &scene, OutputBuffer &output, int numSamples) {
+void render(const Scene &scene, OutputBuffer &output, const Vec3 &camPos,
+            const Vec3 &camDir, int numSamples) {
   // TODO: could all be constexpr if outputbuffer is...
   int width = output.width();
   int height = output.height();
@@ -74,10 +77,8 @@ void render(const Scene &scene, OutputBuffer &output, int numSamples) {
   auto yExtent = tan(yFoVDegrees / 360 * 2 * M_PI / 2) * screenDistance;
   auto xExtent = yExtent * aspectRatio;
 
-  constexpr Vec3 camPos(0, 0, 0);
-  constexpr Vec3 camDir(0, 0, 1);
   constexpr Vec3 camX(1, 0, 0);
-  constexpr auto camY = camX.cross(camDir).normalised();
+  auto camY = camX.cross(camDir).normalised();
 
   for (int y = 0; y < height; ++y) {
     auto yy = (static_cast<double>(y) / height) * 2 - 1.0;
@@ -92,7 +93,7 @@ void render(const Scene &scene, OutputBuffer &output, int numSamples) {
         colour +=
             radiance(scene, rng, Ray::fromOriginAndDirection(camPos, dir), 0);
       }
-      output.plot(x, y, colour * (1.0 / numSamples));
+      output.plot(x, height - y - 1, colour * (1.0 / numSamples));
     }
   }
 }
@@ -115,11 +116,41 @@ struct SpherePrimitive : Primitive {
 struct StaticScene {
   Scene scene;
   StaticScene() {
+    // left
     scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(-10, 0, 50), 9.5),
-        Material{Vec3(0.1, 0.0, 0.1), Vec3(1, 0, 1)}));
+        Sphere(Vec3(1e5 + 1, 40.8, 81.6), 1e5),
+        Material::makeDiffuse(Vec3(0.75, 0.25, 0.25))));
+    // right
     scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(10, 0, 50), 9.5), Material{Vec3(), Vec3(1, 1, 0)}));
+        Sphere(Vec3(-1e5 + 99, 40.8, 81.6), 1e5),
+        Material::makeDiffuse(Vec3(0.25, 0.25, 0.75))));
+    // back
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(50, 40.8, 1e5), 1e5),
+        Material::makeDiffuse(Vec3(0.75, 0.75, 0.75))));
+    // front
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(50, 40.8, -1e5 + 170), 1e5),
+        Material::makeDiffuse(Vec3())));
+    // bottom
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(50, 1e5, 81.6), 1e5),
+        Material::makeDiffuse(Vec3(0.75, 0.75, 0.75))));
+    // top
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(50, -1e5 + 81.6, 81.6), 1e5),
+        Material::makeDiffuse(Vec3(0.75, 0.75, 0.75))));
+    // light
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(50, 681.6 - .27, 81.6), 600),
+        Material{Vec3(12, 12, 12), Vec3()}));
+
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(27, 16.5, 47), 16.5),
+        Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(73, 16.5, 78), 16.5),
+        Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
   }
   auto intersect(const Ray &ray) const noexcept { return scene.intersect(ray); }
 };
@@ -146,13 +177,19 @@ public:
 int main() {
   StaticScene scene;
   ArrayOutput output(320, 240);
-  render(scene, output, 1024);
+  Vec3 camPos(50, 52, 155.6);
+  auto camDir = Vec3(0, -0.042612, -1).normalised();
+  render(scene, output, camPos, camDir, 500);
 
   std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"), fclose);
   auto width = output.width();
   auto height = output.height();
   fprintf(f.get(), "P3\n%d %d\n%d\n", width, height, 255);
   for (int y = 0; y < height; ++y) {
+    if ((y & 7) == 0) {
+      printf("%.2f%%\n", static_cast<double>(y) / height * 100);
+      fflush(stdout);
+    }
     for (int x = 0; x < width; ++x) {
       auto &colour = output.pixelAt(x, y);
       fprintf(f.get(), "%d %d %d ", componentToInt(colour.x()),
