@@ -31,7 +31,7 @@ Vec3 radiance(const Scene &scene, [[maybe_unused]] Rng &rng, const Ray &ray,
   //  return mat.diffuse;
   Hit &hit = intersectionRecord->hit;
 
-  if (++depth > 5) {
+  if (++depth > 10) {
     // TODO: "russian roulette"
     return mat.emission;
   }
@@ -237,7 +237,7 @@ public:
 
 int main() {
   StaticScene scene;
-  ArrayOutput output(320, 240);
+  ArrayOutput output(640, 480);
   Vec3 camPos(50, 52, 155.6);
   auto camDir = Vec3(0, -0.042612, -1).normalised();
   render(scene, output, camPos, camDir, 500);
