@@ -72,7 +72,9 @@ Sphere spheres[] = {
 
 inline double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 
-inline int componentToInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+inline int componentToInt(double x) {
+  return int(pow(clamp(x), 1 / 2.2) * 255 + .5);
+}
 
 inline bool intersect(const Ray &r, double &t, int &id) {
   double n = sizeof(spheres) / sizeof(Sphere), d, inf = t = 1e20;
@@ -135,6 +137,7 @@ int main(int argc, char *argv[]) {
   Ray cam(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm()); // cam pos, dir
   Vec cx = Vec(w * .5135 / h), cy = (cx % cam.d).norm() * .5135, r,
       *c = new Vec[w * h];
+#pragma omp parallel for schedule(dynamic, 1) private(r)
   for (int y = 0; y < h; y++) { // Loop over image rows
     fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps * 4,
             100. * y / (h - 1));
