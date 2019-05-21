@@ -1,10 +1,13 @@
 #include <math/Sphere.h>
 #include <math/Vec3.h>
 
+#include <oo/Primitive.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <memory>
+#include <oo/Scene.h>
 #include <vector>
 
 namespace {
@@ -50,11 +53,12 @@ void render(const Scene &scene, OutputBuffer &output) {
           (camX * xx * xExtent + camY * yy * yExtent + camDir * screenDistance)
               .normalised();
       auto ray = Ray::fromOriginAndDirection(camPos, dir);
-      auto hit = scene.intersect(ray);
+      auto intersectionRecord = scene.intersect(ray);
       Vec3 colour;
-      if (hit) {
-        Vec3 mat(1, 0, 1);
-        colour = mat * pow(dir.dot(hit->normal), 2);
+      if (intersectionRecord) {
+        auto &mat = intersectionRecord->material;
+        auto &hit = intersectionRecord->hit;
+        colour = mat.diffuse * pow(dir.dot(hit.normal), 2);
       }
       output.plot(x, y, colour);
     }
@@ -63,11 +67,28 @@ void render(const Scene &scene, OutputBuffer &output) {
 
 namespace {
 
-struct StaticScene {
-  Sphere sphere{Vec3(0, 0, 50), 15};
-  auto intersect(const Ray &ray) const noexcept {
-    return sphere.intersect(ray);
+struct SpherePrimitive : Primitive {
+  Sphere sphere;
+  Material material;
+  SpherePrimitive(const Sphere &sphere, const Material &material)
+      : sphere(sphere), material(material) {}
+  std::optional<IntersectionRecord> intersect(const Ray &ray) const override {
+    auto hit = sphere.intersect(ray);
+    if (!hit)
+      return {};
+    return IntersectionRecord{*hit, material};
   }
+};
+
+struct StaticScene {
+  Scene scene;
+  StaticScene() {
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(-10, 0, 50), 9.5), Material{Vec3(), Vec3(1, 0, 1)}));
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(10, 0, 50), 9.5), Material{Vec3(), Vec3(1, 1, 0)}));
+  }
+  auto intersect(const Ray &ray) const noexcept { return scene.intersect(ray); }
 };
 
 class ArrayOutput {
@@ -86,6 +107,7 @@ public:
   }
   const Vec3 &pixelAt(int x, int y) noexcept { return output_[x + y * width_]; }
 };
+
 } // namespace
 
 int main() {

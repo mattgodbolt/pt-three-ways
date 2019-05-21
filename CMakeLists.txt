@@ -22,4 +22,4 @@ add_subdirectory(src)
 add_subdirectory(test)
 
 add_executable(pt_three_ways main.cpp)
-target_link_libraries(pt_three_ways math)
+target_link_libraries(pt_three_ways math oo)
