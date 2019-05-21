@@ -2,12 +2,13 @@
 #include <math/Vec3.h>
 
 #include <oo/Primitive.h>
+#include <oo/Scene.h>
 
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <memory>
-#include <oo/Scene.h>
+#include <random>
 #include <vector>
 
 namespace {
@@ -16,8 +17,41 @@ int componentToInt(double x) {
 }
 } // namespace
 
+template <typename Scene, typename Rng>
+Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth) {
+  auto intersectionRecord = scene.intersect(ray);
+  if (!intersectionRecord)
+    return Vec3();
+
+  Material &mat = intersectionRecord->material;
+  Hit &hit = intersectionRecord->hit;
+
+  if (++depth > 5) {
+    // TODO: "russian roulette"
+    return mat.emission;
+  }
+
+  // Get a random polar coordinate.
+  std::uniform_real_distribution<> polar(0, 2.0 * M_PI);
+  auto r1 = polar(rng);
+  std::uniform_real_distribution<> unit(0, 1.0);
+  auto r2 = unit(rng);
+  auto r2s = sqrt(r2);
+  // Create a coordinate system u,v,w local to the point, where the w is the
+  // normal pointing out of the sphere and the u and v are orthonormal to w.
+  const auto &w = hit.normal;
+  // Pick an arbitrary non-zero preferred axis for u
+  const auto u = (fabs(w.x()) > 0.1 ? Vec3(0, 1, 0) : Vec3(1, 0, 0)).cross(w);
+  const auto v = w.cross(u);
+  // construct the new direction
+  const auto newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2);
+  auto newRay = Ray::fromOriginAndDirection(hit.position, newDir.normalised());
+
+  return mat.emission + mat.diffuse * radiance(scene, rng, newRay, depth);
+}
+
 template <typename Scene, typename OutputBuffer>
-void render(const Scene &scene, OutputBuffer &output) {
+void render(const Scene &scene, OutputBuffer &output, int numSamples) {
   // TODO: could all be constexpr if outputbuffer is...
   int width = output.width();
   int height = output.height();
@@ -48,19 +82,17 @@ void render(const Scene &scene, OutputBuffer &output) {
   for (int y = 0; y < height; ++y) {
     auto yy = (static_cast<double>(y) / height) * 2 - 1.0;
     for (int x = 0; x < width; ++x) {
+      std::minstd_rand rng(x + y * width);
       auto xx = (static_cast<double>(x) / width) * 2 - 1.0;
       auto dir =
           (camX * xx * xExtent + camY * yy * yExtent + camDir * screenDistance)
               .normalised();
-      auto ray = Ray::fromOriginAndDirection(camPos, dir);
-      auto intersectionRecord = scene.intersect(ray);
       Vec3 colour;
-      if (intersectionRecord) {
-        auto &mat = intersectionRecord->material;
-        auto &hit = intersectionRecord->hit;
-        colour = mat.diffuse * pow(dir.dot(hit.normal), 2);
+      for (int sample = 0; sample < numSamples; ++sample) {
+        colour +=
+            radiance(scene, rng, Ray::fromOriginAndDirection(camPos, dir), 0);
       }
-      output.plot(x, y, colour);
+      output.plot(x, y, colour * (1.0 / numSamples));
     }
   }
 }
@@ -84,7 +116,8 @@ struct StaticScene {
   Scene scene;
   StaticScene() {
     scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(-10, 0, 50), 9.5), Material{Vec3(), Vec3(1, 0, 1)}));
+        Sphere(Vec3(-10, 0, 50), 9.5),
+        Material{Vec3(0.1, 0.0, 0.1), Vec3(1, 0, 1)}));
     scene.add(std::make_unique<SpherePrimitive>(
         Sphere(Vec3(10, 0, 50), 9.5), Material{Vec3(), Vec3(1, 1, 0)}));
   }
@@ -112,8 +145,8 @@ public:
 
 int main() {
   StaticScene scene;
-  ArrayOutput output(640, 480);
-  render(scene, output);
+  ArrayOutput output(320, 240);
+  render(scene, output, 1024);
 
   std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"), fclose);
   auto width = output.width();
