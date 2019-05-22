@@ -51,6 +51,7 @@ public:
     return *this;
   }
 
+  constexpr Vec3 operator-() const noexcept { return Vec3(-x_, -y_, -z_); }
 
   constexpr double lengthSquared() const noexcept { return dot(*this); }
   constexpr double length() const noexcept {
