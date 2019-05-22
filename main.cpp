@@ -23,8 +23,7 @@ int componentToInt(double x) {
 } // namespace
 
 template <typename Scene, typename Rng>
-Vec3 radiance(const Scene &scene, [[maybe_unused]] Rng &rng, const Ray &ray,
-              [[maybe_unused]] int depth) {
+Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth) {
   auto intersectionRecord = scene.intersect(ray);
   if (!intersectionRecord)
     return Vec3();
@@ -41,16 +40,16 @@ Vec3 radiance(const Scene &scene, [[maybe_unused]] Rng &rng, const Ray &ray,
 
   // Get a random polar coordinate.
   std::uniform_real_distribution<> polar(0, 2.0 * M_PI);
-  auto r1 = polar(rng);
+  auto theta = polar(rng);
   std::uniform_real_distribution<> unit(0, 1.0);
-  auto r2 = unit(rng);
-  auto r2s = sqrt(r2);
+  auto radiusSquared = unit(rng);
+  auto radius = sqrt(radiusSquared);
   // Create a coordinate system local to the point, where the z is the normal at
   // this point.
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
   // Construct the new direction.
-  const auto newDir =
-      basis.transform(Vec3(cos(r1) * r2s, sin(r1) * r2s, sqrt(1 - r2)));
+  const auto newDir = basis.transform(
+      Vec3(cos(theta) * radius, sin(theta) * radius, sqrt(1 - radiusSquared)));
   auto newRay = Ray::fromOriginAndDirection(hit.position, newDir.normalised());
 
   return mat.emission + mat.diffuse * radiance(scene, rng, newRay, depth);
