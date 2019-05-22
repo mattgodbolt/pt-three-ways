@@ -27,4 +27,6 @@ public:
 
   static OrthoNormalBasis fromYZ(const Vec3 &y, const Vec3 &z);
   static OrthoNormalBasis fromZY(const Vec3 &z, const Vec3 &y);
+
+  static OrthoNormalBasis fromZ(const Vec3 &z);
 };

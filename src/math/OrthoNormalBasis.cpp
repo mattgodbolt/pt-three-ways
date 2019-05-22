@@ -41,3 +41,16 @@ OrthoNormalBasis OrthoNormalBasis::fromZY(const Vec3 &z, const Vec3 &y) {
   auto yy = zz.cross(xx);
   return OrthoNormalBasis(xx, yy, zz);
 }
+
+namespace {
+const double Epsilon = 0.001;
+}
+
+OrthoNormalBasis OrthoNormalBasis::fromZ(const Vec3 &z) {
+  auto zz = z.normalised();
+  auto xx = Vec3(0,1,0).cross(zz);
+  if (xx.lengthSquared() < Epsilon * Epsilon)
+    xx = Vec3(1, 0, 0).cross(zz);
+  auto yy = zz.cross(xx);
+  return OrthoNormalBasis(xx, yy, zz);
+}

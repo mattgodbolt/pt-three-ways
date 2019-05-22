@@ -45,15 +45,12 @@ Vec3 radiance(const Scene &scene, [[maybe_unused]] Rng &rng, const Ray &ray,
   std::uniform_real_distribution<> unit(0, 1.0);
   auto r2 = unit(rng);
   auto r2s = sqrt(r2);
-  // Create a coordinate system u,v,w local to the point, where the w is the
-  // normal pointing out of the sphere and the u and v are orthonormal to w.
-  const auto &w = hit.normal;
-  // Pick an arbitrary non-zero preferred axis for u.
-  const auto u =
-      (fabs(w.x()) > 0.1 ? Vec3(0, 1, 0) : Vec3(1, 0, 0)).cross(w).normalised();
-  const auto v = w.cross(u);
-  // construct the new direction
-  const auto newDir = u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2);
+  // Create a coordinate system local to the point, where the z is the normal at
+  // this point.
+  const auto basis = OrthoNormalBasis::fromZ(hit.normal);
+  // Construct the new direction.
+  const auto newDir =
+      basis.transform(Vec3(cos(r1) * r2s, sin(r1) * r2s, sqrt(1 - r2)));
   auto newRay = Ray::fromOriginAndDirection(hit.position, newDir.normalised());
 
   return mat.emission + mat.diffuse * radiance(scene, rng, newRay, depth);
@@ -235,7 +232,7 @@ int main() {
   double distance = camHeight / tan(verticalFov / 2. / 360 * 2 * M_PI);
   Camera camera(camPos, camDir, camUp, aperture, -camWidth / 2, camWidth / 2,
                 -camHeight / 2, camHeight / 2, distance);
-  render(scene, output, camera, 50);
+  render(scene, output, camera, 500);
 
   std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"), fclose);
   auto width = output.width();

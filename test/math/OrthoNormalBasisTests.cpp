@@ -26,6 +26,7 @@ TEST_CASE("OrthoNormalBasis", "[OrthoNormalBasis]") {
     check("zx", OrthoNormalBasis::fromZX(Vec3(0, 0, 1), Vec3(1, 0, 0)));
     check("yz", OrthoNormalBasis::fromYZ(Vec3(0, 1, 0), Vec3(0, 0, 1)));
     check("zy", OrthoNormalBasis::fromZY(Vec3(0, 0, 1), Vec3(0, 1, 0)));
+    check("zz", OrthoNormalBasis::fromZ(Vec3(0, 0, 1)));
   }
 }
 
