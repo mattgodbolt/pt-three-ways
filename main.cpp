@@ -1,3 +1,4 @@
+#include <math/Camera.h>
 #include <math/Sphere.h>
 #include <math/Vec3.h>
 
@@ -15,6 +16,7 @@
 #include <vector>
 
 namespace {
+bool diffuseOnly = false;
 int componentToInt(double x) {
   return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255);
 }
@@ -28,7 +30,8 @@ Vec3 radiance(const Scene &scene, [[maybe_unused]] Rng &rng, const Ray &ray,
     return Vec3();
 
   Material &mat = intersectionRecord->material;
-  //  return mat.diffuse;
+  if (diffuseOnly)
+    return mat.diffuse;
   Hit &hit = intersectionRecord->hit;
 
   if (++depth > 5) {
@@ -57,44 +60,20 @@ Vec3 radiance(const Scene &scene, [[maybe_unused]] Rng &rng, const Ray &ray,
 }
 
 template <typename Scene, typename OutputBuffer>
-void render(const Scene &scene, OutputBuffer &output, const Vec3 &camPos,
-            const Vec3 &camDir, int numSamples) {
-  // TODO: could all be constexpr if outputbuffer is...
+void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
+            int numSamples) {
   int width = output.width();
   int height = output.height();
-  auto aspectRatio = static_cast<double>(width) / height;
-  // We assume the screen is suspended "screenDistance" units from the camera
-  // position. Looking from the side:
-  //        -| -ySize
-  //      -- |
-  //    --th |
-  //  --sD----  0
-  //    --   |
-  //      -- |
-  //        -| ySize
-  // th is half field of view angle
-  // sD is the screenDistance
-  // We need to find yExtent. From geometry, tan(th) = yExtent / sD,
-  // so yExtent = sd * tan(th)
-  constexpr auto screenDistance = 1.0;
-  constexpr auto yFoVDegrees = 50.0;
-  auto yExtent = tan(yFoVDegrees / 360 * 2 * M_PI / 2) * screenDistance;
-  auto xExtent = yExtent * aspectRatio;
 
-  constexpr Vec3 camX(1, 0, 0);
-  auto camY = camX.cross(camDir).normalised();
-
+  std::uniform_real_distribution<> unit(0.0, 1.0);
   auto renderPixel = [&](int x, int y) {
     std::minstd_rand rng(x + y * width);
-    auto yy = (static_cast<double>(y) / height) * 2 - 1.0;
-    auto xx = (static_cast<double>(x) / width) * 2 - 1.0;
-    auto dir =
-        (camX * xx * xExtent + camY * yy * yExtent + camDir * screenDistance)
-            .normalised();
+    auto yy = static_cast<double>(y) / height;
+    auto xx = static_cast<double>(x) / width;
     Vec3 colour;
     for (int sample = 0; sample < numSamples; ++sample) {
-      colour +=
-          radiance(scene, rng, Ray::fromOriginAndDirection(camPos, dir), 0);
+      auto ray = camera.ray(xx, yy, unit(rng), unit(rng));
+      colour += radiance(scene, rng, ray, 0);
     }
     return colour * (1.0 / numSamples);
   };
@@ -110,6 +89,7 @@ void render(const Scene &scene, OutputBuffer &output, const Vec3 &camPos,
     std::mutex mutex;
     size_t numTiles{};
     std::vector<Tile> todo;
+    double lastProgress{};
 
     TileQueue(int width, int height, int xSize, int ySize) {
       for (int y = 0; y < height; y += ySize) {
@@ -130,10 +110,15 @@ void render(const Scene &scene, OutputBuffer &output, const Vec3 &camPos,
         return false;
       auto tile = todo.back();
       todo.pop_back();
-      printf("%.2f%%\n",
-             static_cast<double>(numTiles - todo.size()) / numTiles * 100);
       lock.unlock();
       func(tile);
+      lock.lock();
+      auto progress =
+          static_cast<double>(numTiles - todo.size()) / numTiles * 100;
+      if (progress > lastProgress + 5.) {
+        printf("%.2f%%\n", progress);
+        lastProgress = progress;
+      }
       return true;
     }
   };
@@ -144,7 +129,7 @@ void render(const Scene &scene, OutputBuffer &output, const Vec3 &camPos,
     while (queue.pop([&](const Tile &tile) {
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
-          output.plot(x, height - y - 1, renderPixel(x, y));
+          output.plot(x, y, renderPixel(x, y));
         }
       }
     })) {
@@ -191,9 +176,9 @@ struct StaticScene {
         Sphere(Vec3(50, 40.8, 1e5), 1e5),
         Material::makeDiffuse(Vec3(0.75, 0.75, 0.75))));
     // front
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(50, 40.8, -1e5 + 170), 1e5),
-        Material::makeDiffuse(Vec3())));
+    //    scene.add(std::make_unique<SpherePrimitive>(
+    //        Sphere(Vec3(50, 40.8, -1e5 + 170), 1e5),
+    //        Material::makeDiffuse(Vec3())));
     // bottom
     scene.add(std::make_unique<SpherePrimitive>(
         Sphere(Vec3(50, 1e5, 81.6), 1e5),
@@ -239,9 +224,18 @@ public:
 int main() {
   StaticScene scene;
   ArrayOutput output(640, 480);
-  Vec3 camPos(50, 52, 155.6);
+  Vec3 camPos(50, 52, 295.6);
+  Vec3 camUp(0, -1, 0);
   auto camDir = Vec3(0, -0.042612, -1).normalised();
-  render(scene, output, camPos, camDir, 500);
+  double aspectRatio = static_cast<double>(output.width()) / output.height();
+  double verticalFov = 50.0;
+  double camHeight = 1.0;
+  double camWidth = camHeight * aspectRatio;
+  double aperture = 0.0; // Pinhole camera
+  double distance = camHeight / tan(verticalFov / 2. / 360 * 2 * M_PI);
+  Camera camera(camPos, camDir, camUp, aperture, -camWidth / 2, camWidth / 2,
+                -camHeight / 2, camHeight / 2, distance);
+  render(scene, output, camera, 50);
 
   std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"), fclose);
   auto width = output.width();
