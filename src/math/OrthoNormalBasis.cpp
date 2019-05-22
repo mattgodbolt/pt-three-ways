@@ -1,4 +1,5 @@
 #include "OrthoNormalBasis.h"
+#include <cstdio>
 
 OrthoNormalBasis OrthoNormalBasis::fromXY(const Vec3 &x, const Vec3 &y) {
   auto xx = x.normalised();
@@ -43,14 +44,15 @@ OrthoNormalBasis OrthoNormalBasis::fromZY(const Vec3 &z, const Vec3 &y) {
 }
 
 namespace {
-const double Epsilon = 0.001;
+const double Coincident = 0.9999;
 }
 
 OrthoNormalBasis OrthoNormalBasis::fromZ(const Vec3 &z) {
   auto zz = z.normalised();
-  auto xx = Vec3(0,1,0).cross(zz);
-  if (xx.lengthSquared() < Epsilon * Epsilon)
-    xx = Vec3(1, 0, 0).cross(zz);
-  auto yy = zz.cross(xx);
+  auto xx =
+      (fabs(zz.dot(Vec3::xAxis())) > Coincident ? Vec3::yAxis() : Vec3::xAxis())
+          .cross(zz)
+          .normalised();
+  auto yy = zz.cross(xx).normalised();
   return OrthoNormalBasis(xx, yy, zz);
 }

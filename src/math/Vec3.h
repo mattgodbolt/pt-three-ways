@@ -87,6 +87,10 @@ public:
   constexpr double x() const noexcept { return x_; }
   constexpr double y() const noexcept { return y_; }
   constexpr double z() const noexcept { return z_; }
+
+  static constexpr Vec3 xAxis() { return Vec3(1, 0, 0); }
+  static constexpr Vec3 yAxis() { return Vec3(0, 1, 0); }
+  static constexpr Vec3 zAxis() { return Vec3(0, 0, 1); }
 };
 
 std::ostream &operator<<(std::ostream &o, const Vec3 &v);
