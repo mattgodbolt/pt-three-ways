@@ -16,7 +16,7 @@ conan_cmake_run(CONANFILE conanfile.txt
 set(CMAKE_CXX_STANDARD 17)
 enable_testing()
 
-add_compile_options(-Wall -Werror -Wextra -march=native)
+add_compile_options(-Wall -Werror -Wextra -march=native -g)
 
 add_subdirectory(src)
 add_subdirectory(test)
