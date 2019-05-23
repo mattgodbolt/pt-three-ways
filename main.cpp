@@ -16,6 +16,8 @@
 #include <vector>
 
 namespace {
+constexpr auto SamplesPerPixel = 40;
+constexpr auto SqrtFirstBounceSamples = 4;
 bool diffuseOnly = false;
 int componentToInt(double x) {
   return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255);
@@ -23,7 +25,8 @@ int componentToInt(double x) {
 } // namespace
 
 template <typename Scene, typename Rng>
-Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth) {
+Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
+              int sqrtSamples) {
   auto intersectionRecord = scene.intersect(ray);
   if (!intersectionRecord)
     return Vec3();
@@ -38,40 +41,55 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth) {
     return mat.emission;
   }
 
-  // Get a random polar coordinate.
-  std::uniform_real_distribution<> polar(0, 2.0 * M_PI);
-  auto theta = polar(rng);
-  std::uniform_real_distribution<> unit(0, 1.0);
-  auto radiusSquared = unit(rng);
-  auto radius = sqrt(radiusSquared);
-  // Create a coordinate system local to the point, where the z is the normal at
-  // this point.
-  const auto basis = OrthoNormalBasis::fromZ(hit.normal);
-  // Construct the new direction.
-  const auto newDir = basis.transform(
-      Vec3(cos(theta) * radius, sin(theta) * radius, sqrt(1 - radiusSquared)));
-  auto newRay = Ray::fromOriginAndDirection(hit.position, newDir.normalised());
+  Vec3 result;
 
-  return mat.emission + mat.diffuse * radiance(scene, rng, newRay, depth);
+  const auto nextSqrtSamples = 1;
+
+  // Sample evenly over sqrtSamples x sqrtSamples, with random offset.
+  std::uniform_real_distribution<> unit(0, 1.0);
+  for (auto u = 0; u < sqrtSamples; ++u) {
+    for (auto v = 0; v < sqrtSamples; ++v) {
+      auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng)) /
+                   static_cast<double>(sqrtSamples);
+      auto radiusSquared = (static_cast<double>(v) + unit(rng)) /
+                           static_cast<double>(sqrtSamples);
+      auto radius = sqrt(radiusSquared);
+      // Create a coordinate system local to the point, where the z is the
+      // normal at this point.
+      const auto basis = OrthoNormalBasis::fromZ(hit.normal);
+      // Construct the new direction.
+      const auto newDir = basis.transform(Vec3(
+          cos(theta) * radius, sin(theta) * radius, sqrt(1 - radiusSquared)));
+      auto newRay =
+          Ray::fromOriginAndDirection(hit.position, newDir.normalised());
+
+      result += mat.emission + mat.diffuse * radiance(scene, rng, newRay, depth,
+                                                      nextSqrtSamples);
+    }
+  }
+  if (sqrtSamples == 1)
+    return result;
+  else
+    return result * (1.0 / (sqrtSamples * sqrtSamples));
 }
 
 template <typename Scene, typename OutputBuffer>
 void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
-            int numSamples) {
+            int samplesPerPixel) {
   int width = output.width();
   int height = output.height();
 
   std::uniform_real_distribution<> unit(0.0, 1.0);
   auto renderPixel = [&](int x, int y) {
-    std::minstd_rand rng(x + y * width);
+    std::mt19937 rng(x + y * width);
     auto yy = static_cast<double>(y) / height;
     auto xx = static_cast<double>(x) / width;
     Vec3 colour;
-    for (int sample = 0; sample < numSamples; ++sample) {
+    for (int sample = 0; sample < samplesPerPixel; ++sample) {
       auto ray = camera.ray(xx, yy, unit(rng), unit(rng));
-      colour += radiance(scene, rng, ray, 0);
+      colour += radiance(scene, rng, ray, 0, SqrtFirstBounceSamples);
     }
-    return colour * (1.0 / numSamples);
+    return colour * (1.0 / samplesPerPixel);
   };
 
   struct Tile {
@@ -219,7 +237,7 @@ public:
 
 int main() {
   StaticScene scene;
-  ArrayOutput output(640, 480);
+  ArrayOutput output(1920, 1080);
   Vec3 camPos(50, 52, 295.6);
   Vec3 camUp(0, -1, 0);
   auto camDir = Vec3(0, -0.042612, -1).normalised();
@@ -231,7 +249,7 @@ int main() {
   double distance = camHeight / tan(verticalFov / 2. / 360 * 2 * M_PI);
   Camera camera(camPos, camDir, camUp, aperture, -camWidth / 2, camWidth / 2,
                 -camHeight / 2, camHeight / 2, distance);
-  render(scene, output, camera, 500);
+  render(scene, output, camera, SamplesPerPixel);
 
   std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"), fclose);
   auto width = output.width();
