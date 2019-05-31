@@ -1,3 +1,5 @@
+#include "WorkQueue.h"
+
 #include <math/Camera.h>
 #include <math/Sphere.h>
 #include <math/Vec3.h>
@@ -19,11 +21,34 @@
 #include <vector>
 
 namespace {
+
 constexpr auto SqrtFirstBounceSamples = 4;
 bool preview = false;
 int componentToInt(double x) {
   return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255);
 }
+
+struct Tile {
+  int xBegin;
+  int xEnd;
+  int yBegin;
+  int yEnd;
+};
+
+std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize) {
+  std::vector<Tile> tiles;
+  for (int y = 0; y < height; y += ySize) {
+    int yBegin = y;
+    int yEnd = std::min(y + ySize, height);
+    for (int x = 0; x < width; x += xSize) {
+      int xBegin = x;
+      int xEnd = std::min(x + xSize, width);
+      tiles.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd});
+    }
+  }
+  return tiles;
+}
+
 } // namespace
 
 template <typename Scene, typename Rng>
@@ -94,54 +119,13 @@ void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
     return colour * (1.0 / samplesPerPixel);
   };
 
-  struct Tile {
-    int xBegin;
-    int xEnd;
-    int yBegin;
-    int yEnd;
-  };
-
-  struct TileQueue {
-    std::mutex mutex;
-    size_t numTiles{};
-    std::vector<Tile> todo;
-    double lastProgress{};
-
-    TileQueue(int width, int height, int xSize, int ySize) {
-      for (int y = 0; y < height; y += ySize) {
-        int yBegin = y;
-        int yEnd = std::min(y + ySize, height);
-        for (int x = 0; x < width; x += xSize) {
-          int xBegin = x;
-          int xEnd = std::min(x + xSize, width);
-          todo.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd});
-        }
-      }
-      numTiles = todo.size();
-    }
-
-    std::optional<Tile> pop() {
-      std::unique_lock lock(mutex);
-      auto progress =
-          static_cast<double>(numTiles - todo.size()) / numTiles * 100;
-      if (progress > lastProgress + 5.) {
-        printf("%.2f%%\n", progress);
-        lastProgress = progress;
-      }
-      if (todo.empty())
-        return {};
-      auto tile = todo.back();
-      todo.pop_back();
-      return tile;
-    }
-  };
-
-  TileQueue queue(width, height, 32, 32);
+  WorkQueue<Tile> queue(generateTiles(width, height, 32, 32));
 
   auto worker = [&] {
     for (;;) {
       auto tileOpt = queue.pop();
-      if (!tileOpt) break;
+      if (!tileOpt)
+        break;
       auto &tile = *tileOpt;
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
@@ -151,9 +135,8 @@ void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
     }
   };
   std::vector<std::thread> threads{numThreads};
-  std::generate(threads.begin(), threads.end(), [&](){
-    return std::thread(worker);
-  });
+  std::generate(threads.begin(), threads.end(),
+                [&]() { return std::thread(worker); });
   for (auto &t : threads)
     t.join();
 }
