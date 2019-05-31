@@ -9,6 +9,7 @@ endif ()
 include(${CMAKE_SOURCE_DIR}/scripts/conan.cmake)
 
 conan_add_remote(NAME Catch2 "https://api.bintray.com/conan/catchorg/Catch2")
+conan_add_remote(NAME bincrafters "https://api.bintray.com/conan/bincrafters/public-conan")
 conan_cmake_run(CONANFILE conanfile.txt
         BASIC_SETUP CMAKE_TARGETS
         BUILD missing)
@@ -23,7 +24,7 @@ add_subdirectory(test)
 
 find_package(Threads)
 add_executable(pt_three_ways main.cpp)
-target_link_libraries(pt_three_ways math oo ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(pt_three_ways math oo ${CMAKE_THREAD_LIBS_INIT} CONAN_PKG::clara)
 
 if (NOT ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
     include(CheckIPOSupported)

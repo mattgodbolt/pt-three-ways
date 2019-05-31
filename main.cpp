@@ -5,10 +5,13 @@
 #include <oo/Primitive.h>
 #include <oo/Scene.h>
 
+#include <clara.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -16,9 +19,8 @@
 #include <vector>
 
 namespace {
-constexpr auto SamplesPerPixel = 40;
 constexpr auto SqrtFirstBounceSamples = 4;
-bool diffuseOnly = false;
+bool preview = false;
 int componentToInt(double x) {
   return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255);
 }
@@ -32,7 +34,7 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
     return Vec3();
 
   Material &mat = intersectionRecord->material;
-  if (diffuseOnly)
+  if (preview)
     return mat.diffuse;
   Hit &hit = intersectionRecord->hit;
 
@@ -75,7 +77,7 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
 
 template <typename Scene, typename OutputBuffer>
 void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
-            int samplesPerPixel) {
+            int samplesPerPixel, unsigned numCpus) {
   int width = output.width();
   int height = output.height();
 
@@ -151,8 +153,8 @@ void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
     }
   };
   std::vector<std::thread> threads;
-  threads.reserve(std::thread::hardware_concurrency());
-  for (auto i = 0u; i < std::thread::hardware_concurrency(); ++i) {
+  threads.reserve(numCpus);
+  for (auto i = 0u; i < numCpus; ++i) {
     threads.emplace_back(worker);
   }
   for (auto &t : threads)
@@ -235,9 +237,39 @@ public:
 
 } // namespace
 
-int main() {
+int main(int argc, const char *argv[]) {
   StaticScene scene;
-  ArrayOutput output(1920, 1080);
+
+  bool help = false;
+  auto width = 1920;
+  auto height = 1080;
+  auto numCpus = 1u;
+  auto samplesPerPixel = 40;
+
+  using namespace clara;
+  auto cli =
+      Opt(width, "width")["-w"]["--width"]("output image width") |
+      Opt(height, "height")["-h"]["--height"]("output image height") |
+      Opt(numCpus,
+          "numCpus")["--num-cpus"]("number of CPUs to use (0 for all)") |
+      Opt(samplesPerPixel, "samples")["--spp"]("number of samples per pixel") |
+      Opt(preview)["--preview"]("super quick preview") | Help(help);
+
+  auto result = cli.parse(Args(argc, argv));
+  if (!result) {
+    std::cerr << "Error in command line: " << result.errorMessage() << '\n';
+    exit(1);
+  }
+  if (help) {
+    std::cout << cli;
+    exit(0);
+  }
+
+  if (numCpus == 0) {
+    numCpus = std::thread::hardware_concurrency();
+  }
+
+  ArrayOutput output(width, height);
   Vec3 camPos(50, 52, 295.6);
   Vec3 camUp(0, -1, 0);
   auto camDir = Vec3(0, -0.042612, -1).normalised();
@@ -249,11 +281,9 @@ int main() {
   double distance = camHeight / tan(verticalFov / 2. / 360 * 2 * M_PI);
   Camera camera(camPos, camDir, camUp, aperture, -camWidth / 2, camWidth / 2,
                 -camHeight / 2, camHeight / 2, distance);
-  render(scene, output, camera, SamplesPerPixel);
+  render(scene, output, camera, samplesPerPixel, numCpus);
 
   std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"), fclose);
-  auto width = output.width();
-  auto height = output.height();
   fprintf(f.get(), "P3\n%d %d\n%d\n", width, height, 255);
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
