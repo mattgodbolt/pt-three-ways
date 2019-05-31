@@ -8,8 +8,9 @@ endif ()
 
 include(${CMAKE_SOURCE_DIR}/scripts/conan.cmake)
 
-conan_add_remote(NAME Catch2 "https://api.bintray.com/conan/catchorg/Catch2")
-conan_add_remote(NAME bincrafters "https://api.bintray.com/conan/bincrafters/public-conan")
+conan_check(VERSION 1.14.4 REQUIRED)
+conan_add_remote(NAME bincrafters INDEX 1
+        URL https://api.bintray.com/conan/bincrafters/public-conan)
 conan_cmake_run(CONANFILE conanfile.txt
         BASIC_SETUP CMAKE_TARGETS
         BUILD missing)
