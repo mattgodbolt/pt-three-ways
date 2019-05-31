@@ -77,7 +77,7 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
 
 template <typename Scene, typename OutputBuffer>
 void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
-            int samplesPerPixel, unsigned numCpus) {
+            int samplesPerPixel, unsigned numThreads) {
   int width = output.width();
   int height = output.height();
 
@@ -120,43 +120,40 @@ void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
       numTiles = todo.size();
     }
 
-    bool pop(std::function<void(const Tile &)> func) {
+    std::optional<Tile> pop() {
       std::unique_lock lock(mutex);
-      if (todo.empty())
-        return false;
-      auto tile = todo.back();
-      todo.pop_back();
-      lock.unlock();
-      func(tile);
-      lock.lock();
       auto progress =
           static_cast<double>(numTiles - todo.size()) / numTiles * 100;
       if (progress > lastProgress + 5.) {
         printf("%.2f%%\n", progress);
         lastProgress = progress;
       }
-      return true;
+      if (todo.empty())
+        return {};
+      auto tile = todo.back();
+      todo.pop_back();
+      return tile;
     }
   };
 
   TileQueue queue(width, height, 32, 32);
 
   auto worker = [&] {
-    while (queue.pop([&](const Tile &tile) {
+    for (;;) {
+      auto tileOpt = queue.pop();
+      if (!tileOpt) break;
+      auto &tile = *tileOpt;
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
           output.plot(x, y, renderPixel(x, y));
         }
       }
-    })) {
-      // Do nothing...
     }
   };
-  std::vector<std::thread> threads;
-  threads.reserve(numCpus);
-  for (auto i = 0u; i < numCpus; ++i) {
-    threads.emplace_back(worker);
-  }
+  std::vector<std::thread> threads{numThreads};
+  std::generate(threads.begin(), threads.end(), [&](){
+    return std::thread(worker);
+  });
   for (auto &t : threads)
     t.join();
 }
