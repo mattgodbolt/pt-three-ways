@@ -6,7 +6,8 @@
 #include <optional>
 #include <vector>
 
-template <typename WorkItem> class WorkQueue {
+template <typename WorkItem>
+class WorkQueue {
   std::mutex mutex_;
   std::vector<WorkItem> todo_;
   Progressifier progress_;

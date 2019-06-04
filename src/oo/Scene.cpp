@@ -7,8 +7,8 @@ Scene::intersect(const Ray &ray) const {
     auto intersection = primitive->intersect(ray);
     if (!intersection)
       continue;
-    if (!currentNearest ||
-        intersection->hit.distance < currentNearest->hit.distance) {
+    if (!currentNearest
+        || intersection->hit.distance < currentNearest->hit.distance) {
       currentNearest = intersection;
     }
   }

@@ -33,7 +33,7 @@ TEST_CASE("OrthoNormalBasis", "[OrthoNormalBasis]") {
       CHECK(onb.x().lengthSquared() == Approx(1.));
       CHECK(onb.y().lengthSquared() == Approx(1.));
       CHECK(onb.z().lengthSquared() == Approx(1.));
-      auto basicallyZero =Approx(0.).margin(0.00000001);
+      auto basicallyZero = Approx(0.).margin(0.00000001);
       CHECK(onb.x().dot(onb.y()) == basicallyZero);
       CHECK(onb.x().dot(onb.z()) == basicallyZero);
       CHECK(onb.y().dot(onb.z()) == basicallyZero);

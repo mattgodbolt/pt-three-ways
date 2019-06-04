@@ -49,7 +49,7 @@ std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize) {
   return tiles;
 }
 
-} // namespace
+}
 
 template <typename Scene, typename Rng>
 Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
@@ -76,10 +76,10 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
   std::uniform_real_distribution<> unit(0, 1.0);
   for (auto u = 0; u < sqrtSamples; ++u) {
     for (auto v = 0; v < sqrtSamples; ++v) {
-      auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng)) /
-                   static_cast<double>(sqrtSamples);
-      auto radiusSquared = (static_cast<double>(v) + unit(rng)) /
-                           static_cast<double>(sqrtSamples);
+      auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
+                   / static_cast<double>(sqrtSamples);
+      auto radiusSquared = (static_cast<double>(v) + unit(rng))
+                           / static_cast<double>(sqrtSamples);
       auto radius = sqrt(radiusSquared);
       // Create a coordinate system local to the point, where the z is the
       // normal at this point.
@@ -90,8 +90,9 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
       auto newRay =
           Ray::fromOriginAndDirection(hit.position, newDir.normalised());
 
-      result += mat.emission + mat.diffuse * radiance(scene, rng, newRay, depth,
-                                                      nextSqrtSamples);
+      result +=
+          mat.emission
+          + mat.diffuse * radiance(scene, rng, newRay, depth, nextSqrtSamples);
     }
   }
   if (sqrtSamples == 1)
@@ -215,7 +216,7 @@ public:
   const Vec3 &pixelAt(int x, int y) noexcept { return output_[x + y * width_]; }
 };
 
-} // namespace
+}
 
 int main(int argc, const char *argv[]) {
   StaticScene scene;
@@ -228,12 +229,12 @@ int main(int argc, const char *argv[]) {
 
   using namespace clara;
   auto cli =
-      Opt(width, "width")["-w"]["--width"]("output image width") |
-      Opt(height, "height")["-h"]["--height"]("output image height") |
-      Opt(numCpus,
-          "numCpus")["--num-cpus"]("number of CPUs to use (0 for all)") |
-      Opt(samplesPerPixel, "samples")["--spp"]("number of samples per pixel") |
-      Opt(preview)["--preview"]("super quick preview") | Help(help);
+      Opt(width, "width")["-w"]["--width"]("output image width")
+      | Opt(height, "height")["-h"]["--height"]("output image height")
+      | Opt(numCpus,
+            "numCpus")["--num-cpus"]("number of CPUs to use (0 for all)")
+      | Opt(samplesPerPixel, "samples")["--spp"]("number of samples per pixel")
+      | Opt(preview)["--preview"]("super quick preview") | Help(help);
 
   auto result = cli.parse(Args(argc, argv));
   if (!result) {
