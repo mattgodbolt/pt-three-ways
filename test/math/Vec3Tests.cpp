@@ -39,10 +39,16 @@ TEST_CASE("Vectors", "[math]") {
     CHECK((vec -= Vec3(2, 4, 6)) == Vec3(-1, -2, -3));
     CHECK(vec == Vec3(-1, -2, -3));
   }
+  SECTION("negation") {
+    CHECK(-Vec3() == Vec3());
+    CHECK(-Vec3(1, 2, 3) == Vec3(-1, -2, -3));
+  }
   SECTION("scalar multiply") {
     CHECK(Vec3() * 0 == Vec3());
     CHECK(Vec3(1, 2, 3) * 0 == Vec3());
+    CHECK(0 * Vec3(1, 2, 3) == Vec3());
     CHECK(Vec3(1, 1, 1) * 2 == Vec3(2, 2, 2));
+    CHECK(2 * Vec3(1, 1, 1) == Vec3(2, 2, 2));
     auto vec = Vec3(1, 2, 3);
     CHECK((vec *= 2) == Vec3(2, 4, 6));
     CHECK(vec == Vec3(2, 4, 6));
@@ -79,6 +85,12 @@ TEST_CASE("Vectors", "[math]") {
     std::ostringstream os;
     os << Vec3(5, 3, 2);
     CHECK(os.str() == "{5, 3, 2}");
+  }
+  SECTION("axes") {
+    CHECK(Vec3::xAxis() == Vec3(1, 0, 0));
+    CHECK(Vec3::yAxis() == Vec3(0, 1, 0));
+    CHECK(Vec3::zAxis() == Vec3(0, 0, 1));
+    CHECK(Vec3::xAxis().cross(Vec3::yAxis()) == Vec3::zAxis());
   }
 }
 

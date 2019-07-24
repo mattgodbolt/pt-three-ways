@@ -9,6 +9,7 @@ struct ApproxVec3 {
 
 public:
   ApproxVec3(double x, double y, double z) : vec_(x, y, z) {}
+  explicit ApproxVec3(const Vec3 &vec) : vec_(vec.x(), vec.y(), vec.z()) {}
   friend constexpr bool operator==(const ApproxVec3 &lhs,
                                    const Vec3 &rhs) noexcept {
     return (lhs.vec_ - rhs).lengthSquared() < (lhs.epsilon_ * lhs.epsilon_);
