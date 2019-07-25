@@ -24,7 +24,8 @@ public:
   explicit Triangle(const Vertices &vertices);
   Triangle(const Vertices &vertices, const Normals &normals)
       : vertices_(vertices), normals_(normals) {}
-  Triangle(Vec3 v0, Vec3 v1, Vec3 v2) : Triangle(Vertices{v0, v1, v2}) {}
+  Triangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2)
+      : Triangle(Vertices{v0, v1, v2}) {}
 
   [[nodiscard]] constexpr const Vec3 &vertex(int index) const {
     return vertices_[index];

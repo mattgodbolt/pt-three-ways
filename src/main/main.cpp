@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <functional>
 #include <iostream>
+#include <math/Triangle.h>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -157,6 +158,56 @@ struct SpherePrimitive : Primitive {
   }
 };
 
+struct BoxPrimitive : Primitive {
+  std::array<Triangle, 8> triangles;
+  Material material;
+  static constexpr Vec3 V(const Vec3 &centre, const Vec3 &size, bool x, bool y,
+                          bool z) {
+    return centre + size * Vec3(x ? 1 : -1, y ? 1 : -1, z ? 1 : -1);
+  }
+  BoxPrimitive(const Vec3 &centre, const Vec3 &size, const Material &material)
+      // TODO these are all backwards and the wrong winding order etc...
+      : triangles({
+          Triangle(V(centre, size, false, true, false),
+                   V(centre, size, true, true, false),
+                   V(centre, size, false, false, false)),
+          Triangle(V(centre, size, true, true, false),
+                   V(centre, size, false, false, false),
+                   V(centre, size, true, false, false)),
+          Triangle(V(centre, size, false, true, true),
+                   V(centre, size, true, true, true),
+                   V(centre, size, false, false, true)),
+          Triangle(V(centre, size, true, true, true),
+                   V(centre, size, false, false, true),
+                   V(centre, size, true, false, true)),
+                   // todo not sure this is right (maybe I should write a mesh loader instead of this...
+          Triangle(V(centre, size, false, false, true),
+                   V(centre, size, true, false, true),
+                   V(centre, size, false, false, false)),
+          Triangle(V(centre, size, true, false, true),
+                   V(centre, size, false, false, false),
+                   V(centre, size, true, false, false)),
+          Triangle(V(centre, size, false, false, true),
+                   V(centre, size, true, false, true),
+                   V(centre, size, false, false, false)),
+          Triangle(V(centre, size, true, true, true),
+                   V(centre, size, false, true, false),
+                   V(centre, size, true, true, false)),
+      }),
+        material(material) {}
+  std::optional<IntersectionRecord> intersect(const Ray &ray) const override {
+    std::optional<Hit> nearestHit;
+    for (auto &&t : triangles) {
+      auto hit = t.intersect(ray);
+      if (hit && (!nearestHit || hit->distance < nearestHit->distance))
+        nearestHit = hit;
+    }
+    if (!nearestHit)
+      return {};
+    return IntersectionRecord{*nearestHit, material};
+  }
+};
+
 struct StaticScene {
   Scene scene;
   StaticScene() {
@@ -189,9 +240,12 @@ struct StaticScene {
         Sphere(Vec3(50, 681.6 - .27, 81.6), 600),
         Material{Vec3(12, 12, 12), Vec3()}));
 
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(27, 16.5, 47), 16.5),
+    scene.add(std::make_unique<BoxPrimitive>(
+        Vec3(27, 16.5, 47), Vec3(16.5, 16.5, 16.5),
         Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
+    //    scene.add(std::make_unique<SpherePrimitive>(
+    //        Sphere(Vec3(27, 16.5, 47), 16.5),
+    //        Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
     scene.add(std::make_unique<SpherePrimitive>(
         Sphere(Vec3(73, 16.5, 78), 16.5),
         Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
