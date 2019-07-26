@@ -30,6 +30,7 @@ std::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
 
   auto normalUdelta = normals_[1] - normals_[0];
   auto normalVdelta = normals_[2] - normals_[0];
+  // TODO: proper barycentric coordinates
   auto normal =
       ((u * normalUdelta) + (v * normalVdelta) + normals_[0]).normalised();
   if (backfacing)
