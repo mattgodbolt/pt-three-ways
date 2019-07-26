@@ -16,8 +16,10 @@ public:
   explicit WorkQueue(std::vector<WorkItem> todo) noexcept
       : todo_(std::move(todo)), progress_(todo_.size()) {}
 
-  std::optional<WorkItem> pop() noexcept {
+  template <typename InLock>
+  std::optional<WorkItem> pop(InLock &&inLock) noexcept {
     std::unique_lock lock(mutex_);
+    inLock();
     progress_.update(todo_.size());
     if (todo_.empty())
       return {};

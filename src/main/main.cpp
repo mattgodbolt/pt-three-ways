@@ -10,9 +10,9 @@
 #include <clara.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
-#include <functional>
 #include <iostream>
 #include <math/Triangle.h>
 #include <memory>
@@ -34,9 +34,11 @@ struct Tile {
   int xEnd;
   int yBegin;
   int yEnd;
+  int samples;
 };
 
-std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize) {
+std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
+                                int numSamples, int samplesPerTile) {
   std::vector<Tile> tiles;
   for (int y = 0; y < height; y += ySize) {
     int yBegin = y;
@@ -44,9 +46,14 @@ std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize) {
     for (int x = 0; x < width; x += xSize) {
       int xBegin = x;
       int xEnd = std::min(x + xSize, width);
-      tiles.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd});
+      for (int s = 0; s < numSamples; s += samplesPerTile) {
+        int nSamples = std::min(s + samplesPerTile, numSamples);
+        tiles.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd, nSamples});
+      }
     }
   }
+  std::mt19937 rng(25115284);
+  std::shuffle(tiles.begin(), tiles.end(), rng);
   return tiles;
 }
 
@@ -102,36 +109,38 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
     return result * (1.0 / (sqrtSamples * sqrtSamples));
 }
 
-template <typename Scene, typename OutputBuffer>
+template <typename Scene, typename OutputBuffer, typename Flush>
 void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
-            int samplesPerPixel, unsigned numThreads) {
+            int samplesPerPixel, unsigned numThreads, Flush flush) {
   int width = output.width();
   int height = output.height();
 
   std::uniform_real_distribution<> unit(0.0, 1.0);
-  auto renderPixel = [&](int x, int y) {
-    std::mt19937 rng(x + y * width);
+  auto renderPixel = [&](std::mt19937 &rng, int x, int y, int samples) {
     auto yy = static_cast<double>(y) / height;
     auto xx = static_cast<double>(x) / width;
     Vec3 colour;
-    for (int sample = 0; sample < samplesPerPixel; ++sample) {
+    for (int sample = 0; sample < samples; ++sample) {
       auto ray = camera.ray(xx, yy, unit(rng), unit(rng));
       colour += radiance(scene, rng, ray, 0, SqrtFirstBounceSamples);
     }
-    return colour * (1.0 / samplesPerPixel);
+    return colour;
   };
 
-  WorkQueue<Tile> queue(generateTiles(width, height, 32, 32));
+  WorkQueue<Tile> queue(
+      generateTiles(width, height, 16, 16, samplesPerPixel, 8));
 
   auto worker = [&] {
     for (;;) {
-      auto tileOpt = queue.pop();
+      auto tileOpt = queue.pop(flush);
       if (!tileOpt)
         break;
       auto &tile = *tileOpt;
+
+      std::mt19937 rng(tile.xBegin + tile.yBegin * width);
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
-          output.plot(x, y, renderPixel(x, y));
+          output.plot(x, y, renderPixel(rng, x, y, tile.samples), tile.samples);
         }
       }
     }
@@ -180,7 +189,8 @@ struct BoxPrimitive : Primitive {
           Triangle(V(centre, size, true, true, true),
                    V(centre, size, false, false, true),
                    V(centre, size, true, false, true)),
-                   // todo not sure this is right (maybe I should write a mesh loader instead of this...
+          // todo not sure this is right (maybe I should write a mesh loader
+          // instead of this...
           Triangle(V(centre, size, false, false, true),
                    V(centre, size, true, false, true),
                    V(centre, size, false, false, false)),
@@ -256,18 +266,33 @@ struct StaticScene {
 class ArrayOutput {
   int width_;
   int height_;
-  std::vector<Vec3> output_;
+  struct SampledPixel {
+    Vec3 colour;
+    size_t numSamples{};
+    void accumulate(const Vec3 &sample, int num) {
+      colour += sample;
+      numSamples += num;
+    }
+    [[nodiscard]] Vec3 result() const {
+      if (numSamples == 0)
+        return colour;
+      return colour * (1.0 / numSamples);
+    }
+  };
+  std::vector<SampledPixel> output_;
 
 public:
   ArrayOutput(int width, int height) : width_(width), height_(height) {
     output_.resize(width * height);
   }
-  constexpr int height() const noexcept { return height_; }
-  constexpr int width() const noexcept { return width_; }
-  void plot(int x, int y, const Vec3 &colour) noexcept {
-    output_[x + y * width_] = colour;
+  [[nodiscard]] constexpr int height() const noexcept { return height_; }
+  [[nodiscard]] constexpr int width() const noexcept { return width_; }
+  void plot(int x, int y, const Vec3 &colour, int numSamples) noexcept {
+    output_[x + y * width_].accumulate(colour, numSamples);
   }
-  const Vec3 &pixelAt(int x, int y) noexcept { return output_[x + y * width_]; }
+  [[nodiscard]] Vec3 pixelAt(int x, int y) const noexcept {
+    return output_[x + y * width_].result();
+  }
 };
 
 }
@@ -316,15 +341,33 @@ int main(int argc, const char *argv[]) {
   double distance = camHeight / tan(verticalFov / 2. / 360 * 2 * M_PI);
   Camera camera(camPos, camDir, camUp, aperture, -camWidth / 2, camWidth / 2,
                 -camHeight / 2, camHeight / 2, distance);
-  render(scene, output, camera, samplesPerPixel, numCpus);
 
-  std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"), fclose);
-  fprintf(f.get(), "P3\n%d %d\n%d\n", width, height, 255);
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      auto &colour = output.pixelAt(x, y);
-      fprintf(f.get(), "%d %d %d ", componentToInt(colour.x()),
-              componentToInt(colour.y()), componentToInt(colour.z()));
+  auto save = [&]() {
+    std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"),
+                                                fclose);
+    fprintf(f.get(), "P3\n%d %d\n%d\n", width, height, 255);
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        auto colour = output.pixelAt(x, y);
+        fprintf(f.get(), "%d %d %d ", componentToInt(colour.x()),
+                componentToInt(colour.y()), componentToInt(colour.z()));
+      }
     }
-  }
+  };
+
+  using namespace std::literals;
+  static constexpr auto saveEvery = 5s;
+  auto nextSave = std::chrono::system_clock::now() + saveEvery;
+  render(scene, output, camera, samplesPerPixel, numCpus, [&] {
+    // TODO: save is not thread safe even slightly, and yet it still blocks the
+    // threads. this is terrible. Should have a thread safe result queue and
+    // a single thread reading from it.
+    auto now = std::chrono::system_clock::now();
+    if (now > nextSave) {
+      save();
+      nextSave = now + saveEvery;
+    }
+  });
+
+  save();
 }
