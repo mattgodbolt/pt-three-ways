@@ -15,5 +15,6 @@ public:
     Material material;
   };
 
-  virtual std::optional<IntersectionRecord> intersect(const Ray &ray) const = 0;
+  [[nodiscard]] virtual std::optional<IntersectionRecord>
+  intersect(const Ray &ray) const = 0;
 };

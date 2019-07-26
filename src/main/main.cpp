@@ -159,7 +159,8 @@ struct SpherePrimitive : Primitive {
   Material material;
   SpherePrimitive(const Sphere &sphere, const Material &material)
       : sphere(sphere), material(material) {}
-  std::optional<IntersectionRecord> intersect(const Ray &ray) const override {
+  [[nodiscard]] std::optional<IntersectionRecord>
+  intersect(const Ray &ray) const override {
     auto hit = sphere.intersect(ray);
     if (!hit)
       return {};
