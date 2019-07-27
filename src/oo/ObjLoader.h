@@ -4,6 +4,7 @@
 #include <math/Triangle.h>
 
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -13,6 +14,12 @@ struct ObjFile {
   std::vector<Material> materials;
 };
 
-ObjFile loadObjFile(std::istream &in);
+struct ObjLoaderOpener {
+  virtual ~ObjLoaderOpener() = default;
+  virtual std::unique_ptr<std::istream> open(const std::string &filename) = 0;
+};
 
-std::unordered_map<std::string, Material> loadMaterials(std::istream &in);
+[[nodiscard]] ObjFile loadObjFile(std::istream &in, ObjLoaderOpener &opener);
+
+[[nodiscard]] std::unordered_map<std::string, Material>
+loadMaterials(std::istream &in);

@@ -7,7 +7,7 @@
 
 using namespace std::literals;
 
-static constexpr auto tokenRe = ctll::fixed_string{R"(\s*([^ \t]+))"};
+static constexpr auto tokenRe = ctll::fixed_string{R"(\s*([^ \t\n\r]+))"};
 
 namespace {
 
@@ -50,8 +50,10 @@ void parse(std::istream &in, F &&handler) {
 }
 
 std::unordered_map<std::string, Material> loadMaterials(std::istream &in) {
-  std::unordered_map<std::string, Material> result;
+  if (!in)
+    throw std::runtime_error("Bad input stream");
   in.exceptions(std::ios_base::badbit);
+  std::unordered_map<std::string, Material> result;
 
   Material *curMat{};
 
@@ -91,7 +93,9 @@ std::unordered_map<std::string, Material> loadMaterials(std::istream &in) {
 }
 
 // Thanks to https://en.wikipedia.org/wiki/Wavefront_.obj_file
-ObjFile loadObjFile(std::istream &in) {
+ObjFile loadObjFile(std::istream &in, ObjLoaderOpener &opener) {
+  if (!in)
+    throw std::runtime_error("Bad input stream");
   in.exceptions(std::ios_base::badbit);
 
   ObjFile result;
@@ -132,8 +136,8 @@ ObjFile loadObjFile(std::istream &in) {
       curMat = findIt->second;
       return true;
     } else if (command == "mtllib"sv) {
-      std::ifstream matFile(std::string(params.at(0)));
-      materials = loadMaterials(matFile);
+      auto matFile = opener.open(std::string(params.at(0)));
+      materials = loadMaterials(*matFile);
       return true;
     }
     return false;

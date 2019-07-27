@@ -13,12 +13,15 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <math/Triangle.h>
 #include <memory>
 #include <mutex>
+#include <oo/ObjLoader.h>
 #include <random>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -63,13 +66,12 @@ std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
       for (int s = 0; s < numSamples; s += samplesPerTile) {
         int nSamples = std::min(s + samplesPerTile, numSamples);
         tiles.emplace_back(
-            Tile{xBegin, xEnd, yBegin, yEnd, nSamples, s,
-                 std::numeric_limits<size_t>::max() - distanceSqr, rng()});
+            Tile{xBegin, xEnd, yBegin, yEnd, nSamples, s, distanceSqr, rng()});
       }
     }
   }
   std::sort(tiles.begin(), tiles.end(), [](const Tile &lhs, const Tile &rhs) {
-    return lhs.key() < rhs.key();
+    return lhs.key() > rhs.key();
   });
   return tiles;
 }
@@ -282,6 +284,53 @@ struct StaticScene {
   }
 };
 
+struct DirRelativeOpener : ObjLoaderOpener {
+  std::string dir_;
+  explicit DirRelativeOpener(std::string dir) : dir_(std::move(dir)) {}
+  [[nodiscard]] std::unique_ptr<std::istream>
+  open(const std::string &filename) override {
+    auto fullname = dir_ + "/" + filename;
+    auto res = std::make_unique<std::ifstream>(fullname);
+    if (!*res)
+      throw std::runtime_error("Unable to open " + fullname);
+    return res;
+  }
+};
+
+struct ObjPrimitive : Primitive {
+  ObjFile obj;
+  ObjPrimitive(ObjFile o) : obj(std::move(o)) {}
+  [[nodiscard]] std::optional<IntersectionRecord>
+  intersect(const Ray &ray) const override {
+    std::optional<Hit> nearestHit;
+    size_t hitIndex{};
+    for (size_t index = 0; index < obj.materials.size(); ++index) {
+      auto &t = obj.triangles[index];
+      auto hit = t.intersect(ray);
+      if (hit && (!nearestHit || hit->distance < nearestHit->distance)) {
+        nearestHit = hit;
+        hitIndex = index;
+      }
+    }
+    if (!nearestHit)
+      return {};
+    return IntersectionRecord{*nearestHit, obj.materials[hitIndex]};
+  }
+};
+
+struct StaticScene2 {
+  Scene scene;
+  StaticScene2() {
+    DirRelativeOpener opener("scenes");
+    auto in = opener.open("CornellBox-Original.obj");
+    auto obj = loadObjFile(*in, opener);
+    scene.add(std::make_unique<ObjPrimitive>(obj));
+  }
+  [[nodiscard]] auto intersect(const Ray &ray) const noexcept {
+    return scene.intersect(ray);
+  }
+};
+
 class ArrayOutput {
   int width_;
   int height_;
@@ -317,7 +366,7 @@ public:
 }
 
 int main(int argc, const char *argv[]) {
-  StaticScene scene;
+  StaticScene2 scene;
 
   bool help = false;
   auto width = 1920;
@@ -349,11 +398,14 @@ int main(int argc, const char *argv[]) {
   }
 
   ArrayOutput output(width, height);
-  Vec3 camPos(50, 52, 295.6);
+  //  Vec3 camPos(50, 52, 295.6);
+  //  Vec3 camUp(0, -1, 0);
+  //  auto camDir = Vec3(0, -0.042612, -1).normalised();
+  Vec3 camPos(0, 1, 3);
   Vec3 camUp(0, -1, 0);
-  auto camDir = Vec3(0, -0.042612, -1).normalised();
+  Vec3 camDir(0, 0, -1);
   double aspectRatio = static_cast<double>(output.width()) / output.height();
-  double verticalFov = 50.0;
+  double verticalFov = 83.0;
   double camHeight = 1.0;
   double camWidth = camHeight * aspectRatio;
   double aperture = 0.0; // Pinhole camera

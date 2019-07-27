@@ -20,6 +20,8 @@ public:
         across_(axis_.x() * (u1_ - u0_)), up_(axis_.y() * (v1_ - v0_)) {}
 
   Ray ray(double x, double y, double xi1, double xi2) const {
+    // TODO: we're not actually doing sub-pixel sampling: if lensRadius_ = 0
+    // then we generate the same ray over and over again...
     auto origin =
         centre_
         + axis_.transform(Vec3(2 * ((xi1 * xi1) - 0.5) * lensRadius_,

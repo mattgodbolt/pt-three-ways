@@ -5,16 +5,29 @@
 
 namespace {
 
+struct ThrowingObjLoaderOpener : ObjLoaderOpener {
+  std::unique_ptr<std::istream> open(const std::string &) override {
+    throw std::runtime_error("Unexpected");
+  }
+};
+
 TEST_CASE("ObjLoader", "[ObjLoader]") {
   auto L = [](const char *text) {
+    ThrowingObjLoaderOpener opener;
     std::istringstream in(text);
-    return loadObjFile(in);
+    return loadObjFile(in, opener);
   };
   SECTION("ignores comments and blank lines") {
     CHECK(L("").triangles.empty());
     CHECK(L("\n").triangles.empty());
     CHECK(L("  \n").triangles.empty());
     CHECK(L("  \n  ").triangles.empty());
+    CHECK(L("\r").triangles.empty());
+    CHECK(L("  \r").triangles.empty());
+    CHECK(L("  \r  ").triangles.empty());
+    CHECK(L("\r\n").triangles.empty());
+    CHECK(L("  \r\n").triangles.empty());
+    CHECK(L("  \r\n  ").triangles.empty());
     CHECK(L("# comment").triangles.empty());
     CHECK(L("  # comment").triangles.empty());
     CHECK(L("  # comment\n#another\n").triangles.empty());

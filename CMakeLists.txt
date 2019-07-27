@@ -18,7 +18,7 @@ conan_cmake_run(CONANFILE conanfile.txt
 set(CMAKE_CXX_STANDARD 17)
 enable_testing()
 
-add_compile_options(-Wall -Werror -Wextra -march=native -g)
+add_compile_options(-Wall -Werror -Wextra -march=native -g -funsafe-math-optimizations)
 find_package(Threads)
 
 add_subdirectory(src)
