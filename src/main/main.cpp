@@ -1,3 +1,4 @@
+#include "PngWriter.h"
 #include "WorkQueue.h"
 
 #include <math/Camera.h>
@@ -21,6 +22,8 @@
 #include <thread>
 #include <vector>
 
+#include <libpng/png.h>
+
 namespace {
 
 constexpr auto SqrtFirstBounceSamples = 4;
@@ -35,10 +38,14 @@ struct Tile {
   int yBegin;
   int yEnd;
   int samples;
+  bool firstSample;
+  size_t distanceSqr;
+  size_t sortKey;
 };
 
 std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
                                 int numSamples, int samplesPerTile) {
+  std::mt19937 rng(25115284);
   std::vector<Tile> tiles;
   for (int y = 0; y < height; y += ySize) {
     int yBegin = y;
@@ -46,14 +53,29 @@ std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
     for (int x = 0; x < width; x += xSize) {
       int xBegin = x;
       int xEnd = std::min(x + xSize, width);
+      int midX = (xEnd + xBegin) / 2;
+      int midY = (yEnd + yBegin) / 2;
+      int centreX = width / 2;
+      int centreY = height / 2;
+      size_t distanceSqr = (midX - centreX) * (midX - centreX)
+                           + (midY - centreY) * (midY - centreY);
       for (int s = 0; s < numSamples; s += samplesPerTile) {
         int nSamples = std::min(s + samplesPerTile, numSamples);
-        tiles.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd, nSamples});
+        tiles.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd, nSamples, s == 0,
+                                distanceSqr, rng()});
       }
     }
   }
-  std::mt19937 rng(25115284);
-  std::shuffle(tiles.begin(), tiles.end(), rng);
+  std::sort(tiles.begin(), tiles.end(), [](const Tile &lhs, const Tile &rhs) {
+    if (lhs.firstSample == rhs.firstSample) {
+      if (!lhs.firstSample) {
+        return lhs.sortKey < rhs.sortKey;
+      } else {
+        return lhs.distanceSqr > rhs.distanceSqr;
+      }
+    }
+    return rhs.firstSample;
+  });
   return tiles;
 }
 
@@ -344,20 +366,26 @@ int main(int argc, const char *argv[]) {
                 -camHeight / 2, camHeight / 2, distance);
 
   auto save = [&]() {
-    std::unique_ptr<FILE, decltype(fclose) *> f(fopen("image.ppm", "w"),
-                                                fclose);
-    fprintf(f.get(), "P3\n%d %d\n%d\n", width, height, 255);
+    PngWriter pw("image.png", width, height);
+    if (!pw.ok()) {
+      std::cerr << "Unable to save PNG\n";
+      return;
+    }
+
     for (int y = 0; y < height; ++y) {
+      std::uint8_t row[width * 3];
       for (int x = 0; x < width; ++x) {
         auto colour = output.pixelAt(x, y);
-        fprintf(f.get(), "%d %d %d ", componentToInt(colour.x()),
-                componentToInt(colour.y()), componentToInt(colour.z()));
+        row[x * 3] = componentToInt(colour.x());
+        row[x * 3 + 1] = componentToInt(colour.y());
+        row[x * 3 + 2] = componentToInt(colour.z());
       }
+      pw.addRow(row);
     }
   };
 
   using namespace std::literals;
-  static constexpr auto saveEvery = 5s;
+  static constexpr auto saveEvery = 10s;
   auto nextSave = std::chrono::system_clock::now() + saveEvery;
   render(scene, output, camera, samplesPerPixel, numCpus, [&] {
     // TODO: save is not thread safe even slightly, and yet it still blocks the
