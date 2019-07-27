@@ -20,27 +20,22 @@
   - material
 * Primitives:
   * Spheres
-  * Planes (or maybe just triangles)
-  * Meshes (maybe?)
-  * Lights (maye)
+  * Triangles
 * Materials
-  - given u,v,w what;
-    - emission
-    - diffraction
-    - specular
-* scene defined in code(?)
-  - saves on parsing a file etc unless
-* or simplest thing ever? P 1 2 3 10 10 10 
-  (maybe not for functional reasons?)
-
+  - emission
+  - diffraction - TODO maybe not?
+  - specular - TODO
+* Bounces TODO
 
 ## Maybe...
 * Show "pigeon" OO (like, no optional etc)
   * No mesh, just lots of triangles? that's kinda DoD?
-* Show pure functional
-* Show DoD (TBD)
+* Show "pure" functional
+* Show DoD
 * Show blend (C++ lets us have :allthethings:)
 * Maybe strong types?
+
+Materials? Inline, or "OO" style?
 
 ## Timeline plan...
 

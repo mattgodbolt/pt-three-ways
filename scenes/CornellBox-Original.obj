@@ -41,7 +41,7 @@ g backWall
 usemtl backWall
 f -4 -3 -2 -1
 
-## Object rightwall 
+## Object rightwall
 v	1.00  0.00  -1.04   
 v	1.00  0.00   0.99
 v	1.00  1.99   0.99
@@ -166,3 +166,14 @@ v	 0.23  1.98   0.16
 g light
 usemtl light
 f -4 -3 -2 -1
+
+## Object frontwall (mgodbolt added)
+v  -100  -100.00  3.05
+v   100.00  -100.00  3.05
+v   100.00  100  3.05
+v  -100.02  100  3.05
+
+g backWall
+usemtl backWall
+f -4 -3 -2 -1
+

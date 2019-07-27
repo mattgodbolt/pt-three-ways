@@ -83,7 +83,7 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples) {
   auto intersectionRecord = scene.intersect(ray);
   if (!intersectionRecord)
-    return Vec3();
+    return scene.environment(ray);
 
   Material &mat = intersectionRecord->material;
   if (preview)
@@ -110,13 +110,26 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
       // normal at this point.
       const auto basis = OrthoNormalBasis::fromZ(hit.normal);
       // Construct the new direction.
-      const auto newDir = basis.transform(Vec3(
-          cos(theta) * radius, sin(theta) * radius, sqrt(1 - radiusSquared)));
-      auto newRay =
-          Ray::fromOriginAndDirection(hit.position, newDir.normalised());
+      const auto newDir =
+          basis
+              .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
+                              sqrt(1 - radiusSquared)))
+              .normalised();
+      double p = unit(rng);
 
-      result += mat.emission
-                + mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1);
+      if (p < mat.reflectivity) {
+        auto reflected =
+            ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
+        auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
+
+        result += mat.emission
+                  + mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1);
+      } else {
+        auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
+
+        result += mat.emission
+                  + mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1);
+      }
     }
   }
   if (numUSamples == 1 && numVSamples == 1)
@@ -320,16 +333,22 @@ struct ObjPrimitive : Primitive {
   }
 };
 
-struct StaticScene2 {
+struct DodgyCornellScene {
   Scene scene;
-  StaticScene2() {
+  DodgyCornellScene() {
     DirRelativeOpener opener("scenes");
     auto in = opener.open("CornellBox-Original.obj");
     auto obj = loadObjFile(*in, opener);
     scene.add(std::make_unique<ObjPrimitive>(obj));
+    scene.add(std::make_unique<SpherePrimitive>(
+        Sphere(Vec3(-0.38, 0.281, 0.38), 0.28),
+        Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.75)));
   }
   [[nodiscard]] auto intersect(const Ray &ray) const noexcept {
     return scene.intersect(ray);
+  }
+  [[nodiscard]] auto environment(const Ray &) const noexcept {
+    return Vec3(0.725, 0.71, 0.68) * 0.1;
   }
 };
 
@@ -368,7 +387,7 @@ public:
 }
 
 int main(int argc, const char *argv[]) {
-  StaticScene2 scene;
+  DodgyCornellScene scene;
 
   bool help = false;
   auto width = 1920;
@@ -408,7 +427,7 @@ int main(int argc, const char *argv[]) {
   Vec3 camLookAt(0, 1, 0);
   double verticalFov = 50.0;
   Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
-  camera.setFocus(Vec3(0, 0, 0), 0.15);
+  camera.setFocus(Vec3(0, 0, 0), 0.01);
 
   auto save = [&]() {
     PngWriter pw("image.png", width, height);
