@@ -6,13 +6,14 @@
 #include <memory>
 
 class PngWriter {
-  std::unique_ptr<FILE, decltype(fclose) *> f;
-  png_structp png_ptr{};
-  png_infop info_ptr{};
+  std::unique_ptr<FILE, decltype(fclose) *> file_;
+  png_structp pngStruct_{};
+  png_infop info_{};
 
 public:
   PngWriter(const char *filename, int width, int height);
   ~PngWriter();
+
   PngWriter(const PngWriter &) = delete;
   PngWriter &operator=(const PngWriter &) = delete;
   PngWriter(PngWriter &&) = delete;
@@ -20,5 +21,5 @@ public:
 
   void addRow(const uint8_t *rowData);
 
-  bool ok() const { return png_ptr && info_ptr; }
+  bool ok() const { return pngStruct_ && info_; }
 };
