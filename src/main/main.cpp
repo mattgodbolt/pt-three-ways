@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <cstdio>
 #include <iostream>
 #include <math/Triangle.h>
 #include <memory>
@@ -22,11 +21,10 @@
 #include <thread>
 #include <vector>
 
-#include <libpng/png.h>
-
 namespace {
 
-constexpr auto SqrtFirstBounceSamples = 4;
+constexpr auto FirstBounceNumUSamples = 6;
+constexpr auto FirstBounceNumVSamples = 3;
 bool preview = false;
 int componentToInt(double x) {
   return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255);
@@ -38,14 +36,17 @@ struct Tile {
   int yBegin;
   int yEnd;
   int samples;
-  bool firstSample;
-  size_t distanceSqr;
-  size_t sortKey;
+  int sampleNum;
+  size_t distancePrio;
+  size_t randomPrio;
+  [[nodiscard]] constexpr auto key() const {
+    return std::tie(sampleNum, distancePrio, randomPrio);
+  }
 };
 
 std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
                                 int numSamples, int samplesPerTile) {
-  std::mt19937 rng(25115284);
+  std::mt19937 rng(width * height);
   std::vector<Tile> tiles;
   for (int y = 0; y < height; y += ySize) {
     int yBegin = y;
@@ -61,20 +62,14 @@ std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
                            + (midY - centreY) * (midY - centreY);
       for (int s = 0; s < numSamples; s += samplesPerTile) {
         int nSamples = std::min(s + samplesPerTile, numSamples);
-        tiles.emplace_back(Tile{xBegin, xEnd, yBegin, yEnd, nSamples, s == 0,
-                                distanceSqr, rng()});
+        tiles.emplace_back(
+            Tile{xBegin, xEnd, yBegin, yEnd, nSamples, s,
+                 std::numeric_limits<size_t>::max() - distanceSqr, rng()});
       }
     }
   }
   std::sort(tiles.begin(), tiles.end(), [](const Tile &lhs, const Tile &rhs) {
-    if (lhs.firstSample == rhs.firstSample) {
-      if (!lhs.firstSample) {
-        return lhs.sortKey < rhs.sortKey;
-      } else {
-        return lhs.distanceSqr > rhs.distanceSqr;
-      }
-    }
-    return rhs.firstSample;
+    return lhs.key() < rhs.key();
   });
   return tiles;
 }
@@ -83,7 +78,7 @@ std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
 
 template <typename Scene, typename Rng>
 Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
-              int sqrtSamples) {
+              int numUSamples, int numVSamples) {
   auto intersectionRecord = scene.intersect(ray);
   if (!intersectionRecord)
     return Vec3();
@@ -100,16 +95,14 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
 
   Vec3 result;
 
-  const auto nextSqrtSamples = 1;
-
   // Sample evenly over sqrtSamples x sqrtSamples, with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);
-  for (auto u = 0; u < sqrtSamples; ++u) {
-    for (auto v = 0; v < sqrtSamples; ++v) {
+  for (auto u = 0; u < numUSamples; ++u) {
+    for (auto v = 0; v < numVSamples; ++v) {
       auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
-                   / static_cast<double>(sqrtSamples);
+                   / static_cast<double>(numUSamples);
       auto radiusSquared = (static_cast<double>(v) + unit(rng))
-                           / static_cast<double>(sqrtSamples);
+                           / static_cast<double>(numVSamples);
       auto radius = sqrt(radiusSquared);
       // Create a coordinate system local to the point, where the z is the
       // normal at this point.
@@ -120,15 +113,14 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
       auto newRay =
           Ray::fromOriginAndDirection(hit.position, newDir.normalised());
 
-      result +=
-          mat.emission
-          + mat.diffuse * radiance(scene, rng, newRay, depth, nextSqrtSamples);
+      result += mat.emission
+                + mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1);
     }
   }
-  if (sqrtSamples == 1)
+  if (numUSamples == 1 && numVSamples == 1)
     return result;
   else
-    return result * (1.0 / (sqrtSamples * sqrtSamples));
+    return result * (1.0 / (numUSamples * numVSamples));
 }
 
 template <typename Scene, typename OutputBuffer, typename Flush>
@@ -144,7 +136,8 @@ void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
     Vec3 colour;
     for (int sample = 0; sample < samples; ++sample) {
       auto ray = camera.ray(xx, yy, unit(rng), unit(rng));
-      colour += radiance(scene, rng, ray, 0, SqrtFirstBounceSamples);
+      colour += radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
+                         FirstBounceNumVSamples);
     }
     return colour;
   };
@@ -159,7 +152,7 @@ void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
         break;
       auto &tile = *tileOpt;
 
-      std::mt19937 rng(tile.xBegin + tile.yBegin * width);
+      std::mt19937 rng(tile.randomPrio);
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
           output.plot(x, y, renderPixel(rng, x, y, tile.samples), tile.samples);
@@ -228,7 +221,8 @@ struct BoxPrimitive : Primitive {
                    V(centre, size, true, true, false)),
       }),
         material(material) {}
-  std::optional<IntersectionRecord> intersect(const Ray &ray) const override {
+  [[nodiscard]] std::optional<IntersectionRecord>
+  intersect(const Ray &ray) const override {
     std::optional<Hit> nearestHit;
     for (auto &&t : triangles) {
       auto hit = t.intersect(ray);
@@ -283,7 +277,9 @@ struct StaticScene {
         Sphere(Vec3(73, 16.5, 78), 16.5),
         Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
   }
-  auto intersect(const Ray &ray) const noexcept { return scene.intersect(ray); }
+  [[nodiscard]] auto intersect(const Ray &ray) const noexcept {
+    return scene.intersect(ray);
+  }
 };
 
 class ArrayOutput {
