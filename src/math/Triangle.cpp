@@ -25,7 +25,7 @@ std::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
 
   auto t = vVector().dot(qVec) * invDet;
 
-  if (t < 0)
+  if (t < Epsilon)
     return {};
 
   auto normalUdelta = normals_[1] - normals_[0];
