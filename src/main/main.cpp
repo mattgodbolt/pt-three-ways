@@ -299,7 +299,7 @@ struct DirRelativeOpener : ObjLoaderOpener {
 
 struct ObjPrimitive : Primitive {
   ObjFile obj;
-  ObjPrimitive(ObjFile o) : obj(std::move(o)) {}
+  explicit ObjPrimitive(ObjFile o) : obj(std::move(o)) {}
   [[nodiscard]] std::optional<IntersectionRecord>
   intersect(const Ray &ray) const override {
     std::optional<Hit> nearestHit;
