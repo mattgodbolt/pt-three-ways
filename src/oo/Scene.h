@@ -11,5 +11,6 @@ class Scene : public Primitive {
 public:
   void add(std::unique_ptr<Primitive> primitive);
 
-  std::optional<IntersectionRecord> intersect(const Ray &ray) const override;
+  [[nodiscard]] std::optional<IntersectionRecord>
+  intersect(const Ray &ray) const override;
 };

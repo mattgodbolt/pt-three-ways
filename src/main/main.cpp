@@ -133,11 +133,13 @@ void render(const Scene &scene, OutputBuffer &output, const Camera &camera,
 
   std::uniform_real_distribution<> unit(0.0, 1.0);
   auto renderPixel = [&](std::mt19937 &rng, int x, int y, int samples) {
-    auto yy = static_cast<double>(y) / height;
-    auto xx = static_cast<double>(x) / width;
     Vec3 colour;
     for (int sample = 0; sample < samples; ++sample) {
-      auto ray = camera.ray(xx, yy, unit(rng), unit(rng));
+      auto u = unit(rng);
+      auto v = unit(rng);
+      auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
+      auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
+      auto ray = camera.ray(xx, yy, rng);
       colour += radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
                          FirstBounceNumVSamples);
     }
@@ -402,16 +404,11 @@ int main(int argc, const char *argv[]) {
   //  Vec3 camUp(0, -1, 0);
   //  auto camDir = Vec3(0, -0.042612, -1).normalised();
   Vec3 camPos(0, 1, 3);
-  Vec3 camUp(0, -1, 0);
-  Vec3 camDir(0, 0, -1);
-  double aspectRatio = static_cast<double>(output.width()) / output.height();
-  double verticalFov = 83.0;
-  double camHeight = 1.0;
-  double camWidth = camHeight * aspectRatio;
-  double aperture = 0.0; // Pinhole camera
-  double distance = camHeight / tan(verticalFov / 2. / 360 * 2 * M_PI);
-  Camera camera(camPos, camDir, camUp, aperture, -camWidth / 2, camWidth / 2,
-                -camHeight / 2, camHeight / 2, distance);
+  Vec3 camUp(0, 1, 0);
+  Vec3 camLookAt(0, 1, 0);
+  double verticalFov = 50.0;
+  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
+  camera.setFocus(Vec3(0, 0, 0), 0.15);
 
   auto save = [&]() {
     PngWriter pw("image.png", width, height);

@@ -4,29 +4,46 @@
 #include "Ray.h"
 #include "Vec3.h"
 
+#include <cmath>
+#include <random>
+
 class Camera {
+  Vec3 centre_;
   OrthoNormalBasis axis_;
-  double lensRadius_;
-  double u0_, u1_, v0_, v1_;
-  double d_;
-  Vec3 centre_, corner_, across_, up_;
+  double aspectRatio_;
+  double cameraPlaneDist_;
+  double apertureRadius_{};
+  double focalDistance_{};
 
 public:
-  Camera(const Vec3 &eye, const Vec3 &dir, const Vec3 &up, double aperture,
-         double left, double right, double top, double bottom, double distance)
-      : axis_(OrthoNormalBasis::fromZY(dir, up)), lensRadius_(aperture / 2),
-        u0_(left), u1_(right), v0_(top), v1_(bottom), d_(distance),
-        centre_(eye), corner_(centre_ + axis_.transform(Vec3(u0_, v0_, d_))),
-        across_(axis_.x() * (u1_ - u0_)), up_(axis_.y() * (v1_ - v0_)) {}
+  Camera(const Vec3 &eye, const Vec3 &lookAt, const Vec3 &up, int width,
+         int height, double verticalFov)
+      : centre_(eye),
+        axis_(OrthoNormalBasis::fromZY((lookAt - eye).normalised(), up)),
+        aspectRatio_(static_cast<double>(width) / height),
+        cameraPlaneDist_(1.0 / tan(verticalFov * M_PI / 360.0)) {}
 
-  Ray ray(double x, double y, double xi1, double xi2) const {
-    // TODO: we're not actually doing sub-pixel sampling: if lensRadius_ = 0
-    // then we generate the same ray over and over again...
-    auto origin =
-        centre_
-        + axis_.transform(Vec3(2 * ((xi1 * xi1) - 0.5) * lensRadius_,
-                               2 * ((xi2 * xi2) - 0.5) * lensRadius_, 0));
-    auto target = corner_ + across_ * x + up_ * y;
-    return Ray::fromTwoPoints(origin, target);
+  void setFocus(const Vec3 &focalPoint, double apertureRadius) {
+    focalDistance_ = (focalPoint - centre_).length();
+    apertureRadius_ = apertureRadius;
+  }
+
+  template <typename Rng>
+  [[nodiscard]] Ray ray(double x, double y, Rng &rng) const {
+    auto xContrib = axis_.x() * -x * aspectRatio_;
+    auto yContrib = axis_.y() * -y;
+    auto zContrib = axis_.z() * cameraPlaneDist_;
+    auto direction = (xContrib + yContrib + zContrib).normalised();
+    if (apertureRadius_ == 0)
+      return Ray::fromOriginAndDirection(centre_, direction);
+
+    auto focalPoint = centre_ + direction * focalDistance_;
+    std::uniform_real_distribution<> angleDist(0, 2 * M_PI);
+    std::uniform_real_distribution<> radiusDist(0, apertureRadius_);
+    auto angle = angleDist(rng);
+    auto radius = radiusDist(rng);
+    auto origin = centre_ + (axis_.x() * cos(angle) * radius)
+                  + (axis_.y() * sin(angle) * radius);
+    return Ray::fromTwoPoints(origin, focalPoint);
   }
 };
