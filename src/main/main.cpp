@@ -97,7 +97,7 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
 
   Vec3 result;
 
-  // Sample evenly over sqrtSamples x sqrtSamples, with random offset.
+  // Sample evenly with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {
