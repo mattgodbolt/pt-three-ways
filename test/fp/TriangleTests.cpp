@@ -1,10 +1,12 @@
 #include <catch2/catch.hpp>
 
-#include "ApproxVec3.h"
+#include "fp/Triangle.h"
+#include "math/ApproxVec3.h"
 #include "math/Ray.h"
-#include "math/Triangle.h"
 
 #include <cmath>
+
+using namespace fp;
 
 namespace {
 

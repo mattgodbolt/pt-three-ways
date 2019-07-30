@@ -15,14 +15,16 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include <math/Triangle.h>
 #include <memory>
 #include <mutex>
 #include <oo/ObjLoader.h>
+#include <oo/Triangle.h>
 #include <random>
 #include <thread>
 #include <utility>
 #include <vector>
+
+using namespace oo; // TODO not this. extract renderer from OO and make "OOey"
 
 namespace {
 
@@ -242,8 +244,8 @@ struct BoxPrimitive : Primitive {
   intersect(const Ray &ray) const override {
     std::optional<Hit> nearestHit;
     for (auto &&t : triangles) {
-      auto hit = t.intersect(ray);
-      if (hit && (!nearestHit || hit->distance < nearestHit->distance))
+      Hit hit;
+      if (t.intersect(ray, hit) && (!nearestHit || hit.distance < nearestHit->distance))
         nearestHit = hit;
     }
     if (!nearestHit)
@@ -321,8 +323,8 @@ struct ObjPrimitive : Primitive {
     size_t hitIndex{};
     for (size_t index = 0; index < obj.materials.size(); ++index) {
       auto &t = obj.triangles[index];
-      auto hit = t.intersect(ray);
-      if (hit && (!nearestHit || hit->distance < nearestHit->distance)) {
+      Hit hit;
+      if (t.intersect(ray, hit) && (!nearestHit || hit.distance < nearestHit->distance)) {
         nearestHit = hit;
         hitIndex = index;
       }

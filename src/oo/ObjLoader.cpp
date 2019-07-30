@@ -49,6 +49,8 @@ void parse(std::istream &in, F &&handler) {
 
 }
 
+namespace oo {
+
 std::unordered_map<std::string, Material> loadMaterials(std::istream &in) {
   if (!in)
     throw std::runtime_error("Bad input stream");
@@ -143,4 +145,6 @@ ObjFile loadObjFile(std::istream &in, ObjLoaderOpener &opener) {
     return false;
   });
   return result;
+}
+
 }

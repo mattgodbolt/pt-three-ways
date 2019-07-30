@@ -1,15 +1,12 @@
 #pragma once
 
-#include "Hit.h"
-#include "Ray.h"
-#include "Vec3.h"
+#include "math/Hit.h"
+#include "math/Ray.h"
+#include "math/Vec3.h"
 
 #include <array>
-#include <optional>
 
-// TODO: consider moving this and sphere and ray into "oo" and then take their
-// implementations out as static methods? Then can do proper functional stuff?
-// Will make SoA/AoS easier as can separate vtx from normal
+namespace oo {
 
 class Triangle {
 public:
@@ -46,5 +43,7 @@ public:
   [[nodiscard]] constexpr Vec3 faceNormal() const {
     return uVector().cross(vVector()).normalised();
   }
-  [[nodiscard]] std::optional<Hit> intersect(const Ray &ray) const noexcept;
+  [[nodiscard]] bool intersect(const Ray &ray, Hit &hit) const noexcept;
 };
+
+}

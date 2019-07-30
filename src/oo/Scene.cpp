@@ -1,5 +1,8 @@
 #include "Scene.h"
 
+using oo::Scene;
+using oo::Primitive;
+
 std::optional<Primitive::IntersectionRecord>
 Scene::intersect(const Ray &ray) const {
   std::optional<Primitive::IntersectionRecord> currentNearest;

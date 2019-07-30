@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include "ApproxVec3.h"
+#include "math/ApproxVec3.h"
 #include "math/Ray.h"
 #include "math/Sphere.h"
 

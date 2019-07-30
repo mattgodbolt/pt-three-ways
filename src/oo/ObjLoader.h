@@ -1,13 +1,15 @@
 #pragma once
 
 #include "Material.h"
-#include <math/Triangle.h>
+#include "Triangle.h"
 
 #include <iosfwd>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+namespace oo {
 
 struct ObjFile {
   std::vector<Triangle> triangles;
@@ -23,3 +25,5 @@ struct ObjLoaderOpener {
 
 [[nodiscard]] std::unordered_map<std::string, Material>
 loadMaterials(std::istream &in);
+
+}

@@ -3,6 +3,8 @@
 
 #include "oo/ObjLoader.h"
 
+using namespace oo;
+
 namespace {
 
 struct ThrowingObjLoaderOpener : ObjLoaderOpener {

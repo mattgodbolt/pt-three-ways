@@ -7,6 +7,9 @@
 #include <optional>
 #include <utility>
 
+// TODO get rid of optional
+namespace oo {
+
 class Primitive {
 public:
   virtual ~Primitive() = default;
@@ -18,3 +21,5 @@ public:
   [[nodiscard]] virtual std::optional<IntersectionRecord>
   intersect(const Ray &ray) const = 0;
 };
+
+}

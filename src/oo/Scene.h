@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+namespace oo {
+
 class Scene : public Primitive {
   std::vector<std::unique_ptr<Primitive>> primitives_;
 
@@ -14,3 +16,5 @@ public:
   [[nodiscard]] std::optional<IntersectionRecord>
   intersect(const Ray &ray) const override;
 };
+
+}

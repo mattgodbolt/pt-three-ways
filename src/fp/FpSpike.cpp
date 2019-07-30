@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <math/Camera.h>
 #include <math/Sphere.h>
-#include <math/Triangle.h>
+#include <fp/Triangle.h>
 #include <oo/Material.h>
 #include <variant>
+
+using oo::Material; // XXX
 
 namespace fp {
 struct Scene {};
@@ -105,12 +107,14 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
 // * "monadic" optional hits (would need to remove that from the "OO" version)
 // * more free functions than objects (and make `main`'s rendering  type stuff
 //   only in the OO.
-// * Immutable data structures. e.g. "SampledPixel" in arryayOutput doesn't
+// * Immutable data structures. e.g. "SampledPixel" in arrayOutput doesn't
 //   accumulate, but some final process should. (if we do accumulation)
 // * scene intersection code
 //   Maybe entire function needs to be passed the parts of a scene, and then
 //   builds it itself. "AbstractScene" ? No hierarchy information
 // * Scene graph using variant!
+// * TMP stuff (if can find a way)
+// * most of the "render" stuff is free functions (move from OO)
 
 struct TriangleElem {
   Triangle triangle;
