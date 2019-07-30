@@ -1,21 +1,22 @@
 #include "Scene.h"
 
-using oo::Scene;
 using oo::Primitive;
+using oo::Scene;
 
-std::optional<Primitive::IntersectionRecord>
-Scene::intersect(const Ray &ray) const {
-  std::optional<Primitive::IntersectionRecord> currentNearest;
+bool Scene::intersect(const Ray &ray, IntersectionRecord &intersection) const {
+  Primitive::IntersectionRecord *currentNearest{};
+  IntersectionRecord rec;
   for (auto &primitive : primitives_) {
-    auto intersection = primitive->intersect(ray);
-    if (!intersection)
+    if (!primitive->intersect(ray, rec))
       continue;
-    if (!currentNearest
-        || intersection->hit.distance < currentNearest->hit.distance) {
-      currentNearest = intersection;
+    if (!currentNearest || rec.hit.distance < currentNearest->hit.distance) {
+      currentNearest = &rec;
     }
   }
-  return currentNearest;
+  if (!currentNearest)
+    return false;
+  intersection = *currentNearest;
+  return true;
 }
 
 void Scene::add(std::unique_ptr<Primitive> primitive) {

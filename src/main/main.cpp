@@ -2,8 +2,8 @@
 #include "WorkQueue.h"
 
 #include <math/Camera.h>
-#include <math/Sphere.h>
 #include <math/Vec3.h>
+#include <oo/Sphere.h>
 
 #include <oo/Primitive.h>
 #include <oo/Scene.h>
@@ -83,14 +83,14 @@ std::vector<Tile> generateTiles(int width, int height, int xSize, int ySize,
 template <typename Scene, typename Rng>
 Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples) {
-  auto intersectionRecord = scene.intersect(ray);
-  if (!intersectionRecord)
+  Primitive::IntersectionRecord intersectionRecord;
+  if (!scene.intersect(ray, intersectionRecord))
     return scene.environment(ray);
 
-  Material &mat = intersectionRecord->material;
+  Material &mat = intersectionRecord.material;
   if (preview)
     return mat.diffuse;
-  Hit &hit = intersectionRecord->hit;
+  Hit &hit = intersectionRecord.hit;
 
   if (++depth > 5) {
     // TODO: "russian roulette"
@@ -193,111 +193,13 @@ struct SpherePrimitive : Primitive {
   Material material;
   SpherePrimitive(const Sphere &sphere, const Material &material)
       : sphere(sphere), material(material) {}
-  [[nodiscard]] std::optional<IntersectionRecord>
-  intersect(const Ray &ray) const override {
-    auto hit = sphere.intersect(ray);
-    if (!hit)
-      return {};
-    return IntersectionRecord{*hit, material};
-  }
-};
-
-struct BoxPrimitive : Primitive {
-  std::array<Triangle, 8> triangles;
-  Material material;
-  static constexpr Vec3 V(const Vec3 &centre, const Vec3 &size, bool x, bool y,
-                          bool z) {
-    return centre + size * Vec3(x ? 1 : -1, y ? 1 : -1, z ? 1 : -1);
-  }
-  BoxPrimitive(const Vec3 &centre, const Vec3 &size, const Material &material)
-      // TODO these are all backwards and the wrong winding order etc...
-      : triangles({
-          Triangle(V(centre, size, false, true, false),
-                   V(centre, size, true, true, false),
-                   V(centre, size, false, false, false)),
-          Triangle(V(centre, size, true, true, false),
-                   V(centre, size, false, false, false),
-                   V(centre, size, true, false, false)),
-          Triangle(V(centre, size, false, true, true),
-                   V(centre, size, true, true, true),
-                   V(centre, size, false, false, true)),
-          Triangle(V(centre, size, true, true, true),
-                   V(centre, size, false, false, true),
-                   V(centre, size, true, false, true)),
-          // todo not sure this is right (maybe I should write a mesh loader
-          // instead of this...
-          Triangle(V(centre, size, false, false, true),
-                   V(centre, size, true, false, true),
-                   V(centre, size, false, false, false)),
-          Triangle(V(centre, size, true, false, true),
-                   V(centre, size, false, false, false),
-                   V(centre, size, true, false, false)),
-          Triangle(V(centre, size, false, false, true),
-                   V(centre, size, true, false, true),
-                   V(centre, size, false, false, false)),
-          Triangle(V(centre, size, true, true, true),
-                   V(centre, size, false, true, false),
-                   V(centre, size, true, true, false)),
-      }),
-        material(material) {}
-  [[nodiscard]] std::optional<IntersectionRecord>
-  intersect(const Ray &ray) const override {
-    std::optional<Hit> nearestHit;
-    for (auto &&t : triangles) {
-      Hit hit;
-      if (t.intersect(ray, hit) && (!nearestHit || hit.distance < nearestHit->distance))
-        nearestHit = hit;
-    }
-    if (!nearestHit)
-      return {};
-    return IntersectionRecord{*nearestHit, material};
-  }
-};
-
-struct StaticScene {
-  Scene scene;
-  StaticScene() {
-    // left
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(1e5 + 1, 40.8, 81.6), 1e5),
-        Material::makeDiffuse(Vec3(0.75, 0.25, 0.25))));
-    // right
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(-1e5 + 99, 40.8, 81.6), 1e5),
-        Material::makeDiffuse(Vec3(0.25, 0.25, 0.75))));
-    // back
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(50, 40.8, 1e5), 1e5),
-        Material::makeDiffuse(Vec3(0.75, 0.75, 0.75))));
-    // front
-    //    scene.add(std::make_unique<SpherePrimitive>(
-    //        Sphere(Vec3(50, 40.8, -1e5 + 170), 1e5),
-    //        Material::makeDiffuse(Vec3())));
-    // bottom
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(50, 1e5, 81.6), 1e5),
-        Material::makeDiffuse(Vec3(0.75, 0.75, 0.75))));
-    // top
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(50, -1e5 + 81.6, 81.6), 1e5),
-        Material::makeDiffuse(Vec3(0.75, 0.75, 0.75))));
-    // light
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(50, 681.6 - .27, 81.6), 600),
-        Material{Vec3(12, 12, 12), Vec3()}));
-
-    scene.add(std::make_unique<BoxPrimitive>(
-        Vec3(27, 16.5, 47), Vec3(16.5, 16.5, 16.5),
-        Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
-    //    scene.add(std::make_unique<SpherePrimitive>(
-    //        Sphere(Vec3(27, 16.5, 47), 16.5),
-    //        Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
-    scene.add(std::make_unique<SpherePrimitive>(
-        Sphere(Vec3(73, 16.5, 78), 16.5),
-        Material::makeDiffuse(Vec3(0.999, 0.999, 0.999))));
-  }
-  [[nodiscard]] auto intersect(const Ray &ray) const noexcept {
-    return scene.intersect(ray);
+  [[nodiscard]] bool intersect(const Ray &ray,
+                               IntersectionRecord &rec) const override {
+    Hit hit;
+    if (!sphere.intersect(ray, hit))
+      return false;
+    rec = IntersectionRecord{hit, material};
+    return true;
   }
 };
 
@@ -317,21 +219,27 @@ struct DirRelativeOpener : ObjLoaderOpener {
 struct ObjPrimitive : Primitive {
   ObjFile obj;
   explicit ObjPrimitive(ObjFile o) : obj(std::move(o)) {}
-  [[nodiscard]] std::optional<IntersectionRecord>
-  intersect(const Ray &ray) const override {
-    std::optional<Hit> nearestHit;
+  [[nodiscard]] bool
+  intersect(const Ray &ray,
+            IntersectionRecord &intersectionRecord) const override {
+    bool hasHit = false;
+    Hit nearestHit;
     size_t hitIndex{};
     for (size_t index = 0; index < obj.materials.size(); ++index) {
       auto &t = obj.triangles[index];
       Hit hit;
-      if (t.intersect(ray, hit) && (!nearestHit || hit.distance < nearestHit->distance)) {
+      if (t.intersect(ray, hit)
+          && (!hasHit || hit.distance < nearestHit.distance)) {
+        hasHit = true;
         nearestHit = hit;
         hitIndex = index;
       }
     }
-    if (!nearestHit)
+    if (!hasHit)
       return {};
-    return IntersectionRecord{*nearestHit, obj.materials[hitIndex]};
+    intersectionRecord =
+        IntersectionRecord{nearestHit, obj.materials[hitIndex]};
+    return true;
   }
 };
 
@@ -346,8 +254,10 @@ struct DodgyCornellScene {
         Sphere(Vec3(-0.38, 0.281, 0.38), 0.28),
         Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.75)));
   }
-  [[nodiscard]] auto intersect(const Ray &ray) const noexcept {
-    return scene.intersect(ray);
+  [[nodiscard]] auto intersect(const Ray &ray,
+                               Primitive::IntersectionRecord &rec) const
+      noexcept {
+    return scene.intersect(ray, rec);
   }
   [[nodiscard]] auto environment(const Ray &) const noexcept {
     return Vec3(0.725, 0.71, 0.68) * 0.1;

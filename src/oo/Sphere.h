@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Hit.h"
-#include "Ray.h"
-#include "Vec3.h"
+#include "../math/Hit.h"
+#include "../math/Ray.h"
+#include "../math/Vec3.h"
 
 #include <optional>
 
@@ -19,5 +19,5 @@ public:
   }
   [[nodiscard]] constexpr double radius() const noexcept { return radius_; }
 
-  [[nodiscard]] std::optional<Hit> intersect(const Ray &ray) const noexcept;
+  [[nodiscard]] bool intersect(const Ray &ray, Hit &hit) const noexcept;
 };

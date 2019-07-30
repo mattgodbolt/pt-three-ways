@@ -4,10 +4,6 @@
 #include "math/Ray.h"
 #include "oo/Material.h"
 
-#include <optional>
-#include <utility>
-
-// TODO get rid of optional
 namespace oo {
 
 class Primitive {
@@ -18,8 +14,8 @@ public:
     Material material;
   };
 
-  [[nodiscard]] virtual std::optional<IntersectionRecord>
-  intersect(const Ray &ray) const = 0;
+  [[nodiscard]] virtual bool
+  intersect(const Ray &ray, IntersectionRecord &intersection) const = 0;
 };
 
 }
