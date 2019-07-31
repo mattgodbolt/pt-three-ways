@@ -2,8 +2,6 @@
 
 #include "math/Vec3.h"
 
-namespace oo {
-
 struct Material {
   Vec3 emission;
   Vec3 diffuse;
@@ -15,5 +13,3 @@ struct Material {
     return Material{Vec3(), colour, reflectivity};
   }
 };
-
-}

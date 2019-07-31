@@ -1,9 +1,7 @@
 #include <catch2/catch.hpp>
 #include <sstream>
 
-#include "oo/ObjLoader.h"
-
-using namespace oo;
+#include "util/ObjLoader.h"
 
 namespace {
 
@@ -13,11 +11,27 @@ struct ThrowingObjLoaderOpener : ObjLoaderOpener {
   }
 };
 
+struct CaptureSceneBuilder {
+  struct Triangle {
+    Vec3 v0;
+    Vec3 v1;
+    Vec3 v2;
+    Material material;
+  };
+  std::vector<Triangle> triangles;
+  void addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
+                   const Material &material) {
+    triangles.emplace_back(Triangle{v0, v1, v2, material});
+  }
+};
+
 TEST_CASE("ObjLoader", "[ObjLoader]") {
   auto L = [](const char *text) {
     ThrowingObjLoaderOpener opener;
     std::istringstream in(text);
-    return loadObjFile(in, opener);
+    CaptureSceneBuilder csb;
+    loadObjFile(in, opener, csb);
+    return csb;
   };
   SECTION("ignores comments and blank lines") {
     CHECK(L("").triangles.empty());
@@ -48,9 +62,9 @@ f -3 -2 -1
 )");
     REQUIRE(res.triangles.size() == 1);
     auto &t = res.triangles[0];
-    CHECK(t.vertex(0) == Vec3(0, 0, 0));
-    CHECK(t.vertex(1) == Vec3(0, 0, 1));
-    CHECK(t.vertex(2) == Vec3(0, 1, 0));
+    CHECK(t.v0 == Vec3(0, 0, 0));
+    CHECK(t.v1 == Vec3(0, 0, 1));
+    CHECK(t.v2 == Vec3(0, 1, 0));
   }
 
   SECTION("parses materials") {
@@ -74,7 +88,7 @@ newmtl light
   Ks 0 0 0
   Ke 17 12 4
 )");
-    auto res = loadMaterials(in);
+    auto res = impl::loadMaterials(in);
     CHECK(res.size() == 2);
     CHECK(res.at("leftWall").diffuse == Vec3(0.63, 0.065, 0.05));
     CHECK(res.at("leftWall").emission == Vec3());

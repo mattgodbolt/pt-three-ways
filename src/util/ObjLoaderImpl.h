@@ -1,24 +1,22 @@
-#include "ObjLoader.h"
+#pragma once
 
 #include <fstream>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <ctre.hpp>
 
-using namespace std::literals;
+namespace impl {
+
+double asDouble(std::string_view sv);
+size_t asIndex(std::string_view sv, size_t max);
+
+// Visible for tests
+[[nodiscard]] std::unordered_map<std::string, Material>
+loadMaterials(std::istream &in);
 
 static constexpr auto tokenRe = ctll::fixed_string{R"(\s*([^ \t\n\r]+))"};
-
-namespace {
-
-double asDouble(std::string_view sv) {
-  return std::stod(std::string(sv)); // This is dreadful
-}
-
-size_t asIndex(std::string_view sv, size_t max) {
-  auto res = std::stol(std::string(sv));
-  return res < 0 ? res + max : res;
-}
 
 template <typename F>
 void parse(std::istream &in, F &&handler) {
@@ -49,58 +47,14 @@ void parse(std::istream &in, F &&handler) {
 
 }
 
-namespace oo {
-
-std::unordered_map<std::string, Material> loadMaterials(std::istream &in) {
-  if (!in)
-    throw std::runtime_error("Bad input stream");
-  in.exceptions(std::ios_base::badbit);
-  std::unordered_map<std::string, Material> result;
-
-  Material *curMat{};
-
-  parse(in, [&](std::string_view command,
-                const std::vector<std::string_view> &params) {
-    if (command == "newmtl"sv) {
-      if (params.size() != 1)
-        throw std::runtime_error("Wrong number of params for newmtl");
-      curMat =
-          &result.emplace(std::string(params[0]), Material{}).first->second;
-      return true;
-    } else if (command == "Ke"sv) {
-      if (!curMat)
-        throw std::runtime_error("Unexpected Ke");
-      if (params.size() != 3)
-        throw std::runtime_error("Wrong number of params for Ke");
-      curMat->emission =
-          Vec3(asDouble(params[0]), asDouble(params[1]), asDouble(params[2]));
-      return true;
-    } else if (command == "Kd"sv) {
-      if (!curMat)
-        throw std::runtime_error("Unexpected Kd");
-      if (params.size() != 3)
-        throw std::runtime_error("Wrong number of params for Kd");
-      curMat->diffuse =
-          Vec3(asDouble(params[0]), asDouble(params[1]), asDouble(params[2]));
-      return true;
-    } else if (command == "Ns"sv || command == "Ni"sv || command == "illum"sv
-               || command == "Ka"sv || command == "Ks"sv) {
-      // Ignored
-      return true;
-    }
-    return false;
-  });
-
-  return result;
-}
-
 // Thanks to https://en.wikipedia.org/wiki/Wavefront_.obj_file
-ObjFile loadObjFile(std::istream &in, ObjLoaderOpener &opener) {
+template <typename SceneBuilder>
+void loadObjFile(std::istream &in, ObjLoaderOpener &opener, SceneBuilder &sb) {
+  using namespace std::literals;
+  using namespace impl;
   if (!in)
     throw std::runtime_error("Bad input stream");
   in.exceptions(std::ios_base::badbit);
-
-  ObjFile result;
 
   std::vector<Vec3> vertices;
   std::unordered_map<std::string, Material> materials;
@@ -121,10 +75,8 @@ ObjFile loadObjFile(std::istream &in, ObjLoaderOpener &opener) {
       for (auto f : params)
         indices.emplace_back(asIndex(f, vertices.size()));
       for (size_t index = 1; index < params.size() - 1; ++index) {
-        result.triangles.emplace_back(vertices.at(indices[0]),
-                                      vertices.at(indices[index]),
-                                      vertices.at(indices[index + 1]));
-        result.materials.emplace_back(curMat);
+        sb.addTriangle(vertices.at(indices[0]), vertices.at(indices[index]),
+                       vertices.at(indices[index + 1]), curMat);
       }
       return true;
     } else if (command == "g"sv) {
@@ -144,7 +96,4 @@ ObjFile loadObjFile(std::istream &in, ObjLoaderOpener &opener) {
     }
     return false;
   });
-  return result;
-}
-
 }

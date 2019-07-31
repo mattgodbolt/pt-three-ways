@@ -17,10 +17,10 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <oo/ObjLoader.h>
 #include <oo/Triangle.h>
 #include <random>
 #include <thread>
+#include <util/ObjLoader.h>
 #include <utility>
 #include <vector>
 
@@ -216,48 +216,45 @@ struct DirRelativeOpener : ObjLoaderOpener {
   }
 };
 
-struct ObjPrimitive : Primitive {
-  ObjFile obj;
-  explicit ObjPrimitive(ObjFile o) : obj(std::move(o)) {}
+struct TrianglePrimitive : Primitive {
+  Triangle triangle;
+  Material material;
+  explicit TrianglePrimitive(const Triangle &triangle, const Material &material)
+      : triangle(triangle), material(material) {}
   [[nodiscard]] bool
   intersect(const Ray &ray,
             IntersectionRecord &intersectionRecord) const override {
-    bool hasHit = false;
-    Hit nearestHit;
-    size_t hitIndex{};
-    for (size_t index = 0; index < obj.materials.size(); ++index) {
-      auto &t = obj.triangles[index];
-      Hit hit;
-      if (t.intersect(ray, hit)
-          && (!hasHit || hit.distance < nearestHit.distance)) {
-        hasHit = true;
-        nearestHit = hit;
-        hitIndex = index;
-      }
-    }
-    if (!hasHit)
-      return {};
-    intersectionRecord =
-        IntersectionRecord{nearestHit, obj.materials[hitIndex]};
+    Hit hit;
+    if (!triangle.intersect(ray, hit))
+      return false;
+    intersectionRecord = IntersectionRecord{hit, material};
     return true;
   }
 };
 
-struct DodgyCornellScene {
+struct OOSceneBuilder {
   Scene scene;
+  void addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
+                   const Material &material) {
+    scene.add(
+        std::make_unique<TrianglePrimitive>(Triangle(v0, v1, v2), material));
+  }
+};
+
+struct DodgyCornellScene {
+  OOSceneBuilder sb;
   DodgyCornellScene() {
     DirRelativeOpener opener("scenes");
     auto in = opener.open("CornellBox-Original.obj");
-    auto obj = loadObjFile(*in, opener);
-    scene.add(std::make_unique<ObjPrimitive>(obj));
-    scene.add(std::make_unique<SpherePrimitive>(
+    loadObjFile(*in, opener, sb);
+    sb.scene.add(std::make_unique<SpherePrimitive>(
         Sphere(Vec3(-0.38, 0.281, 0.38), 0.28),
         Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.75)));
   }
   [[nodiscard]] auto intersect(const Ray &ray,
                                Primitive::IntersectionRecord &rec) const
       noexcept {
-    return scene.intersect(ray, rec);
+    return sb.scene.intersect(ray, rec);
   }
   [[nodiscard]] auto environment(const Ray &) const noexcept {
     return Vec3(0.725, 0.71, 0.68) * 0.1;
@@ -331,9 +328,6 @@ int main(int argc, const char *argv[]) {
   }
 
   ArrayOutput output(width, height);
-  //  Vec3 camPos(50, 52, 295.6);
-  //  Vec3 camUp(0, -1, 0);
-  //  auto camDir = Vec3(0, -0.042612, -1).normalised();
   Vec3 camPos(0, 1, 3);
   Vec3 camUp(0, 1, 0);
   Vec3 camLookAt(0, 1, 0);

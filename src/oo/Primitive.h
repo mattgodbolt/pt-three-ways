@@ -2,7 +2,7 @@
 
 #include "math/Hit.h"
 #include "math/Ray.h"
-#include "oo/Material.h"
+#include "util/Material.h"
 
 namespace oo {
 

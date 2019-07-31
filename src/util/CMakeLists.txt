@@ -1,0 +1,3 @@
+add_library(util Material.h ObjLoader.h ObjLoader.cpp ObjLoaderImpl.h)
+target_link_libraries(util math CONAN_PKG::CTRE)
+target_include_directories(util INTERFACE ..)

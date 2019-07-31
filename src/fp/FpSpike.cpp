@@ -1,11 +1,8 @@
 #include "Sphere.h"
-#include <algorithm>
 #include <fp/Triangle.h>
 #include <math/Camera.h>
-#include <oo/Material.h> // XXX
+#include <util/Material.h>
 #include <variant>
-
-using oo::Material; // XXX
 
 namespace fp {
 struct Scene {};
