@@ -34,6 +34,10 @@
 * Show DoD
 * Show blend (C++ lets us have :allthethings:)
 * Maybe strong types?
+* Things to add after initial impl
+  * (strong type?)
+  * k-d tree
+  * "intersection if nearer than XXX" optimisation?
 
 Materials? Inline, or "OO" style?
 

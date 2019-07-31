@@ -1,11 +1,9 @@
-#include "Sphere.h"
-#include <fp/Triangle.h>
-#include <math/Camera.h>
-#include <util/Material.h>
-#include <variant>
+#include "Primitive.h"
+
+#include "Scene.h"
+#include "math/Camera.h"
 
 namespace fp {
-struct Scene {};
 class ArrayOutput {
   int width_;
   int height_;
@@ -113,29 +111,46 @@ Vec3 radiance(const Scene &scene, Rng &rng, const Ray &ray, int depth,
 // * TMP stuff (if can find a way)
 // * most of the "render" stuff is free functions (move from OO)
 
-struct TriangleElem {
-  Triangle triangle;
+struct IntersectionRecord {
+  Hit hit;
   Material material;
 };
-struct SphereElem {
-  Sphere sphere;
-  Material material;
-};
-
-using Elem = std::variant<TriangleElem, SphereElem>;
 
 struct IntersectVisitor {
   const Ray &ray;
-  std::optional<Hit> operator()(const TriangleElem &elem) const {
-    return elem.triangle.intersect(ray);
+
+  static std::optional<IntersectionRecord>
+  unwrapWith(const std::optional<Hit> &hit, const Material &m) {
+    if (!hit)
+      return {};
+    return IntersectionRecord{*hit, m};
   }
-  std::optional<Hit> operator()(const SphereElem &elem) const {
-    return elem.sphere.intersect(ray);
+
+  std::optional<IntersectionRecord>
+  operator()(const TrianglePrimitive &primitive) const {
+    return unwrapWith(primitive.triangle.intersect(ray), primitive.material);
+  }
+  std::optional<IntersectionRecord>
+  operator()(const SpherePrimitive &primitive) const {
+    return unwrapWith(primitive.sphere.intersect(ray), primitive.material);
   }
 };
 
-std::optional<Hit> intersect(const Elem &elem, const Ray &ray) {
-  return std::visit(IntersectVisitor{ray}, elem);
+std::optional<IntersectionRecord> intersect(const Primitive &primitive,
+                                            const Ray &ray) {
+  return std::visit(IntersectVisitor{ray}, primitive);
+}
+
+std::optional<IntersectionRecord> intersect(const Scene &scene,
+                                            const Ray &ray) {
+  std::optional<IntersectionRecord> nearest;
+  for (auto &primitive : scene.primitives) {
+    auto thisIntersection = intersect(primitive, ray);
+    if (thisIntersection
+        && (!nearest || nearest->hit.distance < thisIntersection->hit.distance))
+      nearest = thisIntersection;
+  }
+  return nearest;
 }
 
 }
