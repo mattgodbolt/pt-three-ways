@@ -4,7 +4,9 @@
 #include "math/Ray.h"
 #include "math/Vec3.h"
 
-namespace oo {
+#include <optional>
+
+namespace fp {
 
 class Sphere {
   Vec3 centre_;
@@ -19,7 +21,7 @@ public:
   }
   [[nodiscard]] constexpr double radius() const noexcept { return radius_; }
 
-  [[nodiscard]] bool intersect(const Ray &ray, Hit &hit) const noexcept;
+  [[nodiscard]] std::optional<Hit> intersect(const Ray &ray) const noexcept;
 };
 
 }

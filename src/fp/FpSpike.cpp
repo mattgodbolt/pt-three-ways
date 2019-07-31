@@ -1,8 +1,8 @@
+#include "Sphere.h"
 #include <algorithm>
 #include <fp/Triangle.h>
 #include <math/Camera.h>
 #include <oo/Material.h> // XXX
-#include <oo/Sphere.h> // XXX
 #include <variant>
 
 using oo::Material; // XXX
@@ -132,12 +132,10 @@ struct IntersectVisitor {
   std::optional<Hit> operator()(const TriangleElem &elem) const {
     return elem.triangle.intersect(ray);
   }
-  std::optional<Hit> operator()(const SphereElem &/*elem*/) const {
-    return {}; // XXX
-//    return elem.sphere.intersect(ray);
+  std::optional<Hit> operator()(const SphereElem &elem) const {
+    return elem.sphere.intersect(ray);
   }
 };
-
 
 std::optional<Hit> intersect(const Elem &elem, const Ray &ray) {
   return std::visit(IntersectVisitor{ray}, elem);

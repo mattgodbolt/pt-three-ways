@@ -6,6 +6,8 @@
 
 #include <cmath>
 
+using oo::Sphere;
+
 namespace {
 
 TEST_CASE("Spheres", "[Sphere]") {
