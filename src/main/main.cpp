@@ -1,26 +1,24 @@
 #include "PngWriter.h"
 #include "WorkQueue.h"
 
-#include <math/Camera.h>
-#include <math/Vec3.h>
-#include <oo/Sphere.h>
-
-#include <oo/Primitive.h>
-#include <oo/Scene.h>
+#include "math/Camera.h"
+#include "math/Vec3.h"
+#include "oo/Primitive.h"
+#include "oo/Scene.h"
+#include "oo/Sphere.h"
+#include "oo/Triangle.h"
+#include "util/ObjLoader.h"
 
 #include <clara.hpp>
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <oo/Triangle.h>
 #include <random>
 #include <thread>
-#include <util/ObjLoader.h>
 #include <utility>
 #include <vector>
 
