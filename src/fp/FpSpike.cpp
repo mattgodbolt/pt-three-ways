@@ -165,17 +165,17 @@ void render(const Camera &camera, const Scene &scene, const ArrayOutput &output,
 
   for (auto y = 0; y < height; ++y) {
     for (auto x = 0; x < width; ++x) {
-      Vec3 colour;
+      Vec3 colour_;
       for (int sample = 0; sample < samplesPerPixel; ++sample) {
         auto u = unit(rng);
         auto v = unit(rng);
         auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
         auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
         auto ray = camera.ray(xx, yy, rng);
-        colour += radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
+        colour_ += radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
                            FirstBounceNumVSamples);
       }
-      return colour;
+      return colour_;
     };
   }
 }

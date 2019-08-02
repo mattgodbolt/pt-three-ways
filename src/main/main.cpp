@@ -7,6 +7,7 @@
 #include "oo/Scene.h"
 #include "oo/Sphere.h"
 #include "oo/Triangle.h"
+#include "util/ArrayOutput.h"
 #include "util/ObjLoader.h"
 
 #include <clara.hpp>
@@ -29,9 +30,6 @@ namespace {
 constexpr auto FirstBounceNumUSamples = 6;
 constexpr auto FirstBounceNumVSamples = 3;
 bool preview = false;
-int componentToInt(double x) {
-  return lround(pow(std::clamp(x, 0.0, 1.0), 1.0 / 2.2) * 255);
-}
 
 struct Tile {
   int xBegin;
@@ -259,38 +257,6 @@ struct DodgyCornellScene {
   }
 };
 
-class ArrayOutput {
-  int width_;
-  int height_;
-  struct SampledPixel {
-    Vec3 colour;
-    size_t numSamples{};
-    void accumulate(const Vec3 &sample, int num) {
-      colour += sample;
-      numSamples += num;
-    }
-    [[nodiscard]] Vec3 result() const {
-      if (numSamples == 0)
-        return colour;
-      return colour * (1.0 / numSamples);
-    }
-  };
-  std::vector<SampledPixel> output_;
-
-public:
-  ArrayOutput(int width, int height) : width_(width), height_(height) {
-    output_.resize(width * height);
-  }
-  [[nodiscard]] constexpr int height() const noexcept { return height_; }
-  [[nodiscard]] constexpr int width() const noexcept { return width_; }
-  void plot(int x, int y, const Vec3 &colour, int numSamples) noexcept {
-    output_[x + y * width_].accumulate(colour, numSamples);
-  }
-  [[nodiscard]] Vec3 pixelAt(int x, int y) const noexcept {
-    return output_[x + y * width_].result();
-  }
-};
-
 }
 
 int main(int argc, const char *argv[]) {
@@ -344,9 +310,8 @@ int main(int argc, const char *argv[]) {
       std::uint8_t row[width * 3];
       for (int x = 0; x < width; ++x) {
         auto colour = output.pixelAt(x, y);
-        row[x * 3] = componentToInt(colour.x());
-        row[x * 3 + 1] = componentToInt(colour.y());
-        row[x * 3 + 2] = componentToInt(colour.z());
+        for (int component = 0; component < 3; ++component)
+          row[x * 3 + component] = colour[component];
       }
       pw.addRow(row);
     }
