@@ -22,3 +22,5 @@ bool Scene::intersect(const Ray &ray, IntersectionRecord &intersection) const {
 void Scene::add(std::unique_ptr<Primitive> primitive) {
   primitives_.emplace_back(std::move(primitive));
 }
+
+Vec3 Scene::environment(const Ray &) const { return environment_; }
