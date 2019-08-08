@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <libpng/png.h>
+#include <png.h>
 #include <memory>
 
 class PngWriter {
