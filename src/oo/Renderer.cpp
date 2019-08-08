@@ -99,6 +99,7 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
 // non-OO Type thing? "render context" ? maybe?
+// TODO: non-threaded version?
 void Renderer::render(std::function<void()> updateFunc) const {
   int width = output_.width();
   int height = output_.height();

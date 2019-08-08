@@ -34,6 +34,9 @@
 * Show DoD
 * Show blend (C++ lets us have :allthethings:)
 * Maybe strong types?
+* More complex model
+* "Mock optimization" / perf... show things are super slow, show it's the divide,
+  then actually segue into k-d tree?
 * Things to add after initial impl
   * (strong type?)
   * k-d tree

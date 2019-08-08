@@ -2,10 +2,8 @@
 
 #include "math/Camera.h"
 #include "math/Vec3.h"
-#include "oo/Primitive.h"
-#include "oo/Scene.h"
-#include "oo/Sphere.h"
-#include "oo/Triangle.h"
+#include "oo/Renderer.h"
+#include "oo/SceneBuilder.h"
 #include "util/ArrayOutput.h"
 #include "util/ObjLoader.h"
 
@@ -16,28 +14,10 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <oo/Renderer.h>
 #include <thread>
 #include <utility>
 
 namespace {
-
-using namespace oo; // TODO move out!
-
-struct SpherePrimitive : Primitive {
-  Sphere sphere;
-  Material material;
-  SpherePrimitive(const Sphere &sphere, const Material &material)
-      : sphere(sphere), material(material) {}
-  [[nodiscard]] bool intersect(const Ray &ray,
-                               IntersectionRecord &rec) const override {
-    Hit hit;
-    if (!sphere.intersect(ray, hit))
-      return false;
-    rec = IntersectionRecord{hit, material};
-    return true;
-  }
-};
 
 struct DirRelativeOpener : ObjLoaderOpener {
   std::string dir_;
@@ -52,52 +32,19 @@ struct DirRelativeOpener : ObjLoaderOpener {
   }
 };
 
-struct TrianglePrimitive : Primitive {
-  Triangle triangle;
-  Material material;
-  explicit TrianglePrimitive(const Triangle &triangle, const Material &material)
-      : triangle(triangle), material(material) {}
-  [[nodiscard]] bool
-  intersect(const Ray &ray,
-            IntersectionRecord &intersectionRecord) const override {
-    Hit hit;
-    if (!triangle.intersect(ray, hit))
-      return false;
-    intersectionRecord = IntersectionRecord{hit, material};
-    return true;
-  }
-};
-
-struct OOSceneBuilder {
-  Scene scene;
-  void addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
-                   const Material &material) {
-    scene.add(
-        std::make_unique<TrianglePrimitive>(Triangle(v0, v1, v2), material));
-  }
-  void addSphere(const Vec3 &centre, double radius, const Material &material) {
-    scene.add(
-        std::make_unique<SpherePrimitive>(Sphere(centre, radius), material));
-  }
-};
-
-struct DodgyCornellScene {
-  OOSceneBuilder sb;
-  DodgyCornellScene() {
-    DirRelativeOpener opener("scenes");
-    auto in = opener.open("CornellBox-Original.obj");
-    loadObjFile(*in, opener, sb);
-    sb.addSphere(Vec3(-0.38, 0.281, 0.38), 0.28,
-                 Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.75));
-    sb.scene.setEnvironmentColour(Vec3(0.725, 0.71, 0.68) * 0.1);
-  }
-};
+template <typename SB>
+void createCornellScene(SB &sb) {
+  DirRelativeOpener opener("scenes");
+  auto in = opener.open("CornellBox-Original.obj");
+  loadObjFile(*in, opener, sb);
+  sb.addSphere(Vec3(-0.38, 0.281, 0.38), 0.28,
+               Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.75));
+  sb.setEnvironmentColour(Vec3(0.725, 0.71, 0.68) * 0.1);
+}
 
 }
 
 int main(int argc, const char *argv[]) {
-  DodgyCornellScene scene;
-
   bool help = false;
   auto width = 1920;
   auto height = 1080;
@@ -157,7 +104,9 @@ int main(int argc, const char *argv[]) {
   using namespace std::literals;
   static constexpr auto saveEvery = 10s;
   auto nextSave = std::chrono::system_clock::now() + saveEvery;
-  oo::Renderer renderer(scene.sb.scene, camera, output, samplesPerPixel,
+  oo::SceneBuilder sceneBuilder;
+  createCornellScene(sceneBuilder);
+  oo::Renderer renderer(sceneBuilder.scene(), camera, output, samplesPerPixel,
                         numCpus, preview);
   renderer.render([&] {
     // TODO: save is not thread safe even slightly, and yet it still blocks the
