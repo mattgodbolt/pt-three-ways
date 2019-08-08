@@ -4,18 +4,19 @@ using oo::Primitive;
 using oo::Scene;
 
 bool Scene::intersect(const Ray &ray, IntersectionRecord &intersection) const {
-  Primitive::IntersectionRecord *currentNearest{};
+  Primitive::IntersectionRecord currentNearest;
+  currentNearest.hit.distance = std::numeric_limits<double>::infinity();
   IntersectionRecord rec;
   for (auto &primitive : primitives_) {
     if (!primitive->intersect(ray, rec))
       continue;
-    if (!currentNearest || rec.hit.distance < currentNearest->hit.distance) {
-      currentNearest = &rec;
+    if (rec.hit.distance < currentNearest.hit.distance) {
+      currentNearest = rec;
     }
   }
-  if (!currentNearest)
+  if (currentNearest.hit.distance == std::numeric_limits<double>::infinity())
     return false;
-  intersection = *currentNearest;
+  intersection = currentNearest;
   return true;
 }
 
