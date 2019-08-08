@@ -8,6 +8,7 @@ namespace fp {
 
 struct Scene {
   std::vector<Primitive> primitives;
+  Vec3 environment;
 };
 
 }

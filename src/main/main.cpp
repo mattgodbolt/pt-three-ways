@@ -1,5 +1,7 @@
 #include "PngWriter.h"
 
+#include "fp/Render.h"
+#include "fp/SceneBuilder.h"
 #include "math/Camera.h"
 #include "math/Vec3.h"
 #include "oo/Renderer.h"
@@ -11,6 +13,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <fp/SceneBuilder.h>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -45,21 +48,26 @@ void createCornellScene(SB &sb) {
 }
 
 int main(int argc, const char *argv[]) {
+  using namespace clara;
+  using namespace std::literals;
+
   bool help = false;
   auto width = 1920;
   auto height = 1080;
   auto numCpus = 1u;
   auto samplesPerPixel = 40;
   bool preview = false;
+  std::string way = "oo";
 
-  using namespace clara;
   auto cli =
       Opt(width, "width")["-w"]["--width"]("output image width")
       | Opt(height, "height")["-h"]["--height"]("output image height")
       | Opt(numCpus,
             "numCpus")["--num-cpus"]("number of CPUs to use (0 for all)")
       | Opt(samplesPerPixel, "samples")["--spp"]("number of samples per pixel")
-      | Opt(preview)["--preview"]("super quick preview") | Help(help);
+      | Opt(preview)["--preview"]("super quick preview")
+      | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
+      | Help(help);
 
   auto result = cli.parse(Args(argc, argv));
   if (!result) {
@@ -101,23 +109,34 @@ int main(int argc, const char *argv[]) {
     }
   };
 
-  using namespace std::literals;
-  static constexpr auto saveEvery = 10s;
-  auto nextSave = std::chrono::system_clock::now() + saveEvery;
-  oo::SceneBuilder sceneBuilder;
-  createCornellScene(sceneBuilder);
-  oo::Renderer renderer(sceneBuilder.scene(), camera, output, samplesPerPixel,
-                        numCpus, preview);
-  renderer.render([&] {
-    // TODO: save is not thread safe even slightly, and yet it still blocks the
-    // threads. this is terrible. Should have a thread safe result queue and
-    // a single thread reading from it.
-    auto now = std::chrono::system_clock::now();
-    if (now > nextSave) {
-      save();
-      nextSave = now + saveEvery;
-    }
-  });
+  if (way == "oo") {
+    static constexpr auto saveEvery = 10s;
+    auto nextSave = std::chrono::system_clock::now() + saveEvery;
+    oo::SceneBuilder sceneBuilder;
+    createCornellScene(sceneBuilder);
+    oo::Renderer renderer(sceneBuilder.scene(), camera, output, samplesPerPixel,
+                          numCpus, preview);
+    renderer.render([&] {
+      // TODO: save is not thread safe even slightly, and yet it still blocks
+      // the threads. this is terrible. Should have a thread safe result queue
+      // and a single thread reading from it.
+      auto now = std::chrono::system_clock::now();
+      if (now > nextSave) {
+        save();
+        nextSave = now + saveEvery;
+      }
+    });
+  } else if (way == "fp") {
+    fp::SceneBuilder sceneBuilder;
+    createCornellScene(sceneBuilder);
+    fp::render(camera, sceneBuilder.scene(), output, samplesPerPixel, preview,
+               save);
+  } else if (way == "dod") {
+    // TODO, quite a bit...
+  } else {
+    std::cerr << "Unknown way " << way << std::endl;
+    return 1;
+  }
 
   save();
 }

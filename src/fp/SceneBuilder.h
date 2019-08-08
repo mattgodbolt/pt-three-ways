@@ -2,7 +2,7 @@
 
 #include "Scene.h"
 
-namespace oo {
+namespace fp {
 
 class SceneBuilder {
   Scene scene_;
