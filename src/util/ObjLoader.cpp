@@ -3,15 +3,13 @@
 #include <fstream>
 #include <string>
 
-#include <ctre.hpp>
-
 double impl::asDouble(std::string_view sv) {
   return std::stod(std::string(sv)); // This is dreadful
 }
 
 size_t impl::asIndex(std::string_view sv, size_t max) {
   auto res = std::stol(std::string(sv));
-  return res < 0 ? res + max : res;
+  return res < 0 ? res + max : res - 1;
 }
 
 std::unordered_map<std::string, Material>

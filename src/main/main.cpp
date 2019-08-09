@@ -35,13 +35,56 @@ struct DirRelativeOpener : ObjLoaderOpener {
 };
 
 template <typename SB>
-void createCornellScene(SB &sb) {
+Camera createCornellScene(SB &sb, int width, int height) {
   DirRelativeOpener opener("scenes");
   auto in = opener.open("CornellBox-Original.obj");
   loadObjFile(*in, opener, sb);
   sb.addSphere(Vec3(-0.38, 0.281, 0.38), 0.28,
                Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.75));
   sb.setEnvironmentColour(Vec3(0.725, 0.71, 0.68) * 0.1);
+  Vec3 camPos(0, 1, 3);
+  Vec3 camUp(0, 1, 0);
+  Vec3 camLookAt(0, 1, 0);
+  double verticalFov = 50.0;
+  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
+  camera.setFocus(Vec3(0, 0, 0), 0.01);
+  return camera;
+}
+
+template <typename SB>
+auto createSuzanneScene(SB &sb, int width, int height) {
+  DirRelativeOpener opener("scenes");
+  auto in = opener.open("suzanne.obj");
+  loadObjFile(*in, opener, sb);
+
+  auto lightMat = Material::makeLight(Vec3(4, 4, 4));
+  sb.addSphere(Vec3(0.5, 1, 3), 1, lightMat);
+  sb.addSphere(Vec3(1, 1, 3), 1, lightMat);
+
+  auto boxMat = Material::makeDiffuse(Vec3(0.20, 0.30, 0.36));
+  auto tl = Vec3(-5, -5, -1);
+  auto tr = Vec3(5, -5, -1);
+  auto bl = Vec3(-5, 5, -1);
+  auto br = Vec3(5, 5, -1);
+  sb.addTriangle(tl, tr, bl, boxMat);
+  sb.addTriangle(tr, bl, br, boxMat);
+
+  Vec3 camPos(1, -0.45, 4);
+  Vec3 camLookAt(1, -0.6, 0.4);
+  Vec3 camUp(0, 1, 0);
+  double verticalFov = 40.0;
+  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
+  camera.setFocus(camLookAt, 0.01);
+  return camera;
+}
+
+template <typename SB>
+auto createScene(SB &sb, const std::string &sceneName, int width, int height) {
+  if (sceneName == "cornell")
+    return createCornellScene(sb, width, height);
+  if (sceneName == "suzanne")
+    return createSuzanneScene(sb, width, height);
+  throw std::runtime_error("Unknown scene " + sceneName);
 }
 
 }
@@ -57,6 +100,7 @@ int main(int argc, const char *argv[]) {
   auto samplesPerPixel = 40;
   bool preview = false;
   std::string way = "oo";
+  std::string sceneName = "cornell";
 
   auto cli =
       Opt(width, "width")["-w"]["--width"]("output image width")
@@ -66,6 +110,7 @@ int main(int argc, const char *argv[]) {
       | Opt(samplesPerPixel, "samples")["--spp"]("number of samples per pixel")
       | Opt(preview)["--preview"]("super quick preview")
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
+      | Opt(sceneName, "scene")["--scene"]("which scene to render")
       | Help(help);
 
   auto result = cli.parse(Args(argc, argv));
@@ -83,12 +128,6 @@ int main(int argc, const char *argv[]) {
   }
 
   ArrayOutput output(width, height);
-  Vec3 camPos(0, 1, 3);
-  Vec3 camUp(0, 1, 0);
-  Vec3 camLookAt(0, 1, 0);
-  double verticalFov = 50.0;
-  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
-  camera.setFocus(Vec3(0, 0, 0), 0.01);
 
   auto save = [&]() {
     PngWriter pw("image.png", width, height);
@@ -112,7 +151,7 @@ int main(int argc, const char *argv[]) {
     static constexpr auto saveEvery = 10s;
     auto nextSave = std::chrono::system_clock::now() + saveEvery;
     oo::SceneBuilder sceneBuilder;
-    createCornellScene(sceneBuilder);
+    auto camera = createScene(sceneBuilder, sceneName, width, height);
     oo::Renderer renderer(sceneBuilder.scene(), camera, output, samplesPerPixel,
                           numCpus, preview);
     renderer.render([&] {
@@ -127,7 +166,7 @@ int main(int argc, const char *argv[]) {
     });
   } else if (way == "fp") {
     fp::SceneBuilder sceneBuilder;
-    createCornellScene(sceneBuilder);
+    auto camera = createScene(sceneBuilder, sceneName, width, height);
     fp::render(camera, sceneBuilder.scene(), output, samplesPerPixel, preview,
                save);
   } else if (way == "dod") {

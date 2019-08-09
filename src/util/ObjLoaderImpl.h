@@ -79,8 +79,8 @@ void loadObjFile(std::istream &in, ObjLoaderOpener &opener, SceneBuilder &sb) {
                        vertices.at(indices[index + 1]), curMat);
       }
       return true;
-    } else if (command == "g"sv) {
-      // Ignore groups
+    } else if (command == "g"sv || command == "o"sv) {
+      // Ignore groups and object names
       return true;
     } else if (command == "usemtl"sv) {
       auto matName = std::string(params.at(0));

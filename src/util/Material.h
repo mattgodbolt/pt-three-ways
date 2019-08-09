@@ -9,6 +9,9 @@ struct Material {
   static Material makeDiffuse(const Vec3 &colour) {
     return Material{Vec3(), colour, 0};
   }
+  static Material makeLight(const Vec3 &colour) {
+    return Material{colour, Vec3(), 0};
+  }
   static Material makeReflective(const Vec3 &colour, double reflectivity) {
     return Material{Vec3(), colour, reflectivity};
   }
