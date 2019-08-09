@@ -54,6 +54,10 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
     return mat.emission;
   }
 
+  // Create a coordinate system local to the point, where the z is the
+  // normal at this point.
+  const auto basis = OrthoNormalBasis::fromZ(hit.normal);
+
   Vec3 result;
 
   // Sample evenly with random offset.
@@ -65,9 +69,6 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       auto radiusSquared = (static_cast<double>(v) + unit(rng))
                            / static_cast<double>(numVSamples);
       auto radius = sqrt(radiusSquared);
-      // Create a coordinate system local to the point, where the z is the
-      // normal at this point.
-      const auto basis = OrthoNormalBasis::fromZ(hit.normal);
       // Construct the new direction.
       const auto newDir =
           basis

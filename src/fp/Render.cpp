@@ -59,60 +59,71 @@ std::optional<IntersectionRecord> intersect(const Scene &scene,
 }
 
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
+              int numUSamples, int numVSamples, bool preview);
+
+Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
+               const IntersectionRecord &intersectionRecord, const Ray &ray,
+               const OrthoNormalBasis &basis, double u, double v, int depth,
+               bool preview) {
+  std::uniform_real_distribution<> unit(0, 1.0);
+  const auto &mat = intersectionRecord.material;
+  const auto &hit = intersectionRecord.hit;
+  auto theta = 2 * M_PI * u;
+  auto radiusSquared = v;
+  auto radius = sqrt(radiusSquared);
+  // Construct the new direction.
+  const auto newDir =
+      basis
+          .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
+                          sqrt(1 - radiusSquared)))
+          .normalised();
+  double p = unit(rng);
+
+  if (p < mat.reflectivity) {
+    auto reflected =
+        ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
+    auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
+
+    return mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1, preview);
+  } else {
+    auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
+
+    return mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1, preview);
+  }
+}
+
+Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples, bool preview) {
   auto intersectionRecord = intersect(scene, ray);
   if (!intersectionRecord)
     return scene.environment;
 
   const auto &mat = intersectionRecord->material;
+  const auto &hit = intersectionRecord->hit;
   if (preview)
     return mat.diffuse;
-  const auto &hit = intersectionRecord->hit;
 
   if (++depth > 5) {
     // TODO: "russian roulette"
     return mat.emission;
   }
 
-  Vec3 result;
-
   // Sample evenly with random offset.
-  // TODO extract and don't accumulate over "result", but make functional?
-  // (immutable state and all that)
   std::uniform_real_distribution<> unit(0, 1.0);
+  // Create a coordinate system local to the point, where the z is the
+  // normal at this point.
+  const auto basis = OrthoNormalBasis::fromZ(hit.normal);
+  Vec3 result;
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {
-      auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
-                   / static_cast<double>(numUSamples);
-      auto radiusSquared = (static_cast<double>(v) + unit(rng))
+      const auto sampleU = (static_cast<double>(u) + unit(rng))
+                           / static_cast<double>(numUSamples);
+      const auto sampleV = (static_cast<double>(v) + unit(rng))
                            / static_cast<double>(numVSamples);
-      auto radius = sqrt(radiusSquared);
-      // Create a coordinate system local to the point, where the z is the
-      // normal at this point.
-      const auto basis = OrthoNormalBasis::fromZ(hit.normal);
-      // Construct the new direction.
-      const auto newDir =
-          basis
-              .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
-                              sqrt(1 - radiusSquared)))
-              .normalised();
-      double p = unit(rng);
-
-      if (p < mat.reflectivity) {
-        auto reflected =
-            ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
-        auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
-
-        result +=
-            mat.emission
-            + mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1, preview);
-      } else {
-        auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
-
-        result +=
-            mat.emission
-            + mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1, preview);
-      }
+      // TODO can we use accumulate here?
+      result += mat.emission
+                + singleRay(scene, rng, *intersectionRecord, ray, basis,
+                            sampleU, sampleV, depth, preview);
     }
   }
   if (numUSamples == 1 && numVSamples == 1)
