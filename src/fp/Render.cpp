@@ -68,33 +68,33 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   std::uniform_real_distribution<> unit(0, 1.0);
   const auto &mat = intersectionRecord.material;
   const auto &hit = intersectionRecord.hit;
-  auto theta = 2 * M_PI * u;
-  auto radiusSquared = v;
-  auto radius = sqrt(radiusSquared);
+  const auto theta = 2 * M_PI * u;
+  const auto radiusSquared = v;
+  const auto radius = sqrt(radiusSquared);
   // Construct the new direction.
   const auto newDir =
       basis
           .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
                           sqrt(1 - radiusSquared)))
           .normalised();
-  double p = unit(rng);
+  const auto p = unit(rng);
 
   if (p < mat.reflectivity) {
     auto reflected =
         ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
     auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
 
-    return mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1, preview);
+    return radiance(scene, rng, newRay, depth, 1, 1, preview);
   } else {
     auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
 
-    return mat.diffuse * radiance(scene, rng, newRay, depth, 1, 1, preview);
+    return radiance(scene, rng, newRay, depth, 1, 1, preview);
   }
 }
 
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples, bool preview) {
-  auto intersectionRecord = intersect(scene, ray);
+  const auto intersectionRecord = intersect(scene, ray);
   if (!intersectionRecord)
     return scene.environment;
 
@@ -103,7 +103,7 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   if (preview)
     return mat.diffuse;
 
-  if (++depth > 5) {
+  if (depth >= 5) {
     // TODO: "russian roulette"
     return mat.emission;
   }
@@ -113,7 +113,8 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   // Create a coordinate system local to the point, where the z is the
   // normal at this point.
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
-  Vec3 result;
+  auto sampleScale = 1.0 / (numUSamples * numVSamples);
+  Vec3 incomingLight;
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {
       const auto sampleU = (static_cast<double>(u) + unit(rng))
@@ -121,20 +122,16 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
       const auto sampleV = (static_cast<double>(v) + unit(rng))
                            / static_cast<double>(numVSamples);
       // TODO can we use accumulate here?
-      result += mat.emission
-                + singleRay(scene, rng, *intersectionRecord, ray, basis,
-                            sampleU, sampleV, depth, preview);
+      incomingLight += singleRay(scene, rng, *intersectionRecord, ray, basis,
+                                 sampleU, sampleV, depth + 1, preview);
     }
   }
-  if (numUSamples == 1 && numVSamples == 1)
-    return result;
-  else
-    return result * (1.0 / (numUSamples * numVSamples));
+  return mat.emission + mat.diffuse * incomingLight * sampleScale;
 }
 
 void render(const Camera &camera, const Scene &scene, ArrayOutput &output,
             int samplesPerPixel, bool preview,
-            std::function<void()> updateFunc) {
+            const std::function<void()> &updateFunc) {
   auto width = output.width();
   auto height = output.height();
   std::mt19937 rng(samplesPerPixel);
