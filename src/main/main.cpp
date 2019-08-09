@@ -172,7 +172,7 @@ int main(int argc, const char *argv[]) {
   } else if (way == "dod") {
     // TODO, quite a bit...
   } else {
-    std::cerr << "Unknown way " << way << std::endl;
+    std::cerr << "Unknown way " << way << '\n';
     return 1;
   }
 
