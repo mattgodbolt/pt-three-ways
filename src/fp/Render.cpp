@@ -52,7 +52,7 @@ std::optional<IntersectionRecord> intersect(const Scene &scene,
   for (auto &primitive : scene.primitives) {
     auto thisIntersection = intersect(primitive, ray);
     if (thisIntersection
-        && (!nearest || nearest->hit.distance < thisIntersection->hit.distance))
+        && (!nearest || thisIntersection->hit.distance < nearest->hit.distance))
       nearest = thisIntersection;
   }
   return nearest;
@@ -64,10 +64,10 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   if (!intersectionRecord)
     return scene.environment;
 
-  Material &mat = intersectionRecord->material;
+  const auto &mat = intersectionRecord->material;
   if (preview)
     return mat.diffuse;
-  Hit &hit = intersectionRecord->hit;
+  const auto &hit = intersectionRecord->hit;
 
   if (++depth > 5) {
     // TODO: "russian roulette"
@@ -77,6 +77,8 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   Vec3 result;
 
   // Sample evenly with random offset.
+  // TODO extract and don't accumulate over "result", but make functional?
+  // (immutable state and all that)
   std::uniform_real_distribution<> unit(0, 1.0);
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {

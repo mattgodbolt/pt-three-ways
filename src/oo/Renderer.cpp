@@ -44,10 +44,10 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   if (!scene_.intersect(ray, intersectionRecord))
     return scene_.environment(ray);
 
-  Material &mat = intersectionRecord.material;
+  const auto &mat = intersectionRecord.material;
   if (preview_)
     return mat.diffuse;
-  Hit &hit = intersectionRecord.hit;
+  const auto &hit = intersectionRecord.hit;
 
   if (++depth > 5) {
     // TODO: "russian roulette"

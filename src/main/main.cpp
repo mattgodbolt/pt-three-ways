@@ -13,7 +13,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <fp/SceneBuilder.h>
 #include <iostream>
 #include <memory>
 #include <mutex>
