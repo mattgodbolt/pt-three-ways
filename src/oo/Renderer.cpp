@@ -60,6 +60,8 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 
   Vec3 result;
 
+  // TODO OO-ify materials!! Samplers?
+
   // Sample evenly with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);
   for (auto u = 0; u < numUSamples; ++u) {

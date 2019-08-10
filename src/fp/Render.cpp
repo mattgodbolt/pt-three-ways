@@ -92,6 +92,25 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   }
 }
 
+// TODO consider making this an iterator instead
+auto sampleRange(std::mt19937 &rng, int numUSamples, int numVSamples) {
+  // Sample evenly with random offset.
+  std::uniform_real_distribution<> unit(0, 1.0);
+  std::vector<std::pair<double, double>> result;
+  result.reserve(numUSamples * numVSamples);
+  for (auto u = 0; u < numUSamples; ++u) {
+    for (auto v = 0; v < numVSamples; ++v) {
+      const auto sampleU = (static_cast<double>(u) + unit(rng))
+                           / static_cast<double>(numUSamples);
+      const auto sampleV = (static_cast<double>(v) + unit(rng))
+                           / static_cast<double>(numVSamples);
+      result.emplace_back(sampleU, sampleV);
+    }
+  }
+  return result;
+}
+
+// TODO rangev3?
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples, bool preview) {
   const auto intersectionRecord = intersect(scene, ray);
@@ -114,18 +133,13 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   // normal at this point.
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
   auto sampleScale = 1.0 / (numUSamples * numVSamples);
-  Vec3 incomingLight;
-  for (auto u = 0; u < numUSamples; ++u) {
-    for (auto v = 0; v < numVSamples; ++v) {
-      const auto sampleU = (static_cast<double>(u) + unit(rng))
-                           / static_cast<double>(numUSamples);
-      const auto sampleV = (static_cast<double>(v) + unit(rng))
-                           / static_cast<double>(numVSamples);
-      // TODO can we use accumulate here?
-      incomingLight += singleRay(scene, rng, *intersectionRecord, ray, basis,
-                                 sampleU, sampleV, depth + 1, preview);
-    }
-  }
+  auto range = sampleRange(rng, numUSamples, numVSamples);
+  Vec3 incomingLight = std::accumulate(
+      std::begin(range), std::end(range), Vec3(),
+      [&](Vec3 colour, const std::pair<double, double> &s) {
+        return colour + singleRay(scene, rng, *intersectionRecord, ray, basis, s.first,
+                         s.second, depth + 1, preview);
+      });
   return mat.emission + mat.diffuse * incomingLight * sampleScale;
 }
 
