@@ -98,6 +98,7 @@ auto sampleRange(std::mt19937 &rng, int numUSamples, int numVSamples) {
   std::uniform_real_distribution<> unit(0, 1.0);
   std::vector<std::pair<double, double>> result;
   result.reserve(numUSamples * numVSamples);
+  // TODO no raw loops
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {
       const auto sampleU = (static_cast<double>(u) + unit(rng))
@@ -151,6 +152,9 @@ void render(const Camera &camera, const Scene &scene, ArrayOutput &output,
   std::mt19937 rng(samplesPerPixel);
   std::uniform_real_distribution<> unit(0.0, 1.0);
 
+  // TODO no raw loops...maybe return whole "Samples" of an entire screen and
+  // accumulate separately? then feeds into a nice multithreaded future based
+  // thing?
   for (int sample = 0; sample < samplesPerPixel; ++sample) {
     for (auto y = 0; y < height; ++y) {
       for (auto x = 0; x < width; ++x) {

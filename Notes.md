@@ -74,6 +74,23 @@ Su Mo Tu We Th Fr Sa
 * So! Only clear weeks: 11->17, 18->24
 
 
+### UPDATE 10th August
+
+* family gone
+* OO and FP separated fairly well
+* Need to start on DoD
+* Need to get a good "v1"; may need to "undo" multithreading (or have slideware versions for single threading)
+* then add k-d?
+* Need to re-add (or write) tests
+* Maybe relegate "strong type" to "further work" ?
+
+New timeline:
+* Aug 11th "get DoD version working"
+* 12, 13, 14, 15, 16, 17 - 12, 13 out, 14, 15, 17 available. MUST GET FULL v1 by then:
+  * tests
+  * three different "ways"
+  * Sketch at some slides!
+
 ## Interesting occurrances
 While extracting OO version from FP/OO blend: got bug!
 
