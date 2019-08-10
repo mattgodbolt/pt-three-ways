@@ -33,6 +33,8 @@ if (LTOAvailable)
     message("Link-time optimization enabled")
 
     set_property(TARGET oo PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+    set_property(TARGET fp PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+    set_property(TARGET util PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
     set_property(TARGET math PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
     set_property(TARGET pt_three_ways PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
 endif ()
