@@ -102,6 +102,7 @@ int main(int argc, const char *argv[]) {
   bool preview = false;
   std::string way = "oo";
   std::string sceneName = "cornell";
+  std::string outputName;
 
   auto cli =
       Opt(width, "width")["-w"]["--width"]("output image width")
@@ -112,7 +113,7 @@ int main(int argc, const char *argv[]) {
       | Opt(preview)["--preview"]("super quick preview")
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
       | Opt(sceneName, "scene")["--scene"]("which scene to render")
-      | Help(help);
+      | Arg(outputName, "output")("output filename").required() | Help(help);
 
   auto result = cli.parse(Args(argc, argv));
   if (!result) {
@@ -124,6 +125,11 @@ int main(int argc, const char *argv[]) {
     exit(0);
   }
 
+  if (outputName.empty()) { // https://github.com/catchorg/Clara/issues/39
+    std::cerr << "Missing output filename.\n" << cli;
+    exit(1);
+  }
+
   if (numCpus == 0) {
     numCpus = std::thread::hardware_concurrency();
   }
@@ -131,7 +137,7 @@ int main(int argc, const char *argv[]) {
   ArrayOutput output(width, height);
 
   auto save = [&]() {
-    PngWriter pw("image.png", width, height);
+    PngWriter pw(outputName.c_str(), width, height);
     if (!pw.ok()) {
       std::cerr << "Unable to save PNG\n";
       return;
