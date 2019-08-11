@@ -15,3 +15,22 @@ ArrayOutput::Pixel ArrayOutput::pixelAt(int x, int y) const noexcept {
                             componentToInt(rawPixel.y()),
                             componentToInt(rawPixel.z())};
 }
+
+void ArrayOutput::addSamples(int x, int y, const Vec3 &colour,
+                             int numSamples) noexcept {
+  output_[indexOf(x, y)].accumulate(colour, numSamples);
+}
+
+Vec3 ArrayOutput::rawPixelAt(int x, int y) const noexcept {
+  return output_[indexOf(x, y)].result();
+}
+
+ArrayOutput &ArrayOutput::operator+=(const ArrayOutput &rhs) {
+  if (rhs.width() != width() || rhs.height() != height())
+    throw std::logic_error(
+        "Two differently-sized arrays were attempted to be combined");
+  for (size_t pixelIndex = 0; pixelIndex < output_.size(); ++pixelIndex) {
+    output_[pixelIndex].accumulate(rhs.output_[pixelIndex]);
+  }
+  return *this;
+}

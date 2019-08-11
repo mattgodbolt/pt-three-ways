@@ -134,8 +134,8 @@ void Renderer::render(std::function<void()> updateFunc) const {
       std::mt19937 rng(tile.randomPrio);
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
-          output_.plot(x, y, renderPixel(rng, x, y, tile.samples),
-                       tile.samples);
+          output_.addSamples(x, y, renderPixel(rng, x, y, tile.samples),
+                             tile.samples);
         }
       }
     }

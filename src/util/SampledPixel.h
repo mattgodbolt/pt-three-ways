@@ -7,13 +7,7 @@ class SampledPixel {
   size_t numSamples_{};
 
 public:
-  void accumulate(const Vec3 &sample, int num) {
-    colour_ += sample;
-    numSamples_ += num;
-  }
-  [[nodiscard]] Vec3 result() const {
-    if (numSamples_ == 0)
-      return colour_;
-    return colour_ * (1.0 / numSamples_);
-  }
+  void accumulate(const SampledPixel &sample) noexcept;
+  void accumulate(const Vec3 &sample, int num) noexcept;
+  [[nodiscard]] Vec3 result() const noexcept;
 };

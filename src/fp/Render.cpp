@@ -163,10 +163,10 @@ void render(const Camera &camera, const Scene &scene, ArrayOutput &output,
         auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
         auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
         auto ray = camera.ray(xx, yy, rng);
-        output.plot(x, y,
-                    radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
-                             FirstBounceNumVSamples, preview),
-                    1);
+        output.addSamples(x, y,
+                          radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
+                                   FirstBounceNumVSamples, preview),
+                          1);
       }
     }
     updateFunc();
