@@ -106,7 +106,7 @@ std::optional<dod::IntersectionRecord> Scene::intersect(const Ray &ray) const {
   return triangleRec ? triangleRec : sphereRec;
 }
 
-Vec3 dod::Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
+Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
                           int numUSamples, int numVSamples,
                           bool preview) const {
   const auto intersectionRecord = intersect(ray);
@@ -118,7 +118,7 @@ Vec3 dod::Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   if (preview)
     return mat.diffuse;
 
-  if (depth >= 5) {
+  if (++depth > 5) {
     // TODO: "russian roulette"
     return mat.emission;
   }
