@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <dod/Scene.h>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -170,7 +171,9 @@ int main(int argc, const char *argv[]) {
     fp::render(camera, sceneBuilder.scene(), output, samplesPerPixel, preview,
                save);
   } else if (way == "dod") {
-    // TODO, quite a bit...
+    dod::Scene scene;
+    auto camera = createScene(scene, sceneName, width, height);
+    scene.render(camera, output, samplesPerPixel, preview, save);
   } else {
     std::cerr << "Unknown way " << way << '\n';
     return 1;

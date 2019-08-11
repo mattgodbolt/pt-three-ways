@@ -2,6 +2,8 @@
 
 #include "math/Vec3.h"
 
+#include <tuple>
+
 struct Material {
   Vec3 emission;
   Vec3 diffuse;
@@ -15,4 +17,9 @@ struct Material {
   static Material makeReflective(const Vec3 &colour, double reflectivity) {
     return Material{Vec3(), colour, reflectivity};
   }
+  bool operator==(const Material &rhs) const {
+    return std::tie(emission, diffuse, reflectivity)
+           == std::tie(rhs.emission, rhs.diffuse, rhs.reflectivity);
+  }
+  bool operator!=(const Material &rhs) const { return !(rhs == *this); }
 };

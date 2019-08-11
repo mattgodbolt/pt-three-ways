@@ -1,4 +1,5 @@
 add_subdirectory(math)
 add_subdirectory(oo)
 add_subdirectory(fp)
+add_subdirectory(dod)
 add_subdirectory(util)
