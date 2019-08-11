@@ -10,6 +10,7 @@
 #include "util/ObjLoader.h"
 
 #include <clara.hpp>
+#include <date/chrono_io.h>
 
 #include <algorithm>
 #include <chrono>
@@ -134,6 +135,7 @@ int main(int argc, const char *argv[]) {
     numCpus = std::thread::hardware_concurrency();
   }
 
+  auto startTime = std::chrono::system_clock::now();
   ArrayOutput output(width, height);
 
   auto save = [&]() {
@@ -174,8 +176,8 @@ int main(int argc, const char *argv[]) {
   } else if (way == "fp") {
     fp::SceneBuilder sceneBuilder;
     auto camera = createScene(sceneBuilder, sceneName, width, height);
-    fp::render(camera, sceneBuilder.scene(), output, samplesPerPixel, preview,
-               save);
+    fp::render(camera, sceneBuilder.scene(), output, samplesPerPixel, numCpus,
+               preview, save);
   } else if (way == "dod") {
     dod::Scene scene;
     auto camera = createScene(scene, sceneName, width, height);
@@ -186,4 +188,18 @@ int main(int argc, const char *argv[]) {
   }
 
   save();
+
+  using namespace date;
+  auto endTime = std::chrono::system_clock::now();
+  auto timeTaken = endTime - startTime;
+  auto totalSamples = output.totalSamples();
+  std::cout << "Took "
+            << std::chrono::duration_cast<std::chrono::seconds>(timeTaken)
+            << "\n";
+  std::cout << "Total samples: " << totalSamples << "\n";
+  auto samplesPerSec =
+      static_cast<double>(totalSamples)
+      / std::chrono::duration_cast<std::chrono::milliseconds>(timeTaken)
+            .count();
+  std::cout << "Samples/ms: " << samplesPerSec << "\n";
 }

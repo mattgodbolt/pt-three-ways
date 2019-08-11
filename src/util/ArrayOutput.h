@@ -30,4 +30,6 @@ public:
   [[nodiscard]] Pixel pixelAt(int x, int y) const noexcept;
 
   ArrayOutput &operator+=(const ArrayOutput &rhs);
+
+  size_t totalSamples() const noexcept;
 };

@@ -4,6 +4,9 @@
 #include "Scene.h"
 #include "math/Camera.h"
 #include "util/ArrayOutput.h"
+#include "util/Progressifier.h"
+
+#include <future>
 
 namespace fp {
 
@@ -138,24 +141,24 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   Vec3 incomingLight = std::accumulate(
       std::begin(range), std::end(range), Vec3(),
       [&](Vec3 colour, const std::pair<double, double> &s) {
-        return colour + singleRay(scene, rng, *intersectionRecord, ray, basis, s.first,
-                         s.second, depth + 1, preview);
+        return colour
+               + singleRay(scene, rng, *intersectionRecord, ray, basis, s.first,
+                           s.second, depth + 1, preview);
       });
   return mat.emission + mat.diffuse * incomingLight * sampleScale;
 }
 
 void render(const Camera &camera, const Scene &scene, ArrayOutput &output,
-            int samplesPerPixel, bool preview,
+            int samplesPerPixel, int numThreads, bool preview,
             const std::function<void()> &updateFunc) {
   auto width = output.width();
   auto height = output.height();
-  std::mt19937 rng(samplesPerPixel);
   std::uniform_real_distribution<> unit(0.0, 1.0);
 
-  // TODO no raw loops...maybe return whole "Samples" of an entire screen and
-  // accumulate separately? then feeds into a nice multithreaded future based
-  // thing?
-  for (int sample = 0; sample < samplesPerPixel; ++sample) {
+  auto makeOneSample = [&](size_t seed) {
+    ArrayOutput outputIn(output.width(), output.height());
+    std::mt19937 rng(seed);
+    // TODO no raw loops (maybe return an array of vec3?)
     for (auto y = 0; y < height; ++y) {
       for (auto x = 0; x < width; ++x) {
         auto u = unit(rng);
@@ -163,13 +166,36 @@ void render(const Camera &camera, const Scene &scene, ArrayOutput &output,
         auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
         auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
         auto ray = camera.ray(xx, yy, rng);
-        output.addSamples(x, y,
-                          radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
-                                   FirstBounceNumVSamples, preview),
-                          1);
+        outputIn.addSamples(x, y,
+                            radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
+                                     FirstBounceNumVSamples, preview),
+                            1);
       }
     }
-    updateFunc();
+    return outputIn;
+  };
+
+  // TODO no raw loops...maybe return whole "Samples" of an entire screen and
+  // accumulate separately? then feeds into a nice multithreaded future based
+  // thing?
+  // future from an async()
+  size_t seed = 0;
+  size_t numDone = 0;
+  Progressifier progressifier(samplesPerPixel);
+  for (int sample = 0; sample < samplesPerPixel; sample += numThreads) {
+    std::vector<std::future<ArrayOutput>> futures;
+    for (int ss = sample; ss < std::min(samplesPerPixel, sample + numThreads);
+         ++ss) {
+      futures.emplace_back(std::async(std::launch::async,
+                                      [&] { return makeOneSample(seed++); }));
+    }
+    for (auto &&future : futures) {
+      future.wait();
+      output += future.get();
+      numDone++;
+      progressifier.update(numDone);
+      updateFunc();
+    }
   }
 }
 

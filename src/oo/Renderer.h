@@ -20,6 +20,16 @@ class Renderer {
   static constexpr auto FirstBounceNumUSamples = 6;
   static constexpr auto FirstBounceNumVSamples = 3;
 
+public:
+  Renderer(const Scene &scene, const Camera &camera, ArrayOutput &arrayOutput,
+           int samplesPerPixel, int numThreads, bool preview)
+      : scene_(scene), camera_(camera), output_(arrayOutput),
+        samplesPerPixel_(samplesPerPixel), numThreads_(numThreads),
+        preview_(preview) {}
+
+  void render(std::function<void()> updateFunc) const;
+
+  // Visible for testing
   struct Tile {
     int xBegin;
     int xEnd;
@@ -34,21 +44,14 @@ class Renderer {
     }
   };
 
-public:
-  Renderer(const Scene &scene, const Camera &camera, ArrayOutput &arrayOutput,
-           int samplesPerPixel, int numThreads, bool preview)
-      : scene_(scene), camera_(camera), output_(arrayOutput),
-        samplesPerPixel_(samplesPerPixel), numThreads_(numThreads),
-        preview_(preview) {}
-
-  void render(std::function<void()> updateFunc) const;
-
-private:
   Vec3 radiance(std::mt19937 &rng, const Ray &ray, int depth, int numUSamples,
                 int numVSamples) const;
-  [[nodiscard]] std::vector<Tile> generateTiles(int xTileSize, int yTileSize,
-                                                int numSamples,
-                                                int samplesPerTile) const;
+  [[nodiscard]] std::vector<Renderer::Tile>
+  generateTiles(int xTileSize, int yTileSize, int numSamples,
+                int samplesPerTile) const;
+  [[nodiscard]] static std::vector<Tile>
+  generateTiles(int width, int height, int xTileSize, int yTileSize,
+                int numSamples, int samplesPerTile);
 };
 
 }

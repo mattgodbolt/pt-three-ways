@@ -3,3 +3,4 @@ Catch2/2.9.1@catchorg/stable
 clara/1.1.5@bincrafters/stable
 CTRE/v2.6.4@ctre/stable
 libpng/1.6.37@bincrafters/stable
+date/2.4.1@bincrafters/stable

@@ -11,6 +11,13 @@ std::vector<Renderer::Tile> Renderer::generateTiles(int xTileSize,
                                                     int samplesPerTile) const {
   auto width = output_.width();
   auto height = output_.height();
+  return Renderer::generateTiles(width, height, xTileSize, yTileSize,
+                                 numSamples, samplesPerTile);
+}
+
+std::vector<Renderer::Tile>
+Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
+                        int numSamples, int samplesPerTile) {
   std::mt19937 rng(width * height);
   std::vector<Tile> tiles;
   for (int y = 0; y < height; y += yTileSize) {
@@ -26,7 +33,7 @@ std::vector<Renderer::Tile> Renderer::generateTiles(int xTileSize,
       size_t distanceSqr = (midX - centreX) * (midX - centreX)
                            + (midY - centreY) * (midY - centreY);
       for (int s = 0; s < numSamples; s += samplesPerTile) {
-        int nSamples = std::min(s + samplesPerTile, numSamples);
+        int nSamples = std::min(s + samplesPerTile, numSamples) - s;
         tiles.emplace_back(
             Tile{xBegin, xEnd, yBegin, yEnd, nSamples, s, distanceSqr, rng()});
       }

@@ -1,6 +1,7 @@
 #include "ArrayOutput.h"
 
 #include <algorithm>
+#include <numeric>
 
 namespace {
 std::uint8_t componentToInt(double x) {
@@ -33,4 +34,11 @@ ArrayOutput &ArrayOutput::operator+=(const ArrayOutput &rhs) {
     output_[pixelIndex].accumulate(rhs.output_[pixelIndex]);
   }
   return *this;
+}
+
+size_t ArrayOutput::totalSamples() const noexcept {
+  return std::accumulate(begin(output_), end(output_), 0ULL,
+                         [](size_t lhs, const SampledPixel &pixel) {
+                           return lhs + pixel.numSamples();
+                         });
 }
