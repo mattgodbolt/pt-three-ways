@@ -81,11 +81,43 @@ auto createSuzanneScene(SB &sb, int width, int height) {
 }
 
 template <typename SB>
+auto createCeScene(SB &sb, int width, int height) {
+  DirRelativeOpener opener("scenes");
+  auto in = opener.open("ce.obj");
+  loadObjFile(*in, opener, sb);
+
+  auto brightLight = Material::makeLight(Vec3(40, 40, 40));
+  sb.addSphere(Vec3(0, 1.6, 0), 0.15, brightLight);
+  auto dullLight = Material::makeLight(Vec3(2.27, 3, 2.97));
+  sb.addSphere(Vec3(-0.2, 5.9, -0.3), 1.0, dullLight);
+
+  auto boxMat = Material::makeDiffuse(Vec3(0.20, 0.30, 0.36));
+  auto tl = Vec3(-5, -1, -5);
+  auto tr = Vec3(5, -1, -5);
+  auto bl = Vec3(-5, 1, -5);
+  auto br = Vec3(5, 1, -5);
+  sb.addTriangle(tl, tr, bl, boxMat);
+  sb.addTriangle(tr, bl, br, boxMat);
+
+  sb.addSphere(Vec3(), 10, Material::makeDiffuse(Vec3(0.2, 0.2, 0.2)));
+
+  Vec3 camPos(0.27, 1.25, 0.36);
+  Vec3 camLookAt(0, 0, 0);
+  Vec3 camUp(0, 0, -1);
+  double verticalFov = 40.0;
+  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
+  camera.setFocus(camLookAt, 0.01);
+  return camera;
+}
+
+template <typename SB>
 auto createScene(SB &sb, const std::string &sceneName, int width, int height) {
   if (sceneName == "cornell")
     return createCornellScene(sb, width, height);
   if (sceneName == "suzanne")
     return createSuzanneScene(sb, width, height);
+  if (sceneName == "ce")
+    return createCeScene(sb, width, height);
   throw std::runtime_error("Unknown scene " + sceneName);
 }
 

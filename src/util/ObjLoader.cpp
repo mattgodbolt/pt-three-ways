@@ -47,7 +47,7 @@ impl::loadMaterials(std::istream &in) {
           Vec3(asDouble(params[0]), asDouble(params[1]), asDouble(params[2]));
       return true;
     } else if (command == "Ns"sv || command == "Ni"sv || command == "illum"sv
-               || command == "Ka"sv || command == "Ks"sv) {
+               || command == "Ka"sv || command == "Ks"sv || command == "d"sv) {
       // Ignored
       return true;
     }
