@@ -115,8 +115,10 @@ auto sampleRange(std::mt19937 &rng, int numUSamples, int numVSamples) {
 }
 
 // TODO rangev3?
+static constexpr auto MaxDepth = 5;
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples, bool preview) {
+  if (depth >= MaxDepth) return Vec3();
   const auto intersectionRecord = intersect(scene, ray);
   if (!intersectionRecord)
     return scene.environment;
@@ -126,10 +128,6 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   if (preview)
     return mat.diffuse;
 
-  if (depth >= 5) {
-    // TODO: "russian roulette"
-    return mat.emission;
-  }
 
   // Sample evenly with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);

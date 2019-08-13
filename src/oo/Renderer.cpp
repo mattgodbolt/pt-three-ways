@@ -45,8 +45,12 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
   return tiles;
 }
 
+static constexpr auto MaxDepth = 5;
+
 Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
                         int numUSamples, int numVSamples) const {
+  if (depth >= MaxDepth)
+    return Vec3();
   Primitive::IntersectionRecord intersectionRecord;
   if (!scene_.intersect(ray, intersectionRecord))
     return scene_.environment(ray);
@@ -56,13 +60,8 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
     return mat.diffuse;
   const auto &hit = intersectionRecord.hit;
 
-  if (++depth > 5) {
-    // TODO: "russian roulette"
-    return mat.emission;
-  }
-
-  // Create a coordinate system local to the point, where the z is the
-  // normal at this point.
+  // Create a coordinate system local to the point, where the z is the normal at
+  // this point.
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
 
   Vec3 result;
@@ -92,12 +91,12 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
         auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
 
         result +=
-            mat.emission + mat.diffuse * radiance(rng, newRay, depth, 1, 1);
+            mat.emission + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
       } else {
         auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
 
         result +=
-            mat.emission + mat.diffuse * radiance(rng, newRay, depth, 1, 1);
+            mat.emission + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
       }
     }
   }

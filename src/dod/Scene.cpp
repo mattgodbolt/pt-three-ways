@@ -106,9 +106,13 @@ std::optional<dod::IntersectionRecord> Scene::intersect(const Ray &ray) const {
   return triangleRec ? triangleRec : sphereRec;
 }
 
+static constexpr auto MaxDepth = 5;
+
 Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
-                          int numUSamples, int numVSamples,
-                          bool preview) const {
+                     int numUSamples, int numVSamples, bool preview) const {
+  if (depth >= MaxDepth)
+    return Vec3();
+
   const auto intersectionRecord = intersect(ray);
   if (!intersectionRecord)
     return environment_;
@@ -117,11 +121,6 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   const auto &hit = intersectionRecord->hit;
   if (preview)
     return mat.diffuse;
-
-  if (++depth > 5) {
-    // TODO: "russian roulette"
-    return mat.emission;
-  }
 
   // Sample evenly with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);
@@ -150,13 +149,15 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
             ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
         auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
 
-        result += mat.emission
-                  + mat.diffuse * radiance(rng, newRay, depth, 1, 1, preview);
+        result +=
+            mat.emission
+            + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1, preview);
       } else {
         auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
 
-        result += mat.emission
-                  + mat.diffuse * radiance(rng, newRay, depth, 1, 1, preview);
+        result +=
+            mat.emission
+            + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1, preview);
       }
     }
   }
