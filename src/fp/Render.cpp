@@ -1,6 +1,7 @@
 #include "Render.h"
 
 #include "Primitive.h"
+#include "Random2DSampler.h"
 #include "Scene.h"
 #include "math/Camera.h"
 #include "util/ArrayOutput.h"
@@ -95,30 +96,12 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   }
 }
 
-// TODO consider making this an iterator instead
-auto sampleRange(std::mt19937 &rng, int numUSamples, int numVSamples) {
-  // Sample evenly with random offset.
-  std::uniform_real_distribution<> unit(0, 1.0);
-  std::vector<std::pair<double, double>> result;
-  result.reserve(numUSamples * numVSamples);
-  // TODO no raw loops
-  for (auto u = 0; u < numUSamples; ++u) {
-    for (auto v = 0; v < numVSamples; ++v) {
-      const auto sampleU = (static_cast<double>(u) + unit(rng))
-                           / static_cast<double>(numUSamples);
-      const auto sampleV = (static_cast<double>(v) + unit(rng))
-                           / static_cast<double>(numVSamples);
-      result.emplace_back(sampleU, sampleV);
-    }
-  }
-  return result;
-}
-
 // TODO rangev3?
 static constexpr auto MaxDepth = 5;
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples, bool preview) {
-  if (depth >= MaxDepth) return Vec3();
+  if (depth >= MaxDepth)
+    return Vec3();
   const auto intersectionRecord = intersect(scene, ray);
   if (!intersectionRecord)
     return scene.environment;
@@ -128,15 +111,12 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   if (preview)
     return mat.diffuse;
 
-
-  // Sample evenly with random offset.
-  std::uniform_real_distribution<> unit(0, 1.0);
   // Create a coordinate system local to the point, where the z is the
   // normal at this point.
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
-  auto sampleScale = 1.0 / (numUSamples * numVSamples);
-  auto range = sampleRange(rng, numUSamples, numVSamples);
-  Vec3 incomingLight = std::accumulate(
+  const auto sampleScale = 1.0 / (numUSamples * numVSamples);
+  const auto range = Random2DSampler(rng, numUSamples, numVSamples);
+  const Vec3 incomingLight = std::accumulate(
       std::begin(range), std::end(range), Vec3(),
       [&](Vec3 colour, const std::pair<double, double> &s) {
         return colour
