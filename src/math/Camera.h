@@ -46,4 +46,15 @@ public:
                   + (axis_.y() * sin(angle) * radius);
     return Ray::fromTwoPoints(origin, focalPoint);
   }
+
+  // TODO maybe use this more?
+  template <typename Rng>
+  [[nodiscard]] Ray ray(int x, int y, int width, int height, Rng &rng) const {
+    std::uniform_real_distribution<> unit;
+    auto u = unit(rng);
+    auto v = unit(rng);
+    auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
+    auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
+    return ray(xx, yy, rng);
+  }
 };

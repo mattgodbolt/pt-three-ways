@@ -3,6 +3,7 @@
 #include "SampledPixel.h"
 
 #include <array>
+#include <stdexcept>
 #include <vector>
 
 class ArrayOutput {
@@ -19,6 +20,21 @@ public:
   ArrayOutput(int width, int height) : width_(width), height_(height) {
     output_.resize(width * height);
   }
+
+  template <typename Source>
+  ArrayOutput(int width, int height, Source &&source)
+      : width_(width), height_(height) {
+    output_.resize(width * height);
+    int index = 0;
+    for (auto &&sample : source) {
+      if (index >= width * height)
+        throw std::logic_error("Too many samples in input");
+      output_[index++].accumulate(sample, 1);
+    }
+    if (index != width * height)
+      throw std::logic_error("Too few samples in input");
+  }
+
   [[nodiscard]] constexpr int height() const noexcept { return height_; }
   [[nodiscard]] constexpr int width() const noexcept { return width_; }
 
@@ -31,5 +47,5 @@ public:
 
   ArrayOutput &operator+=(const ArrayOutput &rhs);
 
-  size_t totalSamples() const noexcept;
+  [[nodiscard]] size_t totalSamples() const noexcept;
 };

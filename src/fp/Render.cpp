@@ -97,7 +97,6 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   }
 }
 
-// TODO rangev3?
 static constexpr auto MaxDepth = 5;
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               int numUSamples, int numVSamples, bool preview) {
@@ -130,46 +129,25 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
 ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
                               size_t seed, int width, int height,
                               bool preview) {
-  ArrayOutput result(width, height);
-  std::mt19937 rng(seed); // TODO this is mutable shared state below
   using namespace ranges;
-  auto xRange = view::ints(0, width) | view::cycle | view::take(width * height);
-  auto yRange = view::for_each(view::ints(0, height), [width](int i) {
-    return yield_from(view::repeat_n(i, width));
-  });
-  auto xyRange = view::zip(xRange, yRange);
-  std::vector<Vec3> colours =
-      xyRange
-      | view::transform([width, height, &rng, &camera](auto tuple) {
-        std::uniform_real_distribution<> unit(0, 1.0);
-          auto [x, y] = tuple;
-          auto u = unit(rng);
-          auto v = unit(rng);
-          auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
-          auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
-          return camera.ray(xx, yy, rng);
-        })
-      | view::transform([&scene, &rng, preview](const Ray &ray) {
-          return radiance(scene, rng, ray, 0, FirstBounceNumUSamples,
-                          FirstBounceNumVSamples, preview);
-        });
-  // TODO make an iterator that does this and pass it to the above!
-  for (auto y = 0; y < height; ++y) {
-    for (auto x = 0; x < width; ++x) {
-      result.addSamples(x, y, colours[x + y * width], 1);
-    }
-  }
-  return result;
-};
+  auto renderOnePixel = [seed, width, height, preview, &camera,
+                         &scene](auto tuple) {
+    auto [y, x] = tuple;
+    std::mt19937 rng(height * width * seed + x * width + y);
+    return radiance(scene, rng, camera.ray(x, y, width, height, rng), 0,
+                    FirstBounceNumUSamples, FirstBounceNumVSamples, preview);
+  };
+  auto renderedPixelsView =
+      view::cartesian_product(view::ints(0, height), view::ints(0, width))
+      | view::transform(renderOnePixel);
+  return ArrayOutput(width, height, renderedPixelsView);
+}
 
 void render(const Camera &camera, const Scene &scene, ArrayOutput &output,
             int samplesPerPixel, int numThreads, bool preview,
             const std::function<void()> &updateFunc) {
-  std::uniform_real_distribution<> unit(0.0, 1.0);
-
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
-  // accumulate separately? then feeds into a nice multithreaded future based
-  // thing?
+  // accumulate separately?
   // future from an async()
   size_t seed = 0;
   size_t numDone = 0;
