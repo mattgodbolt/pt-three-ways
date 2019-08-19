@@ -25,7 +25,6 @@ TEST_CASE("Renderer", "[Renderer]") {
       // Each tile should be no taller than 20
       REQUIRE(height <= 20);
     }
-    std::cout << tiles.size();
   }
 }
 
