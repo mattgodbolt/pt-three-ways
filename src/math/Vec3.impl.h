@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Norm3.impl.h"
+#include "Norm3.h"
 
 inline Norm3 Vec3::normalised() const noexcept {
   return Norm3(*this * (1.0 / length()));
