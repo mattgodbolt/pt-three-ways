@@ -31,6 +31,16 @@ matrix:
             - g++-9
       env:
         - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
+    - os: linux
+      addons:
+        apt:
+          sources:
+          - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main'
+            key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - clang-9
+      env:
+        - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9"
 
 before_install:
   - export CC
