@@ -56,7 +56,7 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
     return scene_.environment(ray);
 
   const auto &mat = intersectionRecord.material;
-  if (preview_)
+  if (renderParams_.preview)
     return mat.diffuse;
   const auto &hit = intersectionRecord.hit;
 
@@ -128,7 +128,8 @@ void Renderer::render(std::function<void()> updateFunc) const {
     return colour;
   };
 
-  WorkQueue<Tile> queue(generateTiles(16, 16, samplesPerPixel_, 8));
+  WorkQueue<Tile> queue(
+      generateTiles(16, 16, renderParams_.samplesPerPixel, 8));
 
   auto worker = [&] {
     for (;;) {
@@ -146,7 +147,7 @@ void Renderer::render(std::function<void()> updateFunc) const {
       }
     }
   };
-  std::vector<std::thread> threads{static_cast<size_t>(numThreads_)};
+  std::vector<std::thread> threads{static_cast<size_t>(renderParams_.maxCpus)};
   std::generate(threads.begin(), threads.end(),
                 [&]() { return std::thread(worker); });
   for (auto &t : threads)

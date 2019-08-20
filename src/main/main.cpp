@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <util/RenderParams.h>
 #include <utility>
 
 namespace {
@@ -37,7 +38,7 @@ struct DirRelativeOpener : ObjLoaderOpener {
 };
 
 template <typename SB>
-Camera createCornellScene(SB &sb, int width, int height) {
+Camera createCornellScene(SB &sb, const RenderParams &renderParams) {
   DirRelativeOpener opener("scenes");
   auto in = opener.open("CornellBox-Original.obj");
   loadObjFile(*in, opener, sb);
@@ -48,13 +49,14 @@ Camera createCornellScene(SB &sb, int width, int height) {
   Vec3 camUp(0, 1, 0);
   Vec3 camLookAt(0, 1, 0);
   double verticalFov = 50.0;
-  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
+  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+                renderParams.height, verticalFov);
   camera.setFocus(Vec3(0, 0, 0), 0.01);
   return camera;
 }
 
 template <typename SB>
-auto createSuzanneScene(SB &sb, int width, int height) {
+auto createSuzanneScene(SB &sb, const RenderParams &renderParams) {
   DirRelativeOpener opener("scenes");
   auto in = opener.open("suzanne.obj");
   loadObjFile(*in, opener, sb);
@@ -75,13 +77,14 @@ auto createSuzanneScene(SB &sb, int width, int height) {
   Vec3 camLookAt(1, -0.6, 0.4);
   Vec3 camUp(0, 1, 0);
   double verticalFov = 40.0;
-  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
+  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+                renderParams.height, verticalFov);
   camera.setFocus(camLookAt, 0.01);
   return camera;
 }
 
 template <typename SB>
-auto createCeScene(SB &sb, int width, int height) {
+auto createCeScene(SB &sb, const RenderParams &renderParams) {
   DirRelativeOpener opener("scenes");
   auto in = opener.open("ce.obj");
   loadObjFile(*in, opener, sb);
@@ -105,19 +108,21 @@ auto createCeScene(SB &sb, int width, int height) {
   Vec3 camLookAt(0, 0, 0);
   Vec3 camUp(0, 0, -1);
   double verticalFov = 40.0;
-  Camera camera(camPos, camLookAt, camUp, width, height, verticalFov);
+  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+                renderParams.height, verticalFov);
   camera.setFocus(camLookAt, 0.01);
   return camera;
 }
 
 template <typename SB>
-auto createScene(SB &sb, const std::string &sceneName, int width, int height) {
+auto createScene(SB &sb, const std::string &sceneName,
+                 const RenderParams &renderParams) {
   if (sceneName == "cornell")
-    return createCornellScene(sb, width, height);
+    return createCornellScene(sb, renderParams);
   if (sceneName == "suzanne")
-    return createSuzanneScene(sb, width, height);
+    return createSuzanneScene(sb, renderParams);
   if (sceneName == "ce")
-    return createCeScene(sb, width, height);
+    return createCeScene(sb, renderParams);
   throw std::runtime_error("Unknown scene " + sceneName);
 }
 
@@ -128,22 +133,20 @@ int main(int argc, const char *argv[]) {
   using namespace std::literals;
 
   bool help = false;
-  auto width = 1920;
-  auto height = 1080;
-  auto numCpus = 1u;
-  auto samplesPerPixel = 40;
-  bool preview = false;
+  RenderParams renderParams;
   std::string way = "oo";
   std::string sceneName = "cornell";
   std::string outputName;
 
   auto cli =
-      Opt(width, "width")["-w"]["--width"]("output image width")
-      | Opt(height, "height")["-h"]["--height"]("output image height")
-      | Opt(numCpus,
-            "numCpus")["--num-cpus"]("number of CPUs to use (0 for all)")
-      | Opt(samplesPerPixel, "samples")["--spp"]("number of samples per pixel")
-      | Opt(preview)["--preview"]("super quick preview")
+      Opt(renderParams.width, "width")["-w"]["--width"]("output image width")
+      | Opt(renderParams.height,
+            "height")["-h"]["--height"]("output image height")
+      | Opt(renderParams.maxCpus, "numCpus")["--num-cpus"](
+          "maximum number of CPUs to use (0 for all)")
+      | Opt(renderParams.samplesPerPixel,
+            "samples")["--spp"]("number of samples per pixel")
+      | Opt(renderParams.preview)["--preview"]("super quick preview")
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
       | Opt(sceneName, "scene")["--scene"]("which scene to render")
       | Arg(outputName, "output")("output filename").required() | Help(help);
@@ -163,23 +166,24 @@ int main(int argc, const char *argv[]) {
     exit(1);
   }
 
-  if (numCpus == 0) {
-    numCpus = std::thread::hardware_concurrency();
+  if (renderParams.maxCpus == 0) {
+    renderParams.maxCpus =
+        static_cast<int>(std::thread::hardware_concurrency());
   }
 
   auto startTime = std::chrono::system_clock::now();
-  ArrayOutput output(width, height);
+  ArrayOutput output(renderParams.width, renderParams.height);
 
   auto save = [&]() {
-    PngWriter pw(outputName.c_str(), width, height);
+    PngWriter pw(outputName.c_str(), renderParams.width, renderParams.height);
     if (!pw.ok()) {
       std::cerr << "Unable to save PNG\n";
       return;
     }
 
-    for (int y = 0; y < height; ++y) {
-      std::uint8_t row[width * 3];
-      for (int x = 0; x < width; ++x) {
+    for (int y = 0; y < renderParams.height; ++y) {
+      std::uint8_t row[renderParams.width * 3];
+      for (int x = 0; x < renderParams.width; ++x) {
         auto colour = output.pixelAt(x, y);
         for (int component = 0; component < 3; ++component)
           row[x * 3 + component] = colour[component];
@@ -192,9 +196,8 @@ int main(int argc, const char *argv[]) {
     static constexpr auto saveEvery = 10s;
     auto nextSave = std::chrono::system_clock::now() + saveEvery;
     oo::SceneBuilder sceneBuilder;
-    auto camera = createScene(sceneBuilder, sceneName, width, height);
-    oo::Renderer renderer(sceneBuilder.scene(), camera, output, samplesPerPixel,
-                          numCpus, preview);
+    auto camera = createScene(sceneBuilder, sceneName, renderParams);
+    oo::Renderer renderer(sceneBuilder.scene(), camera, renderParams, output);
     renderer.render([&] {
       // TODO: save is not thread safe even slightly, and yet it still blocks
       // the threads. this is terrible. Should have a thread safe result queue
@@ -207,13 +210,12 @@ int main(int argc, const char *argv[]) {
     });
   } else if (way == "fp") {
     fp::SceneBuilder sceneBuilder;
-    auto camera = createScene(sceneBuilder, sceneName, width, height);
-    fp::render(camera, sceneBuilder.scene(), output, samplesPerPixel, numCpus,
-               preview, save);
+    auto camera = createScene(sceneBuilder, sceneName, renderParams);
+    fp::render(camera, sceneBuilder.scene(), renderParams, output, save);
   } else if (way == "dod") {
     dod::Scene scene;
-    auto camera = createScene(scene, sceneName, width, height);
-    scene.render(camera, output, samplesPerPixel, preview, save);
+    auto camera = createScene(scene, sceneName, renderParams);
+    scene.render(camera, renderParams, output, save);
   } else {
     std::cerr << "Unknown way " << way << '\n';
     return 1;

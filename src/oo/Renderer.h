@@ -6,26 +6,24 @@
 
 #include <functional>
 #include <random>
+#include <util/RenderParams.h>
 
 namespace oo {
 
 class Renderer {
   const Scene &scene_;
   const Camera &camera_;
+  const RenderParams &renderParams_;
   ArrayOutput &output_;
-  int samplesPerPixel_;
-  int numThreads_;
-  bool preview_;
 
   static constexpr auto FirstBounceNumUSamples = 6;
   static constexpr auto FirstBounceNumVSamples = 3;
 
 public:
-  Renderer(const Scene &scene, const Camera &camera, ArrayOutput &arrayOutput,
-           int samplesPerPixel, int numThreads, bool preview)
-      : scene_(scene), camera_(camera), output_(arrayOutput),
-        samplesPerPixel_(samplesPerPixel), numThreads_(numThreads),
-        preview_(preview) {}
+  Renderer(const Scene &scene, const Camera &camera,
+           const RenderParams &renderParams, ArrayOutput &arrayOutput)
+      : scene_(scene), camera_(camera), renderParams_(renderParams),
+        output_(arrayOutput) {}
 
   void render(std::function<void()> updateFunc) const;
 

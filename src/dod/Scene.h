@@ -8,6 +8,7 @@
 #include "math/Vec3.h"
 #include "util/ArrayOutput.h"
 #include "util/Material.h"
+#include "util/RenderParams.h"
 
 #include <array>
 #include <functional>
@@ -40,8 +41,8 @@ public:
 
   void setEnvironmentColour(const Vec3 &colour);
 
-  void render(const Camera &camera, ArrayOutput &output, int samplesPerPixel,
-              bool preview, const std::function<void()> &updateFunc);
+  void render(const Camera &camera, const RenderParams &renderParams,
+              ArrayOutput &output, const std::function<void()> &updateFunc);
 
   // Visible for tests
   [[nodiscard]] std::optional<IntersectionRecord>

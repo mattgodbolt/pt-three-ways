@@ -1,5 +1,5 @@
 #include "Scene.h"
-#include <math/OrthoNormalBasis.h>
+#include "math/OrthoNormalBasis.h"
 
 using dod::Scene;
 
@@ -182,18 +182,19 @@ void Scene::addSphere(const Vec3 &centre, double radius,
 
 void Scene::setEnvironmentColour(const Vec3 &colour) { environment_ = colour; }
 
-void Scene::render(const Camera &camera, ArrayOutput &output,
-                   int samplesPerPixel, bool preview,
+void Scene::render(const Camera &camera, const RenderParams &renderParams,
+                   ArrayOutput &output,
                    const std::function<void()> &updateFunc) {
   auto width = output.width();
   auto height = output.height();
-  std::mt19937 rng(samplesPerPixel);
+  std::mt19937 rng(renderParams.samplesPerPixel);
   std::uniform_real_distribution<> unit(0.0, 1.0);
 
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
   // accumulate separately? then feeds into a nice multithreaded future based
   // thing?
-  for (int sample = 0; sample < samplesPerPixel; ++sample) {
+  // TODO: multi cpus
+  for (int sample = 0; sample < renderParams.samplesPerPixel; ++sample) {
     for (auto y = 0; y < height; ++y) {
       for (auto x = 0; x < width; ++x) {
         auto u = unit(rng);
@@ -203,7 +204,8 @@ void Scene::render(const Camera &camera, ArrayOutput &output,
         auto ray = camera.ray(xx, yy, rng);
         output.addSamples(x, y,
                           radiance(rng, ray, 0, FirstBounceNumUSamples,
-                                   FirstBounceNumVSamples, preview),
+                                   FirstBounceNumVSamples,
+                                   renderParams.preview),
                           1);
       }
     }

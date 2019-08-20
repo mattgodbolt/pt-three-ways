@@ -127,38 +127,42 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
 }
 
 ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
-                              size_t seed, int width, int height,
-                              bool preview) {
+                              size_t seed, const RenderParams &renderParams) {
   using namespace ranges;
-  auto renderOnePixel = [seed, width, height, preview, &camera,
-                         &scene](auto tuple) {
+  auto renderOnePixel = [seed, &renderParams, &camera, &scene](auto tuple) {
     auto [y, x] = tuple;
-    std::mt19937 rng(height * width * seed + x * width + y);
-    return radiance(scene, rng, camera.ray(x, y, width, height, rng), 0,
-                    FirstBounceNumUSamples, FirstBounceNumVSamples, preview);
+    std::mt19937 rng(renderParams.height * renderParams.width * seed
+                     + x * renderParams.width + y);
+    return radiance(
+        scene, rng,
+        camera.ray(x, y, renderParams.width, renderParams.height, rng), 0,
+        FirstBounceNumUSamples, FirstBounceNumVSamples, renderParams.preview);
   };
   auto renderedPixelsView =
-      view::cartesian_product(view::ints(0, height), view::ints(0, width))
+      view::cartesian_product(view::ints(0, renderParams.height),
+                              view::ints(0, renderParams.width))
       | view::transform(renderOnePixel);
-  return ArrayOutput(width, height, renderedPixelsView);
+  return ArrayOutput(renderParams.width, renderParams.height,
+                     renderedPixelsView);
 }
 
-void render(const Camera &camera, const Scene &scene, ArrayOutput &output,
-            int samplesPerPixel, int numThreads, bool preview,
+void render(const Camera &camera, const Scene &scene,
+            const RenderParams &renderParams, ArrayOutput &output,
             const std::function<void()> &updateFunc) {
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
   // accumulate separately?
   // future from an async()
   size_t seed = 0;
   size_t numDone = 0;
-  Progressifier progressifier(samplesPerPixel);
-  for (int sample = 0; sample < samplesPerPixel; sample += numThreads) {
+  Progressifier progressifier(renderParams.samplesPerPixel);
+  for (int sample = 0; sample < renderParams.samplesPerPixel;
+       sample += renderParams.maxCpus) {
     std::vector<std::future<ArrayOutput>> futures;
-    for (int ss = sample; ss < std::min(samplesPerPixel, sample + numThreads);
+    for (int ss = sample; ss < std::min(renderParams.samplesPerPixel,
+                                        sample + renderParams.maxCpus);
          ++ss) {
       futures.emplace_back(std::async(std::launch::async, [&] {
-        return renderWholeScreen(camera, scene, seed++, output.width(),
-                                 output.height(), preview);
+        return renderWholeScreen(camera, scene, seed++, renderParams);
       }));
     }
     for (auto &&future : futures) {
