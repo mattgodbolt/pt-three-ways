@@ -94,11 +94,4 @@ public:
 
 std::ostream &operator<<(std::ostream &o, const Vec3 &v);
 
-#include "Norm3.h"
-
-inline Norm3 Vec3::normalised() const noexcept {
-  return Norm3(*this * (1.0 / length()));
-}
-
-inline constexpr Vec3::Vec3(const Norm3 &norm)
-    : x_(norm.x()), y_(norm.y()), z_(norm.z()) {}
+#include "Vec3.impl.h"
