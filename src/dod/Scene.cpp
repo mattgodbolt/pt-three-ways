@@ -131,6 +131,7 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {
+      // TODO cone bounce
       auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
                    / static_cast<double>(numUSamples);
       auto radiusSquared = (static_cast<double>(v) + unit(rng))

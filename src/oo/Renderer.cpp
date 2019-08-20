@@ -44,6 +44,25 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
   return tiles;
 }
 
+namespace {
+
+Vec3 cone(const Vec3 &direction, double coneTheta, double u, double v) {
+  static constexpr auto Epsilon = 0.00001; // TODO unify epsilons
+  if (coneTheta < Epsilon)
+    return direction;
+  coneTheta = coneTheta * (1.0 - (2.0 * acos(u) / M_PI));
+  const auto radius = sin(coneTheta);
+  const auto zScale = cos(coneTheta);
+  const auto randomTheta = v * 2 * M_PI;
+  const auto basis = OrthoNormalBasis::fromZ(direction);
+  return basis
+      .transform(
+          Vec3(cos(randomTheta) * radius, sin(randomTheta) * radius, zScale))
+      .normalised();
+}
+
+}
+
 static constexpr auto MaxDepth = 5;
 
 Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
@@ -71,27 +90,34 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   std::uniform_real_distribution<> unit(0, 1.0);
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {
-      auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
-                   / static_cast<double>(numUSamples);
-      auto radiusSquared = (static_cast<double>(v) + unit(rng))
-                           / static_cast<double>(numVSamples);
-      auto radius = sqrt(radiusSquared);
-      // Construct the new direction.
-      const auto newDir =
-          basis
-              .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
-                              sqrt(1 - radiusSquared)))
-              .normalised();
       double p = unit(rng);
 
+      // For non-"reflective" materials this should also include a reflectivity
+      // term. That requires IoR of inside vs outside, and knowledge of whether
+      // we're in or out. This is needed for transparency too...which we don't
+      // support yet either.
       if (p < mat.reflectivity) {
         auto reflected =
             ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
-        auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
+        auto newDir =
+            cone(reflected, mat.reflectionConeAngle(), unit(rng), unit(rng));
+        auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
 
+        // TODO should this be diffuse? seems not to me
         result +=
             mat.emission + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
       } else {
+        // Construct the new direction.
+        auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
+                     / static_cast<double>(numUSamples);
+        auto radiusSquared = (static_cast<double>(v) + unit(rng))
+                             / static_cast<double>(numVSamples);
+        auto radius = sqrt(radiusSquared);
+        const auto newDir =
+            basis
+                .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
+                                sqrt(1 - radiusSquared)))
+                .normalised();
         auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
 
         result +=
