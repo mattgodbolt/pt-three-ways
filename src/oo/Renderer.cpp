@@ -46,7 +46,7 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
 
 namespace {
 
-Vec3 cone(const Vec3 &direction, double coneTheta, double u, double v) {
+Norm3 cone(const Norm3 &direction, double coneTheta, double u, double v) {
   static constexpr auto Epsilon = 0.00001; // TODO unify epsilons
   if (coneTheta < Epsilon)
     return direction;
@@ -97,10 +97,8 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       // we're in or out. This is needed for transparency too...which we don't
       // support yet either.
       if (p < mat.reflectivity) {
-        auto reflected =
-            ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
         auto newDir =
-            cone(reflected, mat.reflectionConeAngle(), unit(rng), unit(rng));
+            cone(hit.normal.reflect(ray.direction()), mat.reflectionConeAngle(), unit(rng), unit(rng));
         auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
 
         // TODO should this be diffuse? seems not to me

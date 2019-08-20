@@ -4,9 +4,9 @@
 
 class Ray {
   Vec3 origin_;
-  Vec3 direction_;
+  Norm3 direction_;
 
-  constexpr Ray(const Vec3 &origin, const Vec3 &direction) noexcept
+  constexpr Ray(const Vec3 &origin, const Norm3 &direction) noexcept
       : origin_(origin), direction_(direction) {}
 
 public:
@@ -16,7 +16,7 @@ public:
     return Ray(point1, (point2 - point1).normalised());
   }
   [[nodiscard]] static Ray fromOriginAndDirection(const Vec3 &origin,
-                                                  const Vec3 &direction) {
+                                                  const Norm3 &direction) {
     // TODO assert dir is normal?
     return Ray(origin, direction);
   }
@@ -24,7 +24,7 @@ public:
   [[nodiscard]] constexpr const Vec3 &origin() const noexcept {
     return origin_;
   }
-  [[nodiscard]] constexpr const Vec3 &direction() const noexcept {
+  [[nodiscard]] constexpr const Norm3 &direction() const noexcept {
     return direction_;
   }
 

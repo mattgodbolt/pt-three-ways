@@ -22,7 +22,7 @@ bool Sphere::intersect(const Ray &ray, Hit &hit) const noexcept {
   auto hitPosition = ray.positionAlong(t);
   auto normal = (hitPosition - centre_).normalised();
   if (normal.dot(ray.direction()) > 0)
-    normal = normal * -1;
+    normal = -normal;
   hit = Hit{t, hitPosition, normal};
   return true;
 }

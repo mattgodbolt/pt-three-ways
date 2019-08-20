@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CeSupt.h"
 #include <cmath>
 #include <iosfwd>
+
+class Norm3;
 
 class Vec3 {
   double x_{}, y_{}, z_{};
@@ -10,6 +11,7 @@ class Vec3 {
 public:
   constexpr Vec3() noexcept = default;
   constexpr Vec3(double x, double y, double z) noexcept : x_(x), y_(y), z_(z) {}
+  constexpr Vec3(const Norm3 &norm); // NOLINT(google-explicit-constructor)
 
   constexpr Vec3 operator+(const Vec3 &b) const noexcept {
     return Vec3(x_ + b.x_, y_ + b.y_, z_ + b.z_);
@@ -59,17 +61,9 @@ public:
   [[nodiscard]] constexpr double lengthSquared() const noexcept {
     return dot(*this);
   }
-  [[nodiscard]] constexpr double length() const noexcept {
-    return ce_supt::sqrt(lengthSquared());
-  }
+  [[nodiscard]] double length() const noexcept { return sqrt(lengthSquared()); }
 
-  [[nodiscard]] constexpr Vec3 normalised() const noexcept {
-    return *this * (1.0 / length());
-  }
-  constexpr Vec3 &normalise() noexcept {
-    *this = normalised();
-    return *this;
-  }
+  [[nodiscard]] Norm3 normalised() const noexcept;
 
   [[nodiscard]] constexpr double dot(const Vec3 &b) const noexcept {
     return x_ * b.x_ + y_ * b.y_ + z_ * b.z_;
@@ -99,3 +93,12 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &o, const Vec3 &v);
+
+#include "Norm3.h"
+
+inline Norm3 Vec3::normalised() const noexcept {
+  return Norm3(*this * (1.0 / length()));
+}
+
+inline constexpr Vec3::Vec3(const Norm3 &norm)
+    : x_(norm.x()), y_(norm.y()), z_(norm.z()) {}
