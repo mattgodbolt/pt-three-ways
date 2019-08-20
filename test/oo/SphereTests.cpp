@@ -42,7 +42,8 @@ TEST_CASE("Spheres", "[Sphere]") {
   SECTION("intersect from within sphere at known intersection point") {
     Sphere s(Vec3(0, 0, 30), 10);
     Hit hit;
-    REQUIRE(s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 30), Vec3(0, 0, 2)), hit));
+    REQUIRE(
+        s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 30), Vec3(0, 0, 2)), hit));
     CHECK(hit.distance == 10);
     CHECK(hit.position == ApproxVec3(0, 0, 20));
     CHECK(hit.normal == ApproxVec3(0, 0, 1));

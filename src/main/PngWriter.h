@@ -2,8 +2,8 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <png.h>
 #include <memory>
+#include <png.h>
 
 class PngWriter {
   std::unique_ptr<FILE, decltype(fclose) *> file_;
