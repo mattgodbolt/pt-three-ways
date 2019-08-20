@@ -9,10 +9,9 @@ std::vector<Renderer::Tile> Renderer::generateTiles(int xTileSize,
                                                     int yTileSize,
                                                     int numSamples,
                                                     int samplesPerTile) const {
-  auto width = output_.width();
-  auto height = output_.height();
-  return Renderer::generateTiles(width, height, xTileSize, yTileSize,
-                                 numSamples, samplesPerTile);
+  return Renderer::generateTiles(renderParams_.width, renderParams_.height,
+                                 xTileSize, yTileSize, numSamples,
+                                 samplesPerTile);
 }
 
 std::vector<Renderer::Tile>
@@ -109,9 +108,12 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
 // non-OO Type thing? "render context" ? maybe?
 // TODO: non-threaded version?
-void Renderer::render(std::function<void()> updateFunc) const {
-  int width = output_.width();
-  int height = output_.height();
+ArrayOutput
+Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
+  ArrayOutput output(renderParams_.width, renderParams_.height);
+
+  int width = renderParams_.width;
+  int height = renderParams_.height;
 
   std::uniform_real_distribution<> unit(0.0, 1.0);
   auto renderPixel = [&](std::mt19937 &rng, int x, int y, int samples) {
@@ -133,7 +135,7 @@ void Renderer::render(std::function<void()> updateFunc) const {
 
   auto worker = [&] {
     for (;;) {
-      auto tileOpt = queue.pop(updateFunc);
+      auto tileOpt = queue.pop([&] { updateFunc(output); });
       if (!tileOpt)
         break;
       auto &tile = *tileOpt;
@@ -141,8 +143,8 @@ void Renderer::render(std::function<void()> updateFunc) const {
       std::mt19937 rng(tile.randomPrio);
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
-          output_.addSamples(x, y, renderPixel(rng, x, y, tile.samples),
-                             tile.samples);
+          output.addSamples(x, y, renderPixel(rng, x, y, tile.samples),
+                            tile.samples);
         }
       }
     }
@@ -152,4 +154,6 @@ void Renderer::render(std::function<void()> updateFunc) const {
                 [&]() { return std::thread(worker); });
   for (auto &t : threads)
     t.join();
+
+  return output;
 }

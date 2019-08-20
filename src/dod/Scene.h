@@ -41,8 +41,9 @@ public:
 
   void setEnvironmentColour(const Vec3 &colour);
 
-  void render(const Camera &camera, const RenderParams &renderParams,
-              ArrayOutput &output, const std::function<void()> &updateFunc);
+  ArrayOutput
+  render(const Camera &camera, const RenderParams &renderParams,
+         const std::function<void(ArrayOutput &output)> &updateFunc);
 
   // Visible for tests
   [[nodiscard]] std::optional<IntersectionRecord>

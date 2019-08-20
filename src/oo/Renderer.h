@@ -14,18 +14,16 @@ class Renderer {
   const Scene &scene_;
   const Camera &camera_;
   const RenderParams &renderParams_;
-  ArrayOutput &output_;
 
   static constexpr auto FirstBounceNumUSamples = 6;
   static constexpr auto FirstBounceNumVSamples = 3;
 
 public:
   Renderer(const Scene &scene, const Camera &camera,
-           const RenderParams &renderParams, ArrayOutput &arrayOutput)
-      : scene_(scene), camera_(camera), renderParams_(renderParams),
-        output_(arrayOutput) {}
+           const RenderParams &renderParams)
+      : scene_(scene), camera_(camera), renderParams_(renderParams) {}
 
-  void render(std::function<void()> updateFunc) const;
+  ArrayOutput render(std::function<void(const ArrayOutput &)> updateFunc) const;
 
   // Visible for testing
   struct Tile {

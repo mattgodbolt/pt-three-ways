@@ -182,11 +182,12 @@ void Scene::addSphere(const Vec3 &centre, double radius,
 
 void Scene::setEnvironmentColour(const Vec3 &colour) { environment_ = colour; }
 
-void Scene::render(const Camera &camera, const RenderParams &renderParams,
-                   ArrayOutput &output,
-                   const std::function<void()> &updateFunc) {
-  auto width = output.width();
-  auto height = output.height();
+ArrayOutput
+Scene::render(const Camera &camera, const RenderParams &renderParams,
+              const std::function<void(ArrayOutput &output)> &updateFunc) {
+  auto width = renderParams.width;
+  auto height = renderParams.height;
+  ArrayOutput output(width, height);
   std::mt19937 rng(renderParams.samplesPerPixel);
   std::uniform_real_distribution<> unit(0.0, 1.0);
 
@@ -209,6 +210,7 @@ void Scene::render(const Camera &camera, const RenderParams &renderParams,
                           1);
       }
     }
-    updateFunc();
+    updateFunc(output);
   }
+  return output;
 }

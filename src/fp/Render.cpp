@@ -146,14 +146,15 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
                      renderedPixelsView);
 }
 
-void render(const Camera &camera, const Scene &scene,
-            const RenderParams &renderParams, ArrayOutput &output,
-            const std::function<void()> &updateFunc) {
+ArrayOutput render(const Camera &camera, const Scene &scene,
+                   const RenderParams &renderParams,
+                   const std::function<void(const ArrayOutput &)> &updateFunc) {
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
   // accumulate separately?
   // future from an async()
   size_t seed = 0;
   size_t numDone = 0;
+  ArrayOutput output(renderParams.width, renderParams.height);
   Progressifier progressifier(renderParams.samplesPerPixel);
   for (int sample = 0; sample < renderParams.samplesPerPixel;
        sample += renderParams.maxCpus) {
@@ -170,9 +171,10 @@ void render(const Camera &camera, const Scene &scene,
       output += future.get();
       numDone++;
       progressifier.update(numDone);
-      updateFunc();
+      updateFunc(output);
     }
   }
+  return output;
 }
 
 }
