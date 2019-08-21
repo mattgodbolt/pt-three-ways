@@ -11,8 +11,6 @@ class Norm3 {
       : x_(x), y_(y), z_(z) {}
 
 public:
-  constexpr Norm3() noexcept = default;
-
   [[nodiscard]] constexpr Vec3 toVec3() const noexcept;
 
   static Norm3 fromNormal(const Vec3 &normal);

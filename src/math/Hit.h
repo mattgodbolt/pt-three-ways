@@ -6,5 +6,5 @@
 struct Hit {
   double distance{};
   Vec3 position;
-  Norm3 normal;
+  Norm3 normal{Norm3::xAxis()};
 };
