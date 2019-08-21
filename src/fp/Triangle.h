@@ -41,7 +41,7 @@ public:
     return vertices_[2] - vertices_[0];
   }
 
-  [[nodiscard]] constexpr Vec3 faceNormal() const {
+  [[nodiscard]] Norm3 faceNormal() const {
     return uVector().cross(vVector()).normalised();
   }
   [[nodiscard]] std::optional<Hit> intersect(const Ray &ray) const noexcept;

@@ -22,6 +22,6 @@ std::optional<Hit> Sphere::intersect(const Ray &ray) const noexcept {
   auto hitPosition = ray.positionAlong(t);
   auto normal = (hitPosition - centre_).normalised();
   if (normal.dot(ray.direction()) > 0)
-    normal = normal * -1;
+    normal = -normal;
   return Hit{t, hitPosition, normal};
 }

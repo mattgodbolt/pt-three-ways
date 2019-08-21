@@ -39,7 +39,7 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
   auto hitPosition = ray.positionAlong(currentNearestDist);
   auto normal = (hitPosition - spheres_[*nearestIndex].centre).normalised();
   if (normal.dot(ray.direction()) > 0)
-    normal = normal * -1;
+    normal = -normal;
   return IntersectionRecord{Hit{currentNearestDist, hitPosition, normal},
                             sphereMaterials_[*nearestIndex]};
 }
@@ -146,9 +146,9 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       double p = unit(rng);
 
       if (p < mat.reflectivity) {
-        auto reflected =
-            ray.direction() - hit.normal * 2 * hit.normal.dot(ray.direction());
-        auto newRay = Ray::fromOriginAndDirection(hit.position, reflected);
+        // TODO cone
+        auto newRay = Ray::fromOriginAndDirection(
+            hit.position, hit.normal.reflect(ray.direction()));
 
         result +=
             mat.emission

@@ -68,12 +68,9 @@ TEST_CASE("Vectors", "[math]") {
     CHECK(Vec3(3, 4, 5).length() == Approx(sqrt(50)));
   }
   SECTION("normalisation") {
-    CHECK(Vec3(1, 0, 0).normalised() == Vec3(1, 0, 0));
-    CHECK(Vec3(10, 0, 0).normalised() == Vec3(1, 0, 0));
-    CHECK(Vec3(4, 5, 6).normalised().length() == Approx(1.0));
-    auto vec = Vec3(10, 20, 30);
-    CHECK(vec.normalise().length() == Approx(1.0));
-    CHECK(vec.length() == Approx(1.0));
+    CHECK(Vec3(1, 0, 0).normalised() == Norm3::xAxis());
+    CHECK(Vec3(10, 0, 0).normalised() == Norm3::xAxis());
+    CHECK(Vec3(4, 5, 6).normalised().toVec3().length() == Approx(1.0));
   }
   SECTION("dot product") {
     CHECK(Vec3(1, 2, 3).dot(Vec3(4, 5, 6)) == Approx(1 * 4 + 2 * 5 + 3 * 6));

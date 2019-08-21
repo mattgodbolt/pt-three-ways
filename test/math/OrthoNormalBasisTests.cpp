@@ -8,17 +8,17 @@ namespace {
 
 TEST_CASE("OrthoNormalBasis", "[OrthoNormalBasis]") {
   SECTION("constructs") {
-    OrthoNormalBasis onb(Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1));
-    CHECK(onb.x() == Vec3(1, 0, 0));
-    CHECK(onb.y() == Vec3(0, 1, 0));
-    CHECK(onb.z() == Vec3(0, 0, 1));
+    OrthoNormalBasis onb(Norm3::xAxis(), Norm3::yAxis(), Norm3::zAxis());
+    CHECK(onb.x() == Norm3::xAxis());
+    CHECK(onb.y() == Norm3::yAxis());
+    CHECK(onb.z() == Norm3::zAxis());
   }
   SECTION("creates sane ONBs") {
     auto check = [](const char *name, const OrthoNormalBasis &onb) {
       INFO(name);
-      CHECK(onb.x() == Vec3(1, 0, 0));
-      CHECK(onb.y() == Vec3(0, 1, 0));
-      CHECK(onb.z() == Vec3(0, 0, 1));
+      CHECK(onb.x() == Norm3::xAxis());
+      CHECK(onb.y() == Norm3::yAxis());
+      CHECK(onb.z() == Norm3::zAxis());
     };
     check("xy", OrthoNormalBasis::fromXY(Vec3(1, 0, 0), Vec3(0, 1, 0)));
     check("yx", OrthoNormalBasis::fromYX(Vec3(0, 1, 0), Vec3(1, 0, 0)));
@@ -30,9 +30,6 @@ TEST_CASE("OrthoNormalBasis", "[OrthoNormalBasis]") {
   SECTION("creates ONBs for single axes") {
     auto checkIsBasis = [](const char *name, const OrthoNormalBasis &onb) {
       INFO(name);
-      CHECK(onb.x().lengthSquared() == Approx(1.));
-      CHECK(onb.y().lengthSquared() == Approx(1.));
-      CHECK(onb.z().lengthSquared() == Approx(1.));
       auto basicallyZero = Approx(0.).margin(0.00000001);
       CHECK(onb.x().dot(onb.y()) == basicallyZero);
       CHECK(onb.x().dot(onb.z()) == basicallyZero);
