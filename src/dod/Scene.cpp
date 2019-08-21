@@ -1,9 +1,9 @@
 #include "Scene.h"
+#include "math/Epsilon.h"
 #include "math/OrthoNormalBasis.h"
 
 using dod::Scene;
 
-constexpr double Epsilon = 0.000000001;
 constexpr auto FirstBounceNumUSamples = 6;
 constexpr auto FirstBounceNumVSamples = 3;
 
@@ -21,13 +21,12 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
       continue;
 
     determinant = sqrt(determinant);
-    static constexpr auto epsilon = 1e-4;
     auto minusT = b - determinant;
     auto plusT = b + determinant;
-    if (minusT < epsilon && plusT < epsilon)
+    if (minusT < Epsilon && plusT < Epsilon)
       continue;
 
-    auto t = minusT > epsilon ? minusT : plusT;
+    auto t = minusT > Epsilon ? minusT : plusT;
     if (t < currentNearestDist) {
       nearestIndex = sphereIndex;
       currentNearestDist = t;
@@ -131,7 +130,7 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 
   for (auto u = 0; u < numUSamples; ++u) {
     for (auto v = 0; v < numVSamples; ++v) {
-      // TODO cone bounce
+      // TODO coneSample bounce
       auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
                    / static_cast<double>(numUSamples);
       auto radiusSquared = (static_cast<double>(v) + unit(rng))
@@ -146,15 +145,14 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       double p = unit(rng);
 
       if (p < mat.reflectivity) {
-        // TODO cone
-        auto newRay = Ray::fromOriginAndDirection(
-            hit.position, hit.normal.reflect(ray.direction()));
+        // TODO coneSample
+        auto newRay = Ray(hit.position, hit.normal.reflect(ray.direction()));
 
         result +=
             mat.emission
             + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1, preview);
       } else {
-        auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
+        auto newRay = Ray(hit.position, newDir);
 
         result +=
             mat.emission

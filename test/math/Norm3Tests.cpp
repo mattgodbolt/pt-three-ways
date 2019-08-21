@@ -42,8 +42,9 @@ TEST_CASE("Normals", "[math]") {
   SECTION("reflection") {
     CHECK(Norm3::xAxis().reflect(Norm3::yAxis()) == Norm3::yAxis());
     auto incoming = Vec3(1, -0.2, 0).normalised();
-    CHECK(Norm3::yAxis().reflect(incoming)
-          == Norm3::fromNormal(Vec3(incoming.x(), -incoming.y(), incoming.z())));
+    CHECK(
+        Norm3::yAxis().reflect(incoming)
+        == Norm3::fromNormal(Vec3(incoming.x(), -incoming.y(), incoming.z())));
   }
 }
 

@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "Epsilon.h"
 #include "Vec3.h"
 
 constexpr Norm3::Norm3(const Vec3 &vec) noexcept
@@ -25,7 +26,7 @@ constexpr Vec3 Norm3::cross(const Vec3 &b) const noexcept {
 }
 
 inline Norm3 Norm3::fromNormal(const Vec3 &normal) {
-  assert(fabs(normal.lengthSquared() - 1.0) < 0.0000001); // TODO epsilon
+  assert(fabs(normal.lengthSquared() - 1.0) < Epsilon);
   return Norm3(normal);
 }
 

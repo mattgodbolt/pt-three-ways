@@ -1,4 +1,5 @@
 #include "Sphere.h"
+#include "math/Epsilon.h"
 
 using fp::Sphere;
 
@@ -12,13 +13,12 @@ std::optional<Hit> Sphere::intersect(const Ray &ray) const noexcept {
     return {};
 
   determinant = sqrt(determinant);
-  static constexpr auto epsilon = 1e-4;
   auto minusT = b - determinant;
   auto plusT = b + determinant;
-  if (minusT < epsilon && plusT < epsilon)
+  if (minusT < Epsilon && plusT < Epsilon)
     return {};
 
-  auto t = minusT > epsilon ? minusT : plusT;
+  auto t = minusT > Epsilon ? minusT : plusT;
   auto hitPosition = ray.positionAlong(t);
   auto normal = (hitPosition - centre_).normalised();
   if (normal.dot(ray.direction()) > 0)

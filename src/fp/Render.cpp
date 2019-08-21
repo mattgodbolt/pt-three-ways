@@ -85,13 +85,12 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   const auto p = unit(rng);
 
   if (p < mat.reflectivity) {
-    // TODO cone bounce
-    auto newRay = Ray::fromOriginAndDirection(
-        hit.position, hit.normal.reflect(ray.direction()));
+    // TODO coneSample bounce
+    auto newRay = Ray(hit.position, hit.normal.reflect(ray.direction()));
 
     return radiance(scene, rng, newRay, depth, 1, 1, preview);
   } else {
-    auto newRay = Ray::fromOriginAndDirection(hit.position, newDir);
+    auto newRay = Ray(hit.position, newDir);
 
     return radiance(scene, rng, newRay, depth, 1, 1, preview);
   }

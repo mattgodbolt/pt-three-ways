@@ -1,8 +1,7 @@
 #include "Triangle.h"
+#include "math/Epsilon.h"
 
 using oo::Triangle;
-
-constexpr double Epsilon = 0.000000001;
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 bool Triangle::intersect(const Ray &ray, Hit &hit) const noexcept {

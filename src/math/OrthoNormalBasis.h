@@ -15,7 +15,7 @@ public:
   [[nodiscard]] constexpr const Norm3 &y() const noexcept { return y_; }
   [[nodiscard]] constexpr const Norm3 &z() const noexcept { return z_; }
 
-  [[nodiscard]] constexpr const Vec3 transform(const Vec3 &pos) const noexcept {
+  [[nodiscard]] constexpr Vec3 transform(const Vec3 &pos) const noexcept {
     return x_ * pos.x() + y_ * pos.y() + z_ * pos.z();
   }
 

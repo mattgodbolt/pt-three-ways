@@ -35,7 +35,7 @@ public:
     auto zContrib = axis_.z() * cameraPlaneDist_;
     auto direction = (xContrib + yContrib + zContrib).normalised();
     if (apertureRadius_ == 0)
-      return Ray::fromOriginAndDirection(centre_, direction);
+      return Ray(centre_, direction);
 
     auto focalPoint = centre_ + direction * focalDistance_;
     std::uniform_real_distribution<> angleDist(0, 2 * M_PI);

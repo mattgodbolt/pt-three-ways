@@ -2,6 +2,7 @@
 
 #include "Norm3.h"
 #include "Vec3.h"
+
 #include <iosfwd>
 
 struct ApproxVec3 {
