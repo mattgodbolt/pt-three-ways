@@ -4,6 +4,7 @@
 #include "Random2DSampler.h"
 #include "Scene.h"
 #include "math/Camera.h"
+#include "math/Samples.h"
 #include "util/ArrayOutput.h"
 #include "util/Progressifier.h"
 
@@ -73,24 +74,16 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   std::uniform_real_distribution<> unit(0, 1.0);
   const auto &mat = intersectionRecord.material;
   const auto &hit = intersectionRecord.hit;
-  const auto theta = 2 * M_PI * u;
-  const auto radiusSquared = v;
-  const auto radius = sqrt(radiusSquared);
-  // Construct the new direction.
-  const auto newDir =
-      basis
-          .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
-                          sqrt(1 - radiusSquared)))
-          .normalised();
   const auto p = unit(rng);
 
   if (p < mat.reflectivity) {
-    // TODO coneSample bounce
-    auto newRay = Ray(hit.position, hit.normal.reflect(ray.direction()));
+    auto newRay =
+        Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
+                                     mat.reflectionConeAngle(), u, v));
 
     return radiance(scene, rng, newRay, depth, 1, 1, preview);
   } else {
-    auto newRay = Ray(hit.position, newDir);
+    auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
 
     return radiance(scene, rng, newRay, depth, 1, 1, preview);
   }

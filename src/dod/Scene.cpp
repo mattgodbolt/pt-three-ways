@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "math/Epsilon.h"
 #include "math/OrthoNormalBasis.h"
+#include <math/Samples.h>
 
 using dod::Scene;
 
@@ -128,31 +129,24 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
   Vec3 result;
 
-  for (auto u = 0; u < numUSamples; ++u) {
-    for (auto v = 0; v < numVSamples; ++v) {
-      // TODO coneSample bounce
-      auto theta = 2 * M_PI * (static_cast<double>(u) + unit(rng))
-                   / static_cast<double>(numUSamples);
-      auto radiusSquared = (static_cast<double>(v) + unit(rng))
-                           / static_cast<double>(numVSamples);
-      auto radius = sqrt(radiusSquared);
-      // Construct the new direction.
-      const auto newDir =
-          basis
-              .transform(Vec3(cos(theta) * radius, sin(theta) * radius,
-                              sqrt(1 - radiusSquared)))
-              .normalised();
+  for (auto uSample = 0; uSample < numUSamples; ++uSample) {
+    for (auto vSample = 0; vSample < numVSamples; ++vSample) {
+      const auto u = (static_cast<double>(uSample) + unit(rng))
+                     / static_cast<double>(numUSamples);
+      const auto v = (static_cast<double>(vSample) + unit(rng))
+                     / static_cast<double>(numVSamples);
       double p = unit(rng);
 
       if (p < mat.reflectivity) {
-        // TODO coneSample
-        auto newRay = Ray(hit.position, hit.normal.reflect(ray.direction()));
+        auto newRay =
+            Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
+                                         mat.reflectionConeAngle(), u, v));
 
         result +=
             mat.emission
             + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1, preview);
       } else {
-        auto newRay = Ray(hit.position, newDir);
+        auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
 
         result +=
             mat.emission
