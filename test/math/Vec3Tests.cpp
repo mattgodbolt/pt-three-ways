@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 
+#include "math/ApproxVec3.h"
 #include "math/Vec3.h"
 
 #include <cmath>
@@ -52,6 +53,15 @@ TEST_CASE("Vectors", "[math]") {
     auto vec = Vec3(1, 2, 3);
     CHECK((vec *= 2) == Vec3(2, 4, 6));
     CHECK(vec == Vec3(2, 4, 6));
+  }
+  SECTION("scalar divide") {
+    CHECK(Vec3() / 1 == Vec3());
+    CHECK(Vec3(1, 2, 3) / 1 == Vec3(1, 2, 3));
+    CHECK(1 / Vec3(1, 2, 3) == ApproxVec3(1.0, 0.5, 0.3333333333333));
+    CHECK(Vec3(1, 1, 1) / 2 == ApproxVec3(0.5, 0.5, 0.5));
+    auto vec = Vec3(1, 2, 3);
+    CHECK((vec /= 2) == ApproxVec3(0.5, 1, 1.5));
+    CHECK(vec == ApproxVec3(0.5, 1, 1.5));
   }
   SECTION("vector multiply") {
     CHECK(Vec3() * Vec3() == Vec3());

@@ -154,10 +154,7 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       }
     }
   }
-  if (numUSamples == 1 && numVSamples == 1)
-    return result;
-  else
-    return result * (1.0 / (numUSamples * numVSamples));
+  return result / (numUSamples * numVSamples);
 }
 void Scene::addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
                         const Material &material) {

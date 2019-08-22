@@ -66,18 +66,16 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   // this point.
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
 
-  Vec3 result;
-
   // TODO OO-ify materials!! Samplers?
+
+  Vec3 result;
 
   // Sample evenly with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);
   for (auto uSample = 0; uSample < numUSamples; ++uSample) {
     for (auto vSample = 0; vSample < numVSamples; ++vSample) {
-      auto u = (static_cast<double>(uSample) + unit(rng))
-               / static_cast<double>(numUSamples);
-      auto v = (static_cast<double>(vSample) + unit(rng))
-               / static_cast<double>(numVSamples);
+      auto u = (uSample + unit(rng)) / numUSamples;
+      auto v = (vSample + unit(rng)) / numVSamples;
       auto p = unit(rng);
 
       // For non-"reflective" materials this should also include a reflectivity
@@ -89,22 +87,17 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
             Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
                                          mat.reflectionConeAngle(), u, v));
 
-        // TODO should this be diffuse? seems not to me
-        result +=
-            mat.emission + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
+        // TODO should this be diffuse? seems not to me?
+        result += mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
       } else {
         // Construct the new direction.
         auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
 
-        result +=
-            mat.emission + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
+        result += mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
       }
     }
   }
-  if (numUSamples == 1 && numVSamples == 1)
-    return result;
-  else
-    return result * (1.0 / (numUSamples * numVSamples));
+  return mat.emission + result / (numUSamples * numVSamples);
 }
 
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a

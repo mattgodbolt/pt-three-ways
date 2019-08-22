@@ -3,7 +3,7 @@
 #include "Norm3.h"
 
 inline Norm3 Vec3::normalised() const noexcept {
-  return Norm3(*this * (1.0 / length()));
+  return Norm3(*this / length());
 }
 
 constexpr Vec3::Vec3(const Norm3 &norm)

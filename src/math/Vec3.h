@@ -45,6 +45,20 @@ public:
     z_ *= b;
     return *this;
   }
+  friend Vec3 operator/(double lhs, const Vec3 &rhs) {
+    return Vec3(lhs / rhs.x_, lhs / rhs.y_, lhs / rhs.z_);
+  }
+  constexpr Vec3 operator/(double b) const noexcept {
+    const auto reciprocal = 1.0 / b;
+    return Vec3(x_ * reciprocal, y_ * reciprocal, z_ * reciprocal);
+  }
+  constexpr Vec3 &operator/=(double b) noexcept {
+    const auto reciprocal = 1.0 / b;
+    x_ *= reciprocal;
+    y_ *= reciprocal;
+    z_ *= reciprocal;
+    return *this;
+  }
 
   constexpr Vec3 operator*(const Vec3 &b) const noexcept {
     return Vec3(x_ * b.x_, y_ * b.y_, z_ * b.z_);
