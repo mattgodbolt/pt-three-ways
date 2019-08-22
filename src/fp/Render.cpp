@@ -125,10 +125,9 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
     auto [y, x] = tuple;
     std::mt19937 rng(renderParams.height * renderParams.width * seed
                      + x * renderParams.width + y);
-    return radiance(
-        scene, rng,
-        camera.ray(x, y, rng), 0,
-        FirstBounceNumUSamples, FirstBounceNumVSamples, renderParams.preview);
+    return radiance(scene, rng, camera.randomRay(x, y, rng), 0,
+                    FirstBounceNumUSamples, FirstBounceNumVSamples,
+                    renderParams.preview);
   };
   auto renderedPixelsView =
       view::cartesian_product(view::ints(0, renderParams.height),

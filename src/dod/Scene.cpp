@@ -190,7 +190,7 @@ Scene::render(const Camera &camera, const RenderParams &renderParams,
   for (int sample = 0; sample < renderParams.samplesPerPixel; ++sample) {
     for (auto y = 0; y < height; ++y) {
       for (auto x = 0; x < width; ++x) {
-        auto ray = camera.ray(x, y, rng);
+        auto ray = camera.randomRay(x, y, rng);
         output.addSamples(x, y,
                           radiance(rng, ray, 0, FirstBounceNumUSamples,
                                    FirstBounceNumVSamples,

@@ -118,7 +118,7 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
                             int numSamples) {
     Vec3 colour;
     for (int sample = 0; sample < numSamples; ++sample) {
-      auto ray = camera_.ray(pixelX, pixelY, rng);
+      auto ray = camera_.randomRay(pixelX, pixelY, rng);
       colour +=
           radiance(rng, ray, 0, FirstBounceNumUSamples, FirstBounceNumVSamples);
     }

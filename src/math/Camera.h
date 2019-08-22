@@ -52,7 +52,7 @@ public:
 
   // The pixel center is at 0.5, 0.5 within a pixel.
   template <typename Rng>
-  [[nodiscard]] Ray ray(int pixelX, int pixelY, Rng &rng) const {
+  [[nodiscard]] Ray randomRay(int pixelX, int pixelY, Rng &rng) const {
     std::uniform_real_distribution<> unit;
     auto x = (pixelX + unit(rng)) * reciprocalWidth_;
     auto y = (pixelY + unit(rng)) * reciprocalHeight_;
