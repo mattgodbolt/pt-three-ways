@@ -110,23 +110,15 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
 // non-OO Type thing? "render context" ? maybe?
 // TODO: non-threaded version?
-// NB I changed the sample to be centred around the pixel position + 0.5 to
-// simplify the code.
 ArrayOutput
 Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
   ArrayOutput output(renderParams_.width, renderParams_.height);
 
-  int width = renderParams_.width;
-  int height = renderParams_.height;
-
-  std::uniform_real_distribution<> unit(0.0, 1.0);
-  auto renderPixel = [&](std::mt19937 &rng, int pixelX, int pixelY,
-                         int numSamples) {
+  auto renderPixel = [this](std::mt19937 &rng, int pixelX, int pixelY,
+                            int numSamples) {
     Vec3 colour;
     for (int sample = 0; sample < numSamples; ++sample) {
-      auto x = (pixelX + unit(rng)) / width;
-      auto y = (pixelY + unit(rng)) / height;
-      auto ray = camera_.ray(2 * x - 1, 2 * y - 1, rng);
+      auto ray = camera_.ray(pixelX, pixelY, rng);
       colour +=
           radiance(rng, ray, 0, FirstBounceNumUSamples, FirstBounceNumVSamples);
     }

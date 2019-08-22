@@ -127,7 +127,7 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
                      + x * renderParams.width + y);
     return radiance(
         scene, rng,
-        camera.ray(x, y, renderParams.width, renderParams.height, rng), 0,
+        camera.ray(x, y, rng), 0,
         FirstBounceNumUSamples, FirstBounceNumVSamples, renderParams.preview);
   };
   auto renderedPixelsView =

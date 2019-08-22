@@ -12,24 +12,13 @@ class Camera {
   OrthoNormalBasis axis_;
   double aspectRatio_;
   double cameraPlaneDist_;
+  double reciprocalHeight_;
+  double reciprocalWidth_;
   double apertureRadius_{};
   double focalDistance_{};
 
-public:
-  Camera(const Vec3 &eye, const Vec3 &lookAt, const Vec3 &up, int width,
-         int height, double verticalFov)
-      : centre_(eye),
-        axis_(OrthoNormalBasis::fromZY((lookAt - eye).normalised(), up)),
-        aspectRatio_(static_cast<double>(width) / height),
-        cameraPlaneDist_(1.0 / tan(verticalFov * M_PI / 360.0)) {}
-
-  void setFocus(const Vec3 &focalPoint, double apertureRadius) {
-    focalDistance_ = (focalPoint - centre_).length();
-    apertureRadius_ = apertureRadius;
-  }
-
   template <typename Rng>
-  [[nodiscard]] Ray ray(double x, double y, Rng &rng) const {
+  [[nodiscard]] Ray rayFromUnit(double x, double y, Rng &rng) const {
     auto xContrib = axis_.x() * -x * aspectRatio_;
     auto yContrib = axis_.y() * -y;
     auto zContrib = axis_.z() * cameraPlaneDist_;
@@ -47,14 +36,26 @@ public:
     return Ray::fromTwoPoints(origin, focalPoint);
   }
 
-  // TODO maybe use this more?
+public:
+  Camera(const Vec3 &eye, const Vec3 &lookAt, const Vec3 &up, int width,
+         int height, double verticalFov)
+      : centre_(eye),
+        axis_(OrthoNormalBasis::fromZY((lookAt - eye).normalised(), up)),
+        aspectRatio_(static_cast<double>(width) / height),
+        cameraPlaneDist_(1.0 / tan(verticalFov * M_PI / 360.0)),
+        reciprocalHeight_(1.0 / height), reciprocalWidth_(1.0 / width) {}
+
+  void setFocus(const Vec3 &focalPoint, double apertureRadius) {
+    focalDistance_ = (focalPoint - centre_).length();
+    apertureRadius_ = apertureRadius;
+  }
+
+  // The pixel center is at 0.5, 0.5 within a pixel.
   template <typename Rng>
-  [[nodiscard]] Ray ray(int x, int y, int width, int height, Rng &rng) const {
+  [[nodiscard]] Ray ray(int pixelX, int pixelY, Rng &rng) const {
     std::uniform_real_distribution<> unit;
-    auto u = unit(rng);
-    auto v = unit(rng);
-    auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
-    auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
-    return ray(xx, yy, rng);
+    auto x = (pixelX + unit(rng)) * reciprocalWidth_;
+    auto y = (pixelY + unit(rng)) * reciprocalHeight_;
+    return rayFromUnit(2 * x - 1, 2 * y - 1, rng);
   }
 };

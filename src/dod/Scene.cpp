@@ -182,7 +182,6 @@ Scene::render(const Camera &camera, const RenderParams &renderParams,
   auto height = renderParams.height;
   ArrayOutput output(width, height);
   std::mt19937 rng(renderParams.samplesPerPixel);
-  std::uniform_real_distribution<> unit(0.0, 1.0);
 
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
   // accumulate separately? then feeds into a nice multithreaded future based
@@ -191,11 +190,7 @@ Scene::render(const Camera &camera, const RenderParams &renderParams,
   for (int sample = 0; sample < renderParams.samplesPerPixel; ++sample) {
     for (auto y = 0; y < height; ++y) {
       for (auto x = 0; x < width; ++x) {
-        auto u = unit(rng);
-        auto v = unit(rng);
-        auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
-        auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
-        auto ray = camera.ray(xx, yy, rng);
+        auto ray = camera.ray(x, y, rng);
         output.addSamples(x, y,
                           radiance(rng, ray, 0, FirstBounceNumUSamples,
                                    FirstBounceNumVSamples,
