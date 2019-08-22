@@ -110,6 +110,8 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
 // non-OO Type thing? "render context" ? maybe?
 // TODO: non-threaded version?
+// NB I changed the sample to be centred around the pixel position + 0.5 to
+// simplify the code.
 ArrayOutput
 Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
   ArrayOutput output(renderParams_.width, renderParams_.height);
@@ -118,14 +120,13 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
   int height = renderParams_.height;
 
   std::uniform_real_distribution<> unit(0.0, 1.0);
-  auto renderPixel = [&](std::mt19937 &rng, int x, int y, int samples) {
+  auto renderPixel = [&](std::mt19937 &rng, int pixelX, int pixelY,
+                         int numSamples) {
     Vec3 colour;
-    for (int sample = 0; sample < samples; ++sample) {
-      auto u = unit(rng);
-      auto v = unit(rng);
-      auto yy = (2 * (static_cast<double>(y) + u + 0.5) / (height - 1)) - 1;
-      auto xx = (2 * (static_cast<double>(x) + v + 0.5) / (width - 1)) - 1;
-      auto ray = camera_.ray(xx, yy, rng);
+    for (int sample = 0; sample < numSamples; ++sample) {
+      auto x = (pixelX + unit(rng)) / width;
+      auto y = (pixelY + unit(rng)) / height;
+      auto ray = camera_.ray(2 * x - 1, 2 * y - 1, rng);
       colour +=
           radiance(rng, ray, 0, FirstBounceNumUSamples, FirstBounceNumVSamples);
     }
