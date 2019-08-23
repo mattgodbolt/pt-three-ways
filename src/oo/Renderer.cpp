@@ -45,8 +45,6 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
   return tiles;
 }
 
-namespace {}
-
 static constexpr auto MaxDepth = 5;
 
 Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,

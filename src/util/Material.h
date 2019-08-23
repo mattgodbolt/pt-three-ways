@@ -11,14 +11,14 @@ struct Material {
   double reflectivity{-1};
   double gloss{};
   static Material makeDiffuse(const Vec3 &colour) {
-    return Material{Vec3(), colour, 0, 0};
+    return Material{Vec3(), colour};
   }
   static Material makeLight(const Vec3 &colour) {
-    return Material{colour, Vec3(), 0, 0};
+    return Material{colour, Vec3()};
   }
   static Material makeReflective(const Vec3 &colour, double reflectivity,
                                  double gloss) {
-    return Material{Vec3(), colour, reflectivity, gloss};
+    return Material{Vec3(), colour, 1.0, reflectivity, gloss};
   }
   bool operator==(const Material &rhs) const {
     return emission == rhs.emission && diffuse == rhs.diffuse
