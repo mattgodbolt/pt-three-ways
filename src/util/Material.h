@@ -9,7 +9,7 @@ struct Material {
   Vec3 diffuse;
   double indexOfRefraction{1.0};
   double reflectivity{-1};
-  double gloss{};
+  double gloss{1.0};
   static Material makeDiffuse(const Vec3 &colour) {
     return Material{Vec3(), colour};
   }
