@@ -57,16 +57,10 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   if (!scene_.intersect(ray, intersectionRecord))
     return scene_.environment(ray);
 
-  const auto &mat = intersectionRecord.material;
+  const auto &material = intersectionRecord.material;
   if (renderParams_.preview)
-    return mat.diffuse;
+    return material.diffuse;
   const auto &hit = intersectionRecord.hit;
-
-  // Create a coordinate system local to the point, where the z is the normal at
-  // this point.
-  const auto basis = OrthoNormalBasis::fromZ(hit.normal);
-
-  // TODO OO-ify materials!! Samplers?
 
   Vec3 result;
 
@@ -78,26 +72,12 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       auto v = (vSample + unit(rng)) / numVSamples;
       auto p = unit(rng);
 
-      // For non-"reflective" materials this should also include a reflectivity
-      // term. That requires IoR of inside vs outside, and knowledge of whether
-      // we're in or out. This is needed for transparency too...which we don't
-      // support yet either.
-      if (p < mat.reflectivity) {
-        auto newRay =
-            Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
-                                         mat.reflectionConeAngle(), u, v));
-
-        // TODO should this be diffuse? seems not to me?
-        result += mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
-      } else {
-        // Construct the new direction.
-        auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
-
-        result += mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1);
-      }
+      auto newRay = bounce(material, hit, ray, u, v, p);
+      result += radiance(rng, newRay, depth + 1, 1, 1);
     }
   }
-  return mat.emission + result / (numUSamples * numVSamples);
+  return material.emission
+         + material.diffuse * result / (numUSamples * numVSamples);
 }
 
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
@@ -144,4 +124,20 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
     t.join();
 
   return output;
+}
+
+Ray Renderer::bounce(const Material &mat, const Hit &hit, const Ray &incoming,
+                     double u, double v, double p) const {
+  // For non-"reflective" materials this should also include a reflectivity
+  // term. That requires IoR of inside vs outside, and knowledge of whether
+  // we're in or out. This is needed for transparency too...which we don't
+  // support yet either.
+  if (p < mat.reflectivity) {
+    return Ray(hit.position,
+               coneSample(hit.normal.reflect(incoming.direction()),
+                          mat.reflectionConeAngle(), u, v));
+  } else {
+    auto basis = OrthoNormalBasis::fromZ(hit.normal);
+    return Ray(hit.position, hemisphereSample(basis, u, v));
+  }
 }
