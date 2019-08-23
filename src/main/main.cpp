@@ -43,7 +43,7 @@ Camera createCornellScene(SB &sb, const RenderParams &renderParams) {
   auto in = opener.open("CornellBox-Original.obj");
   loadObjFile(*in, opener, sb);
   sb.addSphere(Vec3(-0.38, 0.281, 0.38), 0.28,
-               Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.75, 0.15));
+               Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.9, 0.8));
   sb.setEnvironmentColour(Vec3(0.725, 0.71, 0.68) * 0.1);
   Vec3 camPos(0, 1, 3);
   Vec3 camUp(0, 1, 0);
