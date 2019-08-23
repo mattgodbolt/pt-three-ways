@@ -126,27 +126,7 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
   return output;
 }
 
-namespace {
-
-// TODO extract? Understand! Rephrase, use in other renderers?
-double reflectance(const Norm3 &normal, const Norm3 &incoming, double iorFrom,
-                   double iorTo) {
-  auto iorRatio = iorFrom / iorTo;
-  auto cosI = -normal.dot(incoming);
-  auto sinTsquared = iorRatio * iorRatio * (1 - cosI * cosI);
-  if (sinTsquared > 1) {
-    // Total internal reflection.
-    return 1.0;
-  }
-  auto cosT = sqrt(1 - sinTsquared);
-  auto rOrth =
-      (iorFrom * cosI - iorTo * cosT) / (iorFrom * cosI + iorTo * cosT);
-  auto rPar = (iorFrom * cosI - iorTo * cosT) / (iorFrom * cosI + iorTo * cosT);
-  return (rOrth * rOrth + rPar * rPar) / 2;
-}
-
-}
-
+// TODO: more sophisticated bounces in other renderers
 Ray Renderer::bounce(const Material &mat, const Hit &hit, const Ray &incoming,
                      double u, double v, double p) const {
   double iorFrom = 1.0;
@@ -156,8 +136,7 @@ Ray Renderer::bounce(const Material &mat, const Hit &hit, const Ray &incoming,
     std::swap(iorFrom, iorTo);
   }
   if (reflectivity < 0) {
-    reflectivity =
-        reflectance(hit.normal, incoming.direction(), iorFrom, iorTo);
+    reflectivity = hit.normal.reflectance(incoming.direction(), iorFrom, iorTo);
   }
   if (p < reflectivity) {
     return Ray(hit.position,

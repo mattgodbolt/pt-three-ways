@@ -27,6 +27,8 @@ public:
   }
 
   [[nodiscard]] constexpr Norm3 reflect(const Norm3 &incoming) const noexcept;
+  [[nodiscard]] double reflectance(const Norm3 &incoming, double iorFrom,
+                                   double iorTo) const noexcept;
 
   [[nodiscard]] constexpr double dot(const Vec3 &b) const noexcept;
   [[nodiscard]] constexpr double dot(const Norm3 &b) const noexcept;
