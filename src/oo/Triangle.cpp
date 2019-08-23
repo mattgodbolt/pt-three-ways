@@ -36,7 +36,7 @@ bool Triangle::intersect(const Ray &ray, Hit &hit) const noexcept {
       ((u * normalUdelta) + (v * normalVdelta) + normals_[0]).normalised();
   if (backfacing)
     normal = -normal;
-  hit = Hit{t, ray.positionAlong(t), normal};
+  hit = Hit{t, backfacing, ray.positionAlong(t), normal};
   return true;
 }
 

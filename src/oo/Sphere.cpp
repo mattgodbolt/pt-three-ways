@@ -21,8 +21,9 @@ bool Sphere::intersect(const Ray &ray, Hit &hit) const noexcept {
   auto t = minusT > Epsilon ? minusT : plusT;
   auto hitPosition = ray.positionAlong(t);
   auto normal = (hitPosition - centre_).normalised();
-  if (normal.dot(ray.direction()) > 0)
+  bool inside = normal.dot(ray.direction()) > 0;
+  if (inside)
     normal = -normal;
-  hit = Hit{t, hitPosition, normal};
+  hit = Hit{t, inside, hitPosition, normal};
   return true;
 }

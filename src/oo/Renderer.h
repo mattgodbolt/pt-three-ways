@@ -19,7 +19,9 @@ class Renderer {
   static constexpr auto FirstBounceNumVSamples = 3;
 
   // TODO make a material method...
-  Ray bounce(const Material &mat, const Hit &hit, const Ray &incoming, double u, double v, double p) const;
+  Ray bounce(const Material &mat, const Hit &hit, const Ray &incoming, double u,
+             double v, double p) const;
+
 public:
   Renderer(const Scene &scene, const Camera &camera,
            const RenderParams &renderParams)

@@ -38,10 +38,12 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
 
   auto hitPosition = ray.positionAlong(currentNearestDist);
   auto normal = (hitPosition - spheres_[*nearestIndex].centre).normalised();
-  if (normal.dot(ray.direction()) > 0)
+  bool inside = normal.dot(ray.direction()) > 0;
+  if (inside)
     normal = -normal;
-  return IntersectionRecord{Hit{currentNearestDist, hitPosition, normal},
-                            sphereMaterials_[*nearestIndex]};
+  return IntersectionRecord{
+      Hit{currentNearestDist, inside, hitPosition, normal},
+      sphereMaterials_[*nearestIndex]};
 }
 
 std::optional<dod::IntersectionRecord>
@@ -92,9 +94,9 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
           .normalised();
   if (nearest->backfacing)
     normal = -normal;
-  return IntersectionRecord{
-      Hit{currentNearestDist, ray.positionAlong(currentNearestDist), normal},
-      triangleMaterials_[nearest->index]};
+  return IntersectionRecord{Hit{currentNearestDist, nearest->backfacing,
+                                ray.positionAlong(currentNearestDist), normal},
+                            triangleMaterials_[nearest->index]};
 }
 
 std::optional<dod::IntersectionRecord> Scene::intersect(const Ray &ray) const {

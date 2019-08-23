@@ -36,7 +36,7 @@ std::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
       ((u * normalUdelta) + (v * normalVdelta) + normals_[0]).normalised();
   if (backfacing)
     normal = -normal;
-  return Hit{t, ray.positionAlong(t), normal};
+  return Hit{t, backfacing, ray.positionAlong(t), normal};
 }
 
 Triangle::Triangle(const Triangle::Vertices &vertices) : vertices_(vertices) {

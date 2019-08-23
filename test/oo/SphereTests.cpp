@@ -28,6 +28,7 @@ TEST_CASE("Spheres", "[Sphere]") {
     CHECK(hit.distance == Approx(22.416738));
     CHECK(hit.position == ApproxVec3(5.99108, 11.9822, 17.9732));
     CHECK(hit.normal == ApproxVec3(-0.267261, -0.534522, -0.801784));
+    CHECK(!hit.inside);
   }
 
   SECTION("intersect with sphere at known intersection point") {
@@ -37,6 +38,7 @@ TEST_CASE("Spheres", "[Sphere]") {
     CHECK(hit.distance == 20);
     CHECK(hit.position == ApproxVec3(0, 0, 20));
     CHECK(hit.normal == ApproxVec3(0, 0, -1));
+    CHECK(!hit.inside);
   }
 
   SECTION("intersect from within sphere at known intersection point") {
@@ -47,6 +49,7 @@ TEST_CASE("Spheres", "[Sphere]") {
     CHECK(hit.distance == 10);
     CHECK(hit.position == ApproxVec3(0, 0, 20));
     CHECK(hit.normal == ApproxVec3(0, 0, 1));
+    CHECK(hit.inside);
   }
 }
 

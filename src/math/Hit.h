@@ -5,6 +5,7 @@
 
 struct Hit {
   double distance{};
+  bool inside{};
   Vec3 position;
   Norm3 normal{Norm3::xAxis()};
 };
