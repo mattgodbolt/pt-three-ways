@@ -3,12 +3,12 @@
 #include "math/Vec3.h"
 
 #include <cmath>
-#include <tuple>
 
 struct Material {
   Vec3 emission;
   Vec3 diffuse;
-  double reflectivity{};
+  double indexOfRefraction{1.0};
+  double reflectivity{-1};
   double gloss{};
   static Material makeDiffuse(const Vec3 &colour) {
     return Material{Vec3(), colour, 0, 0};
@@ -21,9 +21,12 @@ struct Material {
     return Material{Vec3(), colour, reflectivity, gloss};
   }
   bool operator==(const Material &rhs) const {
-    return std::tie(emission, diffuse, reflectivity, gloss)
-           == std::tie(rhs.emission, rhs.diffuse, rhs.reflectivity, gloss);
+    return emission == rhs.emission && diffuse == rhs.diffuse
+           && indexOfRefraction == rhs.indexOfRefraction
+           && reflectivity == rhs.reflectivity && gloss == rhs.gloss;
   }
   bool operator!=(const Material &rhs) const { return !(rhs == *this); }
-  constexpr double reflectionConeAngle() const { return (1 - gloss) * M_PI; }
+  [[nodiscard]] constexpr double reflectionConeAngle() const {
+    return (1 - gloss) * M_PI;
+  }
 };

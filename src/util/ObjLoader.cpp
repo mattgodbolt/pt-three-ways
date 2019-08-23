@@ -46,8 +46,15 @@ impl::loadMaterials(std::istream &in) {
       curMat->diffuse =
           Vec3(asDouble(params[0]), asDouble(params[1]), asDouble(params[2]));
       return true;
-    } else if (command == "Ns"sv || command == "Ni"sv || command == "illum"sv
-               || command == "Ka"sv || command == "Ks"sv || command == "d"sv) {
+    } else if (command == "Ni"sv) {
+      if (!curMat)
+        throw std::runtime_error("Unexpected Ni");
+      if (params.size() != 1)
+        throw std::runtime_error("Wrong number of params for Ni");
+      curMat->indexOfRefraction = asDouble(params[0]);
+      return true;
+    } else if (command == "Ns"sv || command == "illum"sv || command == "Ka"sv
+               || command == "Ks"sv || command == "d"sv) {
       // Ignored
       return true;
     }

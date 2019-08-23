@@ -126,13 +126,40 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
   return output;
 }
 
+namespace {
+
+// TODO extract? Understand! Rephrase, use in other renderers?
+double reflectance(const Norm3 &normal, const Norm3 &incoming, double iorFrom,
+                   double iorTo) {
+  auto iorRatio = iorFrom / iorTo;
+  auto cosI = -normal.dot(incoming);
+  auto sinTsquared = iorRatio * iorRatio * (1 - cosI * cosI);
+  if (sinTsquared > 1) {
+    // Total internal reflection.
+    return 1.0;
+  }
+  auto cosT = sqrt(1 - sinTsquared);
+  auto rOrth =
+      (iorFrom * cosI - iorTo * cosT) / (iorFrom * cosI + iorTo * cosT);
+  auto rPar = (iorFrom * cosI - iorTo * cosT) / (iorFrom * cosI + iorTo * cosT);
+  return (rOrth * rOrth + rPar * rPar) / 2;
+}
+
+}
+
 Ray Renderer::bounce(const Material &mat, const Hit &hit, const Ray &incoming,
                      double u, double v, double p) const {
-  // For non-"reflective" materials this should also include a reflectivity
-  // term. That requires IoR of inside vs outside, and knowledge of whether
-  // we're in or out. This is needed for transparency too...which we don't
-  // support yet either.
-  if (p < mat.reflectivity) {
+  double iorFrom = 1.0;
+  double iorTo = mat.indexOfRefraction;
+  auto reflectivity = mat.reflectivity;
+  if (hit.inside) {
+    std::swap(iorFrom, iorTo);
+  }
+  if (reflectivity < 0) {
+    reflectivity =
+        reflectance(hit.normal, incoming.direction(), iorFrom, iorTo);
+  }
+  if (p < reflectivity) {
     return Ray(hit.position,
                coneSample(hit.normal.reflect(incoming.direction()),
                           mat.reflectionConeAngle(), u, v));
