@@ -37,6 +37,35 @@ struct DirRelativeOpener : ObjLoaderOpener {
   }
 };
 
+Vec3 hexColour(uint32_t hex) {
+  auto c = [](unsigned x) { return pow((x & 0xffu) / 255.0, 2.2); };
+  return Vec3(c(hex >> 16u), c(hex >> 8u), c(hex));
+}
+
+template <typename SB>
+void addCube(SB &sb, const Vec3 &low, const Vec3 &high,
+             const Material &material) {
+  auto T = [&](unsigned bit) {
+    bool x = bit & 4u;
+    bool y = bit & 2u;
+    bool z = bit & 1u;
+    return Vec3(x ? low.x() : high.x(), y ? low.y() : high.y(),
+                z ? low.z() : high.z());
+  };
+  sb.addTriangle(T(0b000), T(0b100), T(0b110), material);
+  sb.addTriangle(T(0b000), T(0b110), T(0b010), material);
+  sb.addTriangle(T(0b001), T(0b101), T(0b111), material);
+  sb.addTriangle(T(0b001), T(0b111), T(0b011), material);
+  sb.addTriangle(T(0b000), T(0b100), T(0b101), material);
+  sb.addTriangle(T(0b000), T(0b101), T(0b001), material);
+  sb.addTriangle(T(0b010), T(0b110), T(0b111), material);
+  sb.addTriangle(T(0b010), T(0b111), T(0b011), material);
+  sb.addTriangle(T(0b000), T(0b010), T(0b011), material);
+  sb.addTriangle(T(0b000), T(0b011), T(0b001), material);
+  sb.addTriangle(T(0b100), T(0b110), T(0b111), material);
+  sb.addTriangle(T(0b100), T(0b111), T(0b101), material);
+}
+
 template <typename SB>
 Camera createCornellScene(SB &sb, const RenderParams &renderParams) {
   DirRelativeOpener opener("scenes");
@@ -89,22 +118,14 @@ auto createCeScene(SB &sb, const RenderParams &renderParams) {
   auto in = opener.open("ce.obj");
   loadObjFile(*in, opener, sb);
 
-  auto brightLight = Material::makeLight(Vec3(40, 40, 40));
-  sb.addSphere(Vec3(0, 1.6, 0), 0.15, brightLight);
-  auto dullLight = Material::makeLight(Vec3(2.27, 3, 2.97));
+  auto brightLight = Material::makeLight(Vec3(1, 1, 1) * 200);
+  sb.addSphere(Vec3(0, 1.6, 0), 0.1, brightLight);
+  auto dullLight = Material::makeLight(Vec3(2.27, 3, 2.97) * 0.5);
   sb.addSphere(Vec3(-0.2, 5.9, -0.3), 1.0, dullLight);
-
-  auto boxMat = Material::makeDiffuse(Vec3(0.20, 0.30, 0.36));
-  auto tl = Vec3(-5, -1, -5);
-  auto tr = Vec3(5, -1, -5);
-  auto bl = Vec3(-5, 1, -5);
-  auto br = Vec3(5, 1, -5);
-  sb.addTriangle(tl, tr, bl, boxMat);
-  sb.addTriangle(tr, bl, br, boxMat);
 
   sb.addSphere(Vec3(), 10, Material::makeDiffuse(Vec3(0.2, 0.2, 0.2)));
 
-  Vec3 camPos(0.27, 1.25, 0.36);
+  Vec3 camPos(0.27, 1.15, 0.36);
   Vec3 camLookAt(0, 0, 0);
   Vec3 camUp(0, 0, -1);
   double verticalFov = 40.0;
@@ -138,35 +159,6 @@ auto createSingleSphereScene(SB &sb, const RenderParams &renderParams) {
   sb.addSphere(Vec3(), 10, worldMat);
 
   return camera;
-}
-
-Vec3 hexColour(uint32_t hex) {
-  auto c = [](unsigned x) { return pow((x & 0xffu) / 255.0, 2.2); };
-  return Vec3(c(hex >> 16u), c(hex >> 8u), c(hex));
-}
-
-template <typename SB>
-void addCube(SB &sb, const Vec3 &low, const Vec3 &high,
-             const Material &material) {
-  auto T = [&](unsigned bit) {
-    bool x = bit & 4u;
-    bool y = bit & 2u;
-    bool z = bit & 1u;
-    return Vec3(x ? low.x() : high.x(), y ? low.y() : high.y(),
-                z ? low.z() : high.z());
-  };
-  sb.addTriangle(T(0b000), T(0b100), T(0b110), material);
-  sb.addTriangle(T(0b000), T(0b110), T(0b010), material);
-  sb.addTriangle(T(0b001), T(0b101), T(0b111), material);
-  sb.addTriangle(T(0b001), T(0b111), T(0b011), material);
-  sb.addTriangle(T(0b000), T(0b100), T(0b101), material);
-  sb.addTriangle(T(0b000), T(0b101), T(0b001), material);
-  sb.addTriangle(T(0b010), T(0b110), T(0b111), material);
-  sb.addTriangle(T(0b010), T(0b111), T(0b011), material);
-  sb.addTriangle(T(0b000), T(0b010), T(0b011), material);
-  sb.addTriangle(T(0b000), T(0b011), T(0b001), material);
-  sb.addTriangle(T(0b100), T(0b110), T(0b111), material);
-  sb.addTriangle(T(0b100), T(0b111), T(0b101), material);
 }
 
 template <typename SB>
