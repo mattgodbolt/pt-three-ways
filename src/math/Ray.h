@@ -12,7 +12,6 @@ public:
 
   [[nodiscard]] static Ray fromTwoPoints(const Vec3 &point1,
                                          const Vec3 &point2) {
-    // TODO assert point1 != point2?
     return Ray(point1, (point2 - point1).normalised());
   }
 

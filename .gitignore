@@ -4,4 +4,4 @@
 /build
 gdb.txt
 /cmake-*
-/image.png
+/image*.*

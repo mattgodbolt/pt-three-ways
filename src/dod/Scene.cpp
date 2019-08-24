@@ -177,7 +177,7 @@ Scene::render(const Camera &camera, const RenderParams &renderParams,
   auto width = renderParams.width;
   auto height = renderParams.height;
   ArrayOutput output(width, height);
-  std::mt19937 rng(renderParams.samplesPerPixel);
+  std::mt19937 rng(renderParams.seed);
 
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
   // accumulate separately? then feeds into a nice multithreaded future based

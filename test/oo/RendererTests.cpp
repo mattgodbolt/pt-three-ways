@@ -9,7 +9,7 @@ namespace {
 
 TEST_CASE("Renderer", "[Renderer]") {
   SECTION("generates plausible tiles") {
-    auto tiles = Renderer::generateTiles(30, 30, 10, 20, 33, 7);
+    auto tiles = Renderer::generateTiles(30, 30, 10, 20, 33, 7, 1);
     // Each sample will get 30/10 = 3 x tiles, 30/20 = 2 y tiles. That's 6
     // Then we want 33 samples, with 7 samples per tile. That should be 33/7 = 5
     CHECK(tiles.size() == 6 * 5);

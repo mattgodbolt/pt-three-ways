@@ -6,19 +6,18 @@
 
 using oo::Renderer;
 
-std::vector<Renderer::Tile> Renderer::generateTiles(int xTileSize,
-                                                    int yTileSize,
-                                                    int numSamples,
-                                                    int samplesPerTile) const {
+std::vector<Renderer::Tile>
+Renderer::generateTiles(int xTileSize, int yTileSize, int numSamples,
+                        int samplesPerTile, int seed) const {
   return Renderer::generateTiles(renderParams_.width, renderParams_.height,
                                  xTileSize, yTileSize, numSamples,
-                                 samplesPerTile);
+                                 samplesPerTile, seed);
 }
 
 std::vector<Renderer::Tile>
 Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
-                        int numSamples, int samplesPerTile) {
-  std::mt19937 rng(width * height);
+                        int numSamples, int samplesPerTile, int seed) {
+  std::mt19937 rng(seed);
   std::vector<Tile> tiles;
   for (int y = 0; y < height; y += yTileSize) {
     int yBegin = y;
@@ -93,8 +92,8 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
     return colour;
   };
 
-  WorkQueue<Tile> queue(
-      generateTiles(16, 16, renderParams_.samplesPerPixel, 8));
+  WorkQueue<Tile> queue(generateTiles(16, 16, renderParams_.samplesPerPixel, 8,
+                                      renderParams_.seed));
 
   auto worker = [&] {
     for (;;) {

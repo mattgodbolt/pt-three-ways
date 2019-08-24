@@ -139,7 +139,7 @@ ArrayOutput render(const Camera &camera, const Scene &scene,
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
   // accumulate separately?
   // future from an async()
-  size_t seed = 0;
+  auto seed = renderParams.seed;
   size_t numDone = 0;
   ArrayOutput output(renderParams.width, renderParams.height);
   Progressifier progressifier(renderParams.samplesPerPixel);

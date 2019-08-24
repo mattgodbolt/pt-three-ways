@@ -2,6 +2,8 @@
 
 PngWriter::PngWriter(const char *filename, int width, int height)
     : file_(fopen(filename, "wb"), fclose) {
+  if (!file_)
+    return;
   pngStruct_ =
       png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 

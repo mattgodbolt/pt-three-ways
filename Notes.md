@@ -23,9 +23,8 @@
   * Triangles
 * Materials
   - emission
-  - diffraction - TODO maybe not?
-  - specular - TODO
-* Bounces TODO
+  - specular
+  - diffraction/transparency - TODO maybe not?
 
 ## Maybe...
 * Show "pigeon" OO (like, no optional etc)

@@ -49,10 +49,10 @@ public:
   Vec3 radiance(std::mt19937 &rng, const Ray &ray, int depth) const;
   [[nodiscard]] std::vector<Renderer::Tile>
   generateTiles(int xTileSize, int yTileSize, int numSamples,
-                int samplesPerTile) const;
+                int samplesPerTile, int seed) const;
   [[nodiscard]] static std::vector<Tile>
   generateTiles(int width, int height, int xTileSize, int yTileSize,
-                int numSamples, int samplesPerTile);
+                int numSamples, int samplesPerTile, int seed);
 };
 
 }

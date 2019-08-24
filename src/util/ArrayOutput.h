@@ -48,4 +48,7 @@ public:
   ArrayOutput &operator+=(const ArrayOutput &rhs);
 
   [[nodiscard]] size_t totalSamples() const noexcept;
+
+  void save(const std::string &filename) const;
+  [[nodiscard]] static ArrayOutput load(const std::string &filename);
 };

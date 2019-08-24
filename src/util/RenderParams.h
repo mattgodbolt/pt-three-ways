@@ -9,4 +9,5 @@ struct RenderParams {
   int maxDepth{5};
   int firstBounceUSamples{4};
   int firstBounceVSamples{4};
+  int seed{0};
 };

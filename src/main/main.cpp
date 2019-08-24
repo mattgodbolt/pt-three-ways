@@ -239,11 +239,12 @@ ArrayOutput doRender(const std::string &way, const std::string &sceneName,
   } else if (way == "fp") {
     fp::SceneBuilder sceneBuilder;
     auto camera = createScene(sceneBuilder, sceneName, renderParams);
-    return fp::render(camera, sceneBuilder.scene(), renderParams, save);
+    return fp::render(camera, sceneBuilder.scene(), renderParams,
+                      throttledSave);
   } else if (way == "dod") {
     dod::Scene scene;
     auto camera = createScene(scene, sceneName, renderParams);
-    return scene.render(camera, renderParams, save);
+    return scene.render(camera, renderParams, throttledSave);
   } else {
     throw std::runtime_error("Unknown way " + way + "\n");
   }
@@ -255,6 +256,7 @@ int main(int argc, const char *argv[]) {
   using namespace std::literals;
 
   bool help = false;
+  bool raw = false;
   RenderParams renderParams;
   std::string way = "oo";
   std::string sceneName = "cornell";
@@ -264,8 +266,8 @@ int main(int argc, const char *argv[]) {
       Opt(renderParams.width, "width")["-w"]["--width"]("output image width")
       | Opt(renderParams.height,
             "height")["-h"]["--height"]("output image height")
-      | Opt(renderParams.maxCpus, "#cpus")["--max-cpus"](
-          "maximum number of CPUs to use (0 for all)")
+      | Opt(renderParams.maxCpus,
+            "#cpus")["--max-cpus"]("maximum number of CPUs to use (0 for all)")
       | Opt(renderParams.samplesPerPixel,
             "samples")["--spp"]("number of samples per pixel")
       | Opt(renderParams.firstBounceUSamples,
@@ -274,9 +276,12 @@ int main(int argc, const char *argv[]) {
             "samples")["--first-bounce-v"]("number of first bounce v samples")
       | Opt(renderParams.maxDepth,
             "depth")["--max-depth"]("maximum recursion depth")
+      | Opt(renderParams.seed,
+            "seed")["--seed"]("set rendering seed (0 to use random seed)")
       | Opt(renderParams.preview)["--preview"]("super quick preview")
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
       | Opt(sceneName, "scene")["--scene"]("which scene to render")
+      | Opt(raw)["--raw"]("output in raw form")
       | Arg(outputName, "output")("output filename").required() | Help(help);
 
   auto result = cli.parse(Args(argc, argv));
@@ -299,23 +304,34 @@ int main(int argc, const char *argv[]) {
         static_cast<int>(std::thread::hardware_concurrency());
   }
 
-  auto save = [&](const ArrayOutput &output) {
-    PngWriter pw(outputName.c_str(), renderParams.width, renderParams.height);
-    if (!pw.ok()) {
-      std::cerr << "Unable to save PNG\n";
-      return;
-    }
+  if (renderParams.seed == 0) {
+    std::random_device device;
+    renderParams.seed = device();
+  }
 
-    for (int y = 0; y < renderParams.height; ++y) {
-      std::uint8_t row[renderParams.width * 3];
-      for (int x = 0; x < renderParams.width; ++x) {
-        auto colour = output.pixelAt(x, y);
-        for (int component = 0; component < 3; ++component)
-          row[x * 3 + component] = colour[component];
+  std::function<void(const ArrayOutput &)> save;
+
+  if (raw) {
+    save = [outputName](const ArrayOutput &output) { output.save(outputName); };
+  } else {
+    save = [outputName](const ArrayOutput &output) {
+      PngWriter pw(outputName.c_str(), output.width(), output.height());
+      if (!pw.ok()) {
+        std::cerr << "Unable to save PNG\n";
+        return;
       }
-      pw.addRow(row);
-    }
-  };
+
+      for (int y = 0; y < output.height(); ++y) {
+        std::uint8_t row[output.width() * 3];
+        for (int x = 0; x < output.width(); ++x) {
+          auto colour = output.pixelAt(x, y);
+          for (int component = 0; component < 3; ++component)
+            row[x * 3 + component] = colour[component];
+        }
+        pw.addRow(row);
+      }
+    };
+  }
 
   auto startTime = std::chrono::system_clock::now();
   auto output = doRender(way, sceneName, renderParams, save);
