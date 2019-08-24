@@ -15,7 +15,7 @@ function check() {
     echo Testing $way:
     ./cmake-build-release/bin/pt_three_ways \
       --width $size --height $size \
-      --num-cpus 0 --spp $spp --scene $scene \
+      --max-cpus 0 --spp $spp --scene $scene \
       --way $way cmake-build-release/smoke/${scene}_${way}.png
   done
 }

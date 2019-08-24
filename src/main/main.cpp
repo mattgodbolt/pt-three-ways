@@ -43,7 +43,7 @@ Camera createCornellScene(SB &sb, const RenderParams &renderParams) {
   auto in = opener.open("CornellBox-Original.obj");
   loadObjFile(*in, opener, sb);
   sb.addSphere(Vec3(-0.38, 0.281, 0.38), 0.28,
-               Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.95, 0.9));
+               Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.95, 5));
   sb.setEnvironmentColour(Vec3(0.725, 0.71, 0.68) * 0.1);
   Vec3 camPos(0, 1, 3);
   Vec3 camUp(0, 1, 0);
@@ -115,6 +115,89 @@ auto createCeScene(SB &sb, const RenderParams &renderParams) {
 }
 
 template <typename SB>
+auto createSingleSphereScene(SB &sb, const RenderParams &renderParams) {
+  Vec3 camPos(0, 0, -3.2);
+  Vec3 camLookAt(0, 0, 0);
+  Vec3 camUp(0, 1, 0);
+  double verticalFov = 40.0;
+  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+                renderParams.height, verticalFov);
+
+  auto lightRadius = 3.0;
+  auto lightOffset = Vec3(6, 6, 0);
+  auto lightMat = Material::makeLight(Vec3(1, 1, 1) * 8);
+  sb.addSphere(camPos + lightOffset - Vec3(0, 0, lightRadius), lightRadius,
+               lightMat);
+
+  auto sphereMat = Material::makeDiffuse(Vec3(0.2, 0.2, 0.2));
+  sphereMat.indexOfRefraction = 1.3;
+  sphereMat.reflectionConeAngleRadians = 0.05;
+  sb.addSphere(Vec3(), 1, sphereMat);
+
+  auto worldMat = Material::makeDiffuse(Vec3(0.2, 0.2, 0.5));
+  sb.addSphere(Vec3(), 10, worldMat);
+
+  return camera;
+}
+
+Vec3 hexColour(uint32_t hex) {
+  auto c = [](unsigned x) { return pow((x & 0xffu) / 255.0, 2.2); };
+  return Vec3(c(hex >> 16u), c(hex >> 8u), c(hex));
+}
+
+template <typename SB>
+void addCube(SB &sb, const Vec3 &low, const Vec3 &high,
+             const Material &material) {
+  auto T = [&](unsigned bit) {
+    bool x = bit & 4u;
+    bool y = bit & 2u;
+    bool z = bit & 1u;
+    return Vec3(x ? low.x() : high.x(), y ? low.y() : high.y(),
+                z ? low.z() : high.z());
+  };
+  sb.addTriangle(T(0b000), T(0b100), T(0b110), material);
+  sb.addTriangle(T(0b000), T(0b110), T(0b010), material);
+  sb.addTriangle(T(0b001), T(0b101), T(0b111), material);
+  sb.addTriangle(T(0b001), T(0b111), T(0b011), material);
+  sb.addTriangle(T(0b000), T(0b100), T(0b101), material);
+  sb.addTriangle(T(0b000), T(0b101), T(0b001), material);
+  sb.addTriangle(T(0b010), T(0b110), T(0b111), material);
+  sb.addTriangle(T(0b010), T(0b111), T(0b011), material);
+  sb.addTriangle(T(0b000), T(0b010), T(0b011), material);
+  sb.addTriangle(T(0b000), T(0b011), T(0b001), material);
+  sb.addTriangle(T(0b100), T(0b110), T(0b111), material);
+  sb.addTriangle(T(0b100), T(0b111), T(0b101), material);
+}
+
+template <typename SB>
+auto createExample1Scene(SB &sb, const RenderParams &renderParams) {
+  // From @fogleman's pt example1.go
+  sb.addSphere(Vec3(1.5, 1.25, 0), 1.25,
+               Material::makeSpecular(hexColour(0x004358), 1.3));
+  sb.addSphere(Vec3(-1, 1, 2), 1.0,
+               Material::makeSpecular(hexColour(0xffe11a), 1.3));
+  sb.addSphere(Vec3(-2.5, 0.75, 0), 0.75,
+               Material::makeSpecular(hexColour(0xfd7400), 1.3));
+  // TODO: clear materials...
+  sb.addSphere(Vec3(-0.75, 0.5, -1), 0.5,
+               Material::makeSpecular(hexColour(0), 1.3));
+  addCube(sb, Vec3(-10, -1, -10), Vec3(10, 0, 10),
+          Material::makeGlossy(Vec3(1, 1, 1), 1.1, 10.0));
+
+  sb.addSphere(Vec3(-1.5, 4, 0), 0.5, Material::makeLight(Vec3(1, 1, 1) * 30));
+
+  Vec3 camPos(0, 2, -5);
+  Vec3 camLookAt(0, 0.25, 3);
+  Vec3 camUp(0, 1, 0);
+  double verticalFov = 45.0;
+  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+                renderParams.height, verticalFov);
+  camera.setFocus(Vec3(-0.75, 1, -1), 0.1);
+
+  return camera;
+}
+
+template <typename SB>
 auto createScene(SB &sb, const std::string &sceneName,
                  const RenderParams &renderParams) {
   if (sceneName == "cornell")
@@ -123,6 +206,10 @@ auto createScene(SB &sb, const std::string &sceneName,
     return createSuzanneScene(sb, renderParams);
   if (sceneName == "ce")
     return createCeScene(sb, renderParams);
+  if (sceneName == "single-sphere")
+    return createSingleSphereScene(sb, renderParams);
+  if (sceneName == "example1")
+    return createExample1Scene(sb, renderParams);
   throw std::runtime_error("Unknown scene " + sceneName);
 }
 
@@ -177,10 +264,16 @@ int main(int argc, const char *argv[]) {
       Opt(renderParams.width, "width")["-w"]["--width"]("output image width")
       | Opt(renderParams.height,
             "height")["-h"]["--height"]("output image height")
-      | Opt(renderParams.maxCpus, "numCpus")["--num-cpus"](
+      | Opt(renderParams.maxCpus, "#cpus")["--max-cpus"](
           "maximum number of CPUs to use (0 for all)")
       | Opt(renderParams.samplesPerPixel,
             "samples")["--spp"]("number of samples per pixel")
+      | Opt(renderParams.firstBounceUSamples,
+            "samples")["--first-bounce-u"]("number of first bounce u samples")
+      | Opt(renderParams.firstBounceVSamples,
+            "samples")["--first-bounce-v"]("number of first bounce v samples")
+      | Opt(renderParams.maxDepth,
+            "depth")["--max-depth"]("maximum recursion depth")
       | Opt(renderParams.preview)["--preview"]("super quick preview")
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
       | Opt(sceneName, "scene")["--scene"]("which scene to render")

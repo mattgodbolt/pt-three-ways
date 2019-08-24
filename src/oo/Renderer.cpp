@@ -45,12 +45,11 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
   return tiles;
 }
 
-static constexpr auto MaxDepth = 5;
-
-Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
-                        int numUSamples, int numVSamples) const {
-  if (depth >= MaxDepth)
+Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
+  if (depth >= renderParams_.maxDepth)
     return Vec3();
+  int numUSamples = depth == 0 ? renderParams_.firstBounceUSamples : 1;
+  int numVSamples = depth == 0 ? renderParams_.firstBounceVSamples : 1;
   Primitive::IntersectionRecord intersectionRecord;
   if (!scene_.intersect(ray, intersectionRecord))
     return scene_.environment(ray);
@@ -70,12 +69,11 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       auto v = (vSample + unit(rng)) / numVSamples;
       auto p = unit(rng);
 
-      auto newRay = bounce(material, hit, ray, u, v, p);
-      result += radiance(rng, newRay, depth + 1, 1, 1);
+      auto nextPath = bounce(material, hit, ray, u, v, p);
+      result += nextPath.colour * radiance(rng, nextPath.bounced, depth + 1);
     }
   }
-  return material.emission
-         + material.diffuse * result / (numUSamples * numVSamples);
+  return material.emission + result / (numUSamples * numVSamples);
 }
 
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
@@ -90,8 +88,7 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
     Vec3 colour;
     for (int sample = 0; sample < numSamples; ++sample) {
       auto ray = camera_.randomRay(pixelX, pixelY, rng);
-      colour +=
-          radiance(rng, ray, 0, FirstBounceNumUSamples, FirstBounceNumVSamples);
+      colour += radiance(rng, ray, 0);
     }
     return colour;
   };
@@ -125,8 +122,9 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
 }
 
 // TODO: more sophisticated bounces in other renderers
-Ray Renderer::bounce(const Material &mat, const Hit &hit, const Ray &incoming,
-                     double u, double v, double p) const {
+Renderer::TBD Renderer::bounce(const Material &mat, const Hit &hit,
+                               const Ray &incoming, double u, double v,
+                               double p) const {
   double iorFrom = 1.0;
   double iorTo = mat.indexOfRefraction;
   auto reflectivity = mat.reflectivity;
@@ -137,11 +135,12 @@ Ray Renderer::bounce(const Material &mat, const Hit &hit, const Ray &incoming,
     reflectivity = hit.normal.reflectance(incoming.direction(), iorFrom, iorTo);
   }
   if (p < reflectivity) {
-    return Ray(hit.position,
-               coneSample(hit.normal.reflect(incoming.direction()),
-                          mat.reflectionConeAngle(), u, v));
+    return TBD{
+        Vec3(1, 1, 1),
+        Ray(hit.position, coneSample(hit.normal.reflect(incoming.direction()),
+                                     mat.reflectionConeAngleRadians, u, v))};
   } else {
     auto basis = OrthoNormalBasis::fromZ(hit.normal);
-    return Ray(hit.position, hemisphereSample(basis, u, v));
+    return TBD{mat.diffuse, Ray(hit.position, hemisphereSample(basis, u, v))};
   }
 }

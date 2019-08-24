@@ -6,4 +6,7 @@ struct RenderParams {
   bool preview{false};
   int samplesPerPixel{40};
   int maxCpus{1};
+  int maxDepth{5};
+  int firstBounceUSamples{4};
+  int firstBounceVSamples{4};
 };

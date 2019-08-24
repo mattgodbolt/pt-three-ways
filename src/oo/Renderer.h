@@ -15,11 +15,13 @@ class Renderer {
   const Camera &camera_;
   const RenderParams &renderParams_;
 
-  static constexpr auto FirstBounceNumUSamples = 6;
-  static constexpr auto FirstBounceNumVSamples = 3;
-
-  // TODO make a material method...
-  Ray bounce(const Material &mat, const Hit &hit, const Ray &incoming, double u,
+  // TODO handle tinting? Rename
+  // Maybe pass radiance function? Might be too FP-ey?
+  struct TBD {
+    Vec3 colour;
+    Ray bounced;
+  };
+  TBD bounce(const Material &mat, const Hit &hit, const Ray &incoming, double u,
              double v, double p) const;
 
 public:
@@ -44,8 +46,7 @@ public:
     }
   };
 
-  Vec3 radiance(std::mt19937 &rng, const Ray &ray, int depth, int numUSamples,
-                int numVSamples) const;
+  Vec3 radiance(std::mt19937 &rng, const Ray &ray, int depth) const;
   [[nodiscard]] std::vector<Renderer::Tile>
   generateTiles(int xTileSize, int yTileSize, int numSamples,
                 int samplesPerTile) const;

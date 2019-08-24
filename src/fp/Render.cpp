@@ -13,9 +13,6 @@
 
 namespace fp {
 
-constexpr auto FirstBounceNumUSamples = 6;
-constexpr auto FirstBounceNumVSamples = 3;
-
 // What is functional?
 // * Immutable data structures. e.g. "SampledPixel" in arrayOutput doesn't
 //   accumulate, but some final process should. (if we do accumulation)
@@ -65,12 +62,12 @@ std::optional<IntersectionRecord> intersect(const Scene &scene,
 }
 
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
-              int numUSamples, int numVSamples, bool preview);
+              const RenderParams &renderParams);
 
 Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
                const IntersectionRecord &intersectionRecord, const Ray &ray,
                const OrthoNormalBasis &basis, double u, double v, int depth,
-               bool preview) {
+               const RenderParams &renderParams) {
   std::uniform_real_distribution<> unit(0, 1.0);
   const auto &mat = intersectionRecord.material;
   const auto &hit = intersectionRecord.hit;
@@ -79,20 +76,21 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   if (p < mat.reflectivity) {
     auto newRay =
         Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
-                                     mat.reflectionConeAngle(), u, v));
+                                     mat.reflectionConeAngleRadians, u, v));
 
-    return radiance(scene, rng, newRay, depth, 1, 1, preview);
+    return radiance(scene, rng, newRay, depth, renderParams);
   } else {
     auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
 
-    return radiance(scene, rng, newRay, depth, 1, 1, preview);
+    return radiance(scene, rng, newRay, depth, renderParams);
   }
 }
 
-static constexpr auto MaxDepth = 5;
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
-              int numUSamples, int numVSamples, bool preview) {
-  if (depth >= MaxDepth)
+              const RenderParams &renderParams) {
+  const auto numUSamples = depth == 0 ? renderParams.firstBounceUSamples : 1;
+  const auto numVSamples = depth == 0 ? renderParams.firstBounceVSamples : 1;
+  if (depth >= renderParams.maxDepth)
     return Vec3();
   const auto intersectionRecord = intersect(scene, ray);
   if (!intersectionRecord)
@@ -100,7 +98,7 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
 
   const auto &mat = intersectionRecord->material;
   const auto &hit = intersectionRecord->hit;
-  if (preview)
+  if (renderParams.preview)
     return mat.diffuse;
 
   // Create a coordinate system local to the point, where the z is the
@@ -113,7 +111,7 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
       [&](Vec3 colour, const std::pair<double, double> &s) {
         return colour
                + singleRay(scene, rng, *intersectionRecord, ray, basis, s.first,
-                           s.second, depth + 1, preview);
+                           s.second, depth + 1, renderParams);
       });
   return mat.emission + mat.diffuse * incomingLight * sampleScale;
 }
@@ -125,9 +123,7 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
     auto [y, x] = tuple;
     std::mt19937 rng(renderParams.height * renderParams.width * seed
                      + x * renderParams.width + y);
-    return radiance(scene, rng, camera.randomRay(x, y, rng), 0,
-                    FirstBounceNumUSamples, FirstBounceNumVSamples,
-                    renderParams.preview);
+    return radiance(scene, rng, camera.randomRay(x, y, rng), 0, renderParams);
   };
   auto renderedPixelsView =
       view::cartesian_product(view::ints(0, renderParams.height),

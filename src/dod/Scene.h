@@ -32,8 +32,7 @@ class Scene {
 
 public:
   [[nodiscard]] Vec3 radiance(std::mt19937 &rng, const Ray &ray, int depth,
-                              int numUSamples, int numVSamples,
-                              bool preview) const;
+                              const RenderParams &renderParams) const;
 
   void addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
                    const Material &material);

@@ -5,9 +5,6 @@
 
 using dod::Scene;
 
-constexpr auto FirstBounceNumUSamples = 6;
-constexpr auto FirstBounceNumVSamples = 3;
-
 std::optional<dod::IntersectionRecord>
 Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
   double currentNearestDist = nearerThan;
@@ -108,11 +105,11 @@ std::optional<dod::IntersectionRecord> Scene::intersect(const Ray &ray) const {
   return triangleRec ? triangleRec : sphereRec;
 }
 
-static constexpr auto MaxDepth = 5;
-
 Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
-                     int numUSamples, int numVSamples, bool preview) const {
-  if (depth >= MaxDepth)
+                     const RenderParams &renderParams) const {
+  int numUSamples = depth == 0 ? renderParams.firstBounceUSamples : 1;
+  int numVSamples = depth == 0 ? renderParams.firstBounceVSamples : 1;
+  if (depth >= renderParams.maxDepth)
     return Vec3();
 
   const auto intersectionRecord = intersect(ray);
@@ -121,7 +118,7 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 
   const auto &mat = intersectionRecord->material;
   const auto &hit = intersectionRecord->hit;
-  if (preview)
+  if (renderParams.preview)
     return mat.diffuse;
 
   // Sample evenly with random offset.
@@ -142,17 +139,17 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
       if (p < mat.reflectivity) {
         auto newRay =
             Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
-                                         mat.reflectionConeAngle(), u, v));
+                                         mat.reflectionConeAngleRadians, u, v));
 
         result +=
             mat.emission
-            + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1, preview);
+            + mat.diffuse * radiance(rng, newRay, depth + 1, renderParams);
       } else {
         auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
 
         result +=
             mat.emission
-            + mat.diffuse * radiance(rng, newRay, depth + 1, 1, 1, preview);
+            + mat.diffuse * radiance(rng, newRay, depth + 1, renderParams);
       }
     }
   }
@@ -190,11 +187,7 @@ Scene::render(const Camera &camera, const RenderParams &renderParams,
     for (auto y = 0; y < height; ++y) {
       for (auto x = 0; x < width; ++x) {
         auto ray = camera.randomRay(x, y, rng);
-        output.addSamples(x, y,
-                          radiance(rng, ray, 0, FirstBounceNumUSamples,
-                                   FirstBounceNumVSamples,
-                                   renderParams.preview),
-                          1);
+        output.addSamples(x, y, radiance(rng, ray, 0, renderParams), 1);
       }
     }
     updateFunc(output);

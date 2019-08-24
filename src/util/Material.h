@@ -9,24 +9,32 @@ struct Material {
   Vec3 diffuse;
   double indexOfRefraction{1.0};
   double reflectivity{-1};
-  double gloss{1.0};
+  double reflectionConeAngleRadians{0.0};
+  static double toRadians(double angle) { return angle / 360 * 2 * M_PI; }
   static Material makeDiffuse(const Vec3 &colour) {
     return Material{Vec3(), colour};
+  }
+  static Material makeSpecular(const Vec3 &colour, double index) {
+    return Material{Vec3(), colour, index};
   }
   static Material makeLight(const Vec3 &colour) {
     return Material{colour, Vec3()};
   }
+  static Material makeGlossy(const Vec3 &colour, double index,
+                             double reflectionConeAngleDegrees) {
+    return Material{Vec3(), colour, index, -1,
+                    toRadians(reflectionConeAngleDegrees)};
+  }
   static Material makeReflective(const Vec3 &colour, double reflectivity,
-                                 double gloss) {
-    return Material{Vec3(), colour, 1.0, reflectivity, gloss};
+                                 double reflectionConeAngleDegrees) {
+    return Material{Vec3(), colour, 1.0, reflectivity,
+                    toRadians(reflectionConeAngleDegrees)};
   }
   bool operator==(const Material &rhs) const {
     return emission == rhs.emission && diffuse == rhs.diffuse
            && indexOfRefraction == rhs.indexOfRefraction
-           && reflectivity == rhs.reflectivity && gloss == rhs.gloss;
+           && reflectivity == rhs.reflectivity
+           && reflectionConeAngleRadians == rhs.reflectionConeAngleRadians;
   }
   bool operator!=(const Material &rhs) const { return !(rhs == *this); }
-  [[nodiscard]] constexpr double reflectionConeAngle() const {
-    return (1 - gloss) * M_PI;
-  }
 };
