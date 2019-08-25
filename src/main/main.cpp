@@ -237,8 +237,8 @@ auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
   planeMat.indexOfRefraction = 1.5;
   addCube(sb, Vec3(-10, -1, -10), Vec3(10, 0, 10), planeMat);
 
-  sb.addSphere(Vec3(-1.5, 4.5, -1), 1.75,
-               Material::makeLight(Vec3(1, 1, 1) * 5));
+  sb.addSphere(Vec3(-1.5, 4.0, -1), 0.75,
+               Material::makeLight(Vec3(1, 1, 1) * 30));
 
   sb.setEnvironmentColour(Vec3(0.2, 0.2, 0.5) * 0.05);
 
@@ -248,7 +248,7 @@ auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
   double verticalFov = 33.0;
   Camera camera(camPos, camLookAt, camUp, renderParams.width,
                 renderParams.height, verticalFov);
-  camera.setFocus(Vec3(-0.75, 1, -2), 0.1);
+  camera.setFocus(Vec3(0, 0.5, 0), 0.1);
 
   return camera;
 }
