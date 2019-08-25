@@ -10,13 +10,15 @@
 namespace impl {
 
 double asDouble(std::string_view sv);
+int asInt(std::string_view sv);
 size_t asIndex(std::string_view sv, size_t max);
 
 // Visible for tests
 [[nodiscard]] std::unordered_map<std::string, Material>
 loadMaterials(std::istream &in);
 
-static constexpr auto tokenRe = ctll::fixed_string{R"(\s*([^ \t\n\r]+))"};
+static constexpr auto tokenRe =
+    ctll::fixed_string{R"(\s*((#.*)|[^ \t\n\r#]+))"};
 
 template <typename F>
 void parse(std::istream &in, F &&handler) {
@@ -30,10 +32,12 @@ void parse(std::istream &in, F &&handler) {
     for (auto match : ctre::range<tokenRe>(line)) {
       if (!match)
         break;
-      fields.emplace_back(match.get<1>().to_view());
+      auto view = match.get<1>().to_view();
+      if (view[0] != '#')
+        fields.emplace_back(view);
     }
 
-    if (fields.empty() || fields[0][0] == '#')
+    if (fields.empty())
       continue;
 
     auto command = fields.front();

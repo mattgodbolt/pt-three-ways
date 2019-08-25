@@ -1,10 +1,15 @@
 #include "ObjLoader.h"
 
+#include <algorithm>
 #include <fstream>
 #include <string>
 
 double impl::asDouble(std::string_view sv) {
   return std::stod(std::string(sv)); // This is dreadful
+}
+
+int impl::asInt(std::string_view sv) {
+  return std::stoi(std::string(sv)); // This is dreadful
 }
 
 size_t impl::asIndex(std::string_view sv, size_t max) {
@@ -21,10 +26,22 @@ impl::loadMaterials(std::istream &in) {
   std::unordered_map<std::string, Material> result;
 
   Material *curMat{};
+  int illum = 2;
+  Vec3 ambientColour;
+
+  auto flushMat = [&] {
+    if (!curMat)
+      return;
+    if (illum == 3) {
+      curMat->reflectivity = ambientColour.length();
+    }
+    curMat = nullptr;
+  };
 
   parse(in, [&](std::string_view command,
                 const std::vector<std::string_view> &params) {
     if (command == "newmtl"sv) {
+      flushMat();
       if (params.size() != 1)
         throw std::runtime_error("Wrong number of params for newmtl");
       curMat =
@@ -46,6 +63,14 @@ impl::loadMaterials(std::istream &in) {
       curMat->diffuse =
           Vec3(asDouble(params[0]), asDouble(params[1]), asDouble(params[2]));
       return true;
+    } else if (command == "Ka"sv) {
+      if (!curMat)
+        throw std::runtime_error("Unexpected Ka");
+      if (params.size() != 3)
+        throw std::runtime_error("Wrong number of params for Ka");
+      ambientColour =
+          Vec3(asDouble(params[0]), asDouble(params[1]), asDouble(params[2]));
+      return true;
     } else if (command == "Ni"sv) {
       if (!curMat)
         throw std::runtime_error("Unexpected Ni");
@@ -53,13 +78,31 @@ impl::loadMaterials(std::istream &in) {
         throw std::runtime_error("Wrong number of params for Ni");
       curMat->indexOfRefraction = asDouble(params[0]);
       return true;
-    } else if (command == "Ns"sv || command == "illum"sv || command == "Ka"sv
-               || command == "Ks"sv || command == "d"sv) {
+    } else if (command == "Ns"sv) {
+      if (!curMat)
+        throw std::runtime_error("Unexpected Ns");
+      if (params.size() != 1)
+        throw std::runtime_error("Wrong number of params for Ns");
+      // Values seem to be in the range [0, 1000], where higher is a tighter
+      // specular highlight. This is an empirical hack.
+      auto val = asDouble(params[0]) / 100;
+      curMat->reflectionConeAngleRadians = M_PI * std::clamp(1 - val, 0.0, 1.0);
+      return true;
+    } else if (command == "illum"sv) {
+      if (!curMat)
+        throw std::runtime_error("Unexpected illum");
+      if (params.size() != 1)
+        throw std::runtime_error("Wrong number of params for illum");
+      illum = asInt(params[0]);
+      return true;
+    } else if (command == "Ks"sv || command == "d"sv) {
       // Ignored
       return true;
     }
     return false;
   });
+
+  flushMat();
 
   return result;
 }
