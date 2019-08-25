@@ -190,6 +190,68 @@ auto createExample1Scene(SB &sb, const RenderParams &renderParams) {
 }
 
 template <typename SB>
+auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
+  using namespace std::literals;
+  constexpr auto owlHeight = 21;
+  constexpr std::string_view owl[owlHeight] = {
+      // clang-format off
+      "* * * * * * * * *"sv,
+      " *     * *     * "sv,
+      "*   *   *   *   *"sv,
+      "   * *     * *   "sv,
+      "*   *       *   *"sv,
+      " *     * *     * "sv,
+      "* *     *     * *"sv,
+      " * *         *   "sv,
+      "* * * * * * *   *"sv,
+      " * * * *         "sv,
+      "* * * * *       *"sv,
+      " * * * *         "sv,
+      "  * * * *       *"sv,
+      "   * * * *       "sv,
+      "    * * * *     *"sv,
+      "     * * * *     "sv,
+      "      * * * *   *"sv,
+      "       * * * *   "sv,
+      "      *   *   * *"sv,
+      " * * * * * *   * "sv,
+      "                *"sv
+      // clang-format on
+  };
+  constexpr auto owlWidth = owl[0].length();
+  const auto sphereSpacing = 0.1;
+  const auto sphereSize = sphereSpacing * 0.7;
+  auto y = owlHeight * sphereSpacing;
+  for (auto &&line : owl) {
+    auto x = owlWidth * sphereSpacing / 2;
+    for (auto c : line) {
+      if (c == '*') {
+        sb.addSphere(Vec3(x, y, 0), sphereSize,
+                     Material::makeSpecular(hexColour(0xfeffd5), 1.3));
+      }
+      x -= sphereSpacing;
+    }
+    y -= sphereSpacing;
+  }
+  auto planeMat = Material::makeReflective(Vec3(1, 1, 1), 0.8, 2.0);
+  planeMat.indexOfRefraction = 1.5;
+  addCube(sb, Vec3(-10, -1, -10), Vec3(10, 0, 10), planeMat);
+
+  sb.addSphere(Vec3(-1.5, 4, 1), 0.5,
+               Material::makeLight(Vec3(1, 1, 1) * 30));
+
+  Vec3 camPos(0, 2, -5);
+  Vec3 camLookAt(0, 0.25, 3);
+  Vec3 camUp(0, 1, 0);
+  double verticalFov = 45.0;
+  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+                renderParams.height, verticalFov);
+  camera.setFocus(Vec3(-0.75, 1, -2), 0.1);
+
+  return camera;
+}
+
+template <typename SB>
 auto createScene(SB &sb, const std::string &sceneName,
                  const RenderParams &renderParams) {
   if (sceneName == "cornell")
@@ -202,6 +264,8 @@ auto createScene(SB &sb, const std::string &sceneName,
     return createSingleSphereScene(sb, renderParams);
   if (sceneName == "example1")
     return createExample1Scene(sb, renderParams);
+  if (sceneName == "bbc-owl")
+    return createBbcOwlScene(sb, renderParams);
   throw std::runtime_error("Unknown scene " + sceneName);
 }
 
