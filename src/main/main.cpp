@@ -242,10 +242,10 @@ auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
 
   sb.setEnvironmentColour(Vec3(0.2, 0.2, 0.5) * 0.05);
 
-  Vec3 camPos(5, 2.0, -5);
+  Vec3 camPos(4, 2.0, -5);
   Vec3 camLookAt(0, 0.5, 0);
   Vec3 camUp(0, 1, 0);
-  double verticalFov = 35.0;
+  double verticalFov = 33.0;
   Camera camera(camPos, camLookAt, camUp, renderParams.width,
                 renderParams.height, verticalFov);
   camera.setFocus(Vec3(-0.75, 1, -2), 0.1);
