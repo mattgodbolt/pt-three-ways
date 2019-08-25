@@ -221,7 +221,7 @@ auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
   constexpr auto owlWidth = owl[0].length();
   const auto sphereSpacing = 0.1;
   const auto sphereSize = sphereSpacing * 0.7;
-  auto y = owlHeight * sphereSpacing;
+  auto y = owlHeight * sphereSpacing - sphereSpacing / 2;
   for (auto &&line : owl) {
     auto x = owlWidth * sphereSpacing / 2;
     for (auto c : line) {
@@ -233,17 +233,19 @@ auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
     }
     y -= sphereSpacing;
   }
-  auto planeMat = Material::makeReflective(Vec3(1, 1, 1), 0.8, 2.0);
+  auto planeMat = Material::makeReflective(Vec3(0.2, 0.2, 0.2), 0.75, 3.0);
   planeMat.indexOfRefraction = 1.5;
   addCube(sb, Vec3(-10, -1, -10), Vec3(10, 0, 10), planeMat);
 
-  sb.addSphere(Vec3(-1.5, 4, 1), 0.5,
-               Material::makeLight(Vec3(1, 1, 1) * 30));
+  sb.addSphere(Vec3(-1.5, 4.5, -1), 1.75,
+               Material::makeLight(Vec3(1, 1, 1) * 5));
 
-  Vec3 camPos(0, 2, -5);
-  Vec3 camLookAt(0, 0.25, 3);
+  sb.setEnvironmentColour(Vec3(0.2, 0.2, 0.5) * 0.05);
+
+  Vec3 camPos(5, 2.0, -5);
+  Vec3 camLookAt(0, 0.5, 0);
   Vec3 camUp(0, 1, 0);
-  double verticalFov = 45.0;
+  double verticalFov = 35.0;
   Camera camera(camPos, camLookAt, camUp, renderParams.width,
                 renderParams.height, verticalFov);
   camera.setFocus(Vec3(-0.75, 1, -2), 0.1);
