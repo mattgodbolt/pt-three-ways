@@ -3,6 +3,7 @@
 
 #include <clara.hpp>
 
+#include <iomanip>
 #include <iostream>
 
 int main(int argc, const char *argv[]) {
@@ -56,8 +57,12 @@ int main(int argc, const char *argv[]) {
     }
     *accumulator += input;
   }
+  auto averageSpp = static_cast<double>(totalSamples)
+                    / (accumulator->width() * accumulator->height());
   std::cout << "Saving " << outputName << " with " << totalSamples
-            << " samples...\n";
+            << " samples (" << std::setprecision(4) << averageSpp
+            << " per pixel)"
+            << "...\n";
   PngWriter pw(outputName.c_str(), accumulator->width(), accumulator->height());
   if (!pw.ok()) {
     std::cerr << "Unable to save PNG\n";
