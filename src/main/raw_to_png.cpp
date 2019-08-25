@@ -60,7 +60,7 @@ int main(int argc, const char *argv[]) {
   auto averageSpp = static_cast<double>(totalSamples)
                     / (accumulator->width() * accumulator->height());
   std::cout << "Saving " << outputName << " with " << totalSamples
-            << " samples (" << std::setprecision(4) << averageSpp
+            << " samples (" << std::fixed << std::setprecision(1) << averageSpp
             << " per pixel)"
             << "...\n";
   PngWriter pw(outputName.c_str(), accumulator->width(), accumulator->height());
