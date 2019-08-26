@@ -1,5 +1,4 @@
 #include "Renderer.h"
-#include "math/Samples.h"
 #include "util/WorkQueue.h"
 
 #include <thread>
@@ -55,7 +54,7 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
 
   const auto &material = intersectionRecord.material;
   if (renderParams_.preview)
-    return material.diffuse;
+    return material.previewColour();
   const auto &hit = intersectionRecord.hit;
 
   Vec3 result;
@@ -68,11 +67,11 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
       auto v = (vSample + unit(rng)) / numVSamples;
       auto p = unit(rng);
 
-      auto nextPath = bounce(material, hit, ray, u, v, p);
+      auto nextPath = material.bounce(hit, ray, u, v, p);
       result += nextPath.colour * radiance(rng, nextPath.bounced, depth + 1);
     }
   }
-  return material.emission + result / (numUSamples * numVSamples);
+  return material.totalEmission(result / (numUSamples * numVSamples));
 }
 
 // TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
@@ -118,28 +117,4 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
     t.join();
 
   return output;
-}
-
-// TODO: more sophisticated bounces in other renderers
-Renderer::TBD Renderer::bounce(const Material &mat, const Hit &hit,
-                               const Ray &incoming, double u, double v,
-                               double p) const {
-  double iorFrom = 1.0;
-  double iorTo = mat.indexOfRefraction;
-  auto reflectivity = mat.reflectivity;
-  if (hit.inside) {
-    std::swap(iorFrom, iorTo);
-  }
-  if (reflectivity < 0) {
-    reflectivity = hit.normal.reflectance(incoming.direction(), iorFrom, iorTo);
-  }
-  if (p < reflectivity) {
-    return TBD{
-        Vec3(1, 1, 1),
-        Ray(hit.position, coneSample(hit.normal.reflect(incoming.direction()),
-                                     mat.reflectionConeAngleRadians, u, v))};
-  } else {
-    auto basis = OrthoNormalBasis::fromZ(hit.normal);
-    return TBD{mat.diffuse, Ray(hit.position, hemisphereSample(basis, u, v))};
-  }
 }

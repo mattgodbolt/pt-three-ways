@@ -15,15 +15,6 @@ class Renderer {
   const Camera &camera_;
   const RenderParams &renderParams_;
 
-  // TODO handle tinting? Rename
-  // Maybe pass radiance function? Might be too FP-ey?
-  struct TBD {
-    Vec3 colour;
-    Ray bounced;
-  };
-  TBD bounce(const Material &mat, const Hit &hit, const Ray &incoming, double u,
-             double v, double p) const;
-
 public:
   Renderer(const Scene &scene, const Camera &camera,
            const RenderParams &renderParams)

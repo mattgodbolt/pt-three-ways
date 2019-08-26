@@ -43,14 +43,14 @@ struct TrianglePrimitive : Primitive {
 }
 
 void SceneBuilder::addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
-                               const Material &material) {
-  scene_.add(
-      std::make_unique<TrianglePrimitive>(Triangle(v0, v1, v2), material));
+                               const ::Material &material) {
+  scene_.add(std::make_unique<TrianglePrimitive>(Triangle(v0, v1, v2),
+                                                 Material(material)));
 }
 void SceneBuilder::addSphere(const Vec3 &centre, double radius,
-                             const Material &material) {
-  scene_.add(
-      std::make_unique<SpherePrimitive>(Sphere(centre, radius), material));
+                             const ::Material &material) {
+  scene_.add(std::make_unique<SpherePrimitive>(Sphere(centre, radius),
+                                               Material(material)));
 }
 
 void SceneBuilder::setEnvironmentColour(const Vec3 &colour) {
