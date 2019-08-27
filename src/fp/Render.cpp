@@ -73,16 +73,22 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
   const auto &hit = intersectionRecord.hit;
   const auto p = unit(rng);
 
-  if (p < mat.reflectivity) {
-    auto newRay =
+  const auto [iorFrom, iorTo] =
+      hit.inside ? std::make_pair(mat.indexOfRefraction, 1.0)
+                 : std::make_pair(1.0, mat.indexOfRefraction);
+  const auto reflectivity =
+      mat.reflectivity < 0
+          ? hit.normal.reflectance(ray.direction(), iorFrom, iorTo)
+          : mat.reflectivity;
+
+  if (p < reflectivity) {
+    const auto newRay =
         Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
                                      mat.reflectionConeAngleRadians, u, v));
-
     return radiance(scene, rng, newRay, depth, renderParams);
   } else {
-    auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
-
-    return radiance(scene, rng, newRay, depth, renderParams);
+    const auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
+    return mat.diffuse * radiance(scene, rng, newRay, depth, renderParams);
   }
 }
 
@@ -113,7 +119,7 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
                + singleRay(scene, rng, *intersectionRecord, ray, basis, s.first,
                            s.second, depth + 1, renderParams);
       });
-  return mat.emission + mat.diffuse * incomingLight * sampleScale;
+  return mat.emission + incomingLight * sampleScale;
 }
 
 ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,

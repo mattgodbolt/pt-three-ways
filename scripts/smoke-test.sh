@@ -21,5 +21,5 @@ function check() {
 }
 
 check cornell 128 32
+check single-sphere 96 32
 check suzanne 96 16
-check ce 64 8

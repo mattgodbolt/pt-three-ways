@@ -121,6 +121,14 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   if (renderParams.preview)
     return mat.diffuse;
 
+  const auto [iorFrom, iorTo] =
+      hit.inside ? std::make_pair(mat.indexOfRefraction, 1.0)
+                 : std::make_pair(1.0, mat.indexOfRefraction);
+  const auto reflectivity =
+      mat.reflectivity < 0
+          ? hit.normal.reflectance(ray.direction(), iorFrom, iorTo)
+          : mat.reflectivity;
+
   // Sample evenly with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);
   // Create a coordinate system local to the point, where the z is the
@@ -134,16 +142,14 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
                      / static_cast<double>(numUSamples);
       const auto v = (static_cast<double>(vSample) + unit(rng))
                      / static_cast<double>(numVSamples);
-      double p = unit(rng);
+      const auto p = unit(rng);
 
-      if (p < mat.reflectivity) {
+      if (p < reflectivity) {
         auto newRay =
             Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
                                          mat.reflectionConeAngleRadians, u, v));
 
-        result +=
-            mat.emission
-            + mat.diffuse * radiance(rng, newRay, depth + 1, renderParams);
+        result += mat.emission + radiance(rng, newRay, depth + 1, renderParams);
       } else {
         auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
 
@@ -155,6 +161,7 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
   }
   return result / (numUSamples * numVSamples);
 }
+
 void Scene::addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
                         const Material &material) {
   auto &tv = triangleVerts_.emplace_back(TriangleVertices{v0, v1, v2});
