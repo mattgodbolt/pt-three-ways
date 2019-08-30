@@ -11,4 +11,5 @@ public:
   explicit Progressifier(size_t numWork) noexcept;
 
   void update(size_t numDone) noexcept;
+  void numLeft(size_t numLeft) noexcept { update(numWork_ - numLeft); }
 };

@@ -1,7 +1,10 @@
 #include "Scene.h"
 #include "math/Epsilon.h"
 #include "math/OrthoNormalBasis.h"
-#include <math/Samples.h>
+#include "math/Samples.h"
+#include "util/Progressifier.h"
+
+#include <future>
 
 using dod::Scene;
 
@@ -183,21 +186,56 @@ Scene::render(const Camera &camera, const RenderParams &renderParams,
               const std::function<void(ArrayOutput &output)> &updateFunc) {
   auto width = renderParams.width;
   auto height = renderParams.height;
-  ArrayOutput output(width, height);
-  std::mt19937 rng(renderParams.seed);
 
   // TODO no raw loops...maybe return whole "Samples" of an entire screen and
   // accumulate separately? then feeds into a nice multithreaded future based
   // thing?
-  // TODO: multi cpus
-  for (int sample = 0; sample < renderParams.samplesPerPixel; ++sample) {
-    for (auto y = 0; y < height; ++y) {
-      for (auto x = 0; x < width; ++x) {
-        auto ray = camera.randomRay(x, y, rng);
-        output.addSamples(x, y, radiance(rng, ray, 0, renderParams), 1);
+
+  int curSample = 0;
+  auto launch = [&] {
+    return std::async(std::launch::async, [&] {
+      ArrayOutput output(width, height);
+      std::mt19937 rng(renderParams.seed + curSample++);
+      for (auto y = 0; y < height; ++y) {
+        for (auto x = 0; x < width; ++x) {
+          auto ray = camera.randomRay(x, y, rng);
+          output.addSamples(x, y, radiance(rng, ray, 0, renderParams), 1);
+        }
       }
+      return output;
+    });
+  };
+
+  std::vector<std::future<ArrayOutput>> futures;
+  auto ensureMaxCpus = [&] {
+    auto numLeft = renderParams.samplesPerPixel - curSample;
+    auto numSpareCpus = renderParams.maxCpus - futures.size();
+    auto numToSpawn = std::min<size_t>(numLeft, numSpareCpus);
+    for (auto i = 0u; i < numToSpawn; ++i)
+      futures.emplace_back(launch());
+  };
+
+  size_t numDone = 0;
+  ArrayOutput output(width, height);
+  Progressifier progressifier(renderParams.samplesPerPixel);
+  do {
+    ensureMaxCpus();
+    const auto firstDone =
+        std::find_if(futures.begin(), futures.end(), [&](auto &f) {
+          return f.wait_for(std::chrono::milliseconds(1))
+                 == std::future_status ::ready;
+        });
+    if (firstDone != futures.end()) {
+      output += firstDone->get();
+      numDone++;
+      progressifier.update(numDone);
+      updateFunc(output);
+      futures.erase(firstDone);
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
-    updateFunc(output);
-  }
+
+  } while (curSample < renderParams.samplesPerPixel);
+
   return output;
 }

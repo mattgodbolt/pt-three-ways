@@ -20,7 +20,7 @@ public:
   std::optional<WorkItem> pop(InLock &&inLock) noexcept {
     std::unique_lock lock(mutex_);
     inLock();
-    progress_.update(todo_.size());
+    progress_.numLeft(todo_.size());
     if (todo_.empty())
       return {};
     auto tile = todo_.back();

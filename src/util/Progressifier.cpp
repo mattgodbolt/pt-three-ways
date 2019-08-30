@@ -9,12 +9,12 @@
 Progressifier::Progressifier(size_t numWork) noexcept : numWork_(numWork) {}
 
 void Progressifier::update(size_t numDone) noexcept {
-  auto progress = static_cast<double>(numWork_ - numDone) / numWork_ * 100;
+  auto progress = static_cast<double>(numDone) / numWork_ * 100;
   if (progress >= lastProgress_ + minProgress_) {
     auto now = std::chrono::system_clock::now();
     using namespace date;
     std::cout << now << " : " << std::fixed << std::setprecision(2) << progress
-              << "%\n"
+              << "% (" << numDone << " / " << numWork_ << ")\n"
               << std::flush;
     lastProgress_ = progress;
   }
