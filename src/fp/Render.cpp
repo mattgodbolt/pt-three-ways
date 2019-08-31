@@ -132,9 +132,9 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
     return radiance(scene, rng, camera.randomRay(x, y, rng), 0, renderParams);
   };
   auto renderedPixelsView =
-      view::cartesian_product(view::ints(0, renderParams.height),
-                              view::ints(0, renderParams.width))
-      | view::transform(renderOnePixel);
+      views::cartesian_product(views::ints(0, renderParams.height),
+                               views::ints(0, renderParams.width))
+      | views::transform(renderOnePixel);
   return ArrayOutput(renderParams.width, renderParams.height,
                      renderedPixelsView);
 }
