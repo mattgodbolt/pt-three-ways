@@ -2,7 +2,7 @@
 
 set -e
 
-make -C cmake-build-release
+make -C cmake-build-release pt_three_ways
 
 for way in oo fp dod; do
   echo Testing $way:
