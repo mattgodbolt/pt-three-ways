@@ -271,6 +271,21 @@ auto createScene(SB &sb, const std::string &sceneName,
   throw std::runtime_error("Unknown scene " + sceneName);
 }
 
+struct StatsSceneBuilder {
+  int numTriangles{};
+  int numSpheres{};
+
+  void addTriangle(...) { numTriangles++; }
+
+  void addSphere(...) { numSpheres++; }
+  void setEnvironmentColour(...) {}
+
+  void report() {
+    std::cout << "Scene contains " << numTriangles << " triangles and "
+              << numSpheres << " spheres.\n";
+  }
+};
+
 ArrayOutput doRender(const std::string &way, const std::string &sceneName,
                      const RenderParams &renderParams,
                      std::function<void(const ArrayOutput &)> save) {
@@ -287,6 +302,10 @@ ArrayOutput doRender(const std::string &way, const std::string &sceneName,
       nextSave = now + saveEvery;
     }
   };
+
+  StatsSceneBuilder ssb;
+  createScene(ssb, sceneName, renderParams);
+  ssb.report();
 
   std::optional<ArrayOutput> result;
   if (way == "oo") {

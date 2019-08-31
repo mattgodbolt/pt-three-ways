@@ -1,7 +1,6 @@
 #include "Render.h"
 
 #include "Primitive.h"
-#include "Random2DSampler.h"
 #include "Scene.h"
 #include "math/Camera.h"
 #include "math/Samples.h"
@@ -94,6 +93,7 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
 
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               const RenderParams &renderParams) {
+  using namespace ranges;
   const auto numUSamples = depth == 0 ? renderParams.firstBounceUSamples : 1;
   const auto numVSamples = depth == 0 ? renderParams.firstBounceVSamples : 1;
   if (depth >= renderParams.maxDepth)
@@ -110,16 +110,26 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   // Create a coordinate system local to the point, where the z is the
   // normal at this point.
   const auto basis = OrthoNormalBasis::fromZ(hit.normal);
-  const auto sampleScale = 1.0 / (numUSamples * numVSamples);
-  const auto range = Random2DSampler(rng, numUSamples, numVSamples);
-  const Vec3 incomingLight = std::accumulate(
-      std::begin(range), std::end(range), Vec3(),
-      [&](Vec3 colour, const std::pair<double, double> &s) {
-        return colour
-               + singleRay(scene, rng, *intersectionRecord, ray, basis, s.first,
-                           s.second, depth + 1, renderParams);
-      });
-  return mat.emission + incomingLight * sampleScale;
+  std::uniform_real_distribution<> unit;
+
+  auto toUVSample = [&rng, &unit, numUSamples, numVSamples](auto vu) {
+    auto [v, u] = vu;
+    const auto sampleU =
+        (static_cast<double>(u) + unit(rng)) / static_cast<double>(numUSamples);
+    const auto sampleV =
+        (static_cast<double>(v) + unit(rng)) / static_cast<double>(numVSamples);
+    return std::make_pair(sampleU, sampleV);
+  };
+
+  const auto incomingLight = accumulate(
+      view::cartesian_product(view::ints(0, numVSamples),
+                              view::ints(0, numUSamples))
+          | view::transform(toUVSample) | view::transform([&](auto s) {
+              return singleRay(scene, rng, *intersectionRecord, ray, basis,
+                               s.first, s.second, depth + 1, renderParams);
+            }),
+      Vec3());
+  return mat.emission + incomingLight / (numUSamples * numVSamples);
 }
 
 ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,

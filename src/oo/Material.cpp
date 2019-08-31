@@ -4,7 +4,6 @@
 
 namespace oo {
 
-// TODO: more sophisticated bounces in other renderers
 Material::Bounce Material::bounce(const Hit &hit, const Ray &incoming, double u,
                                   double v, double p) const {
   double iorFrom = 1.0;
