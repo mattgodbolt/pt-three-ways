@@ -26,20 +26,24 @@ struct IntersectionRecord {
 struct IntersectVisitor {
   const Ray &ray;
 
-  static std::optional<IntersectionRecord>
-  unwrapWith(const std::optional<Hit> &hit, const Material &m) {
-    if (!hit)
-      return {};
-    return IntersectionRecord{*hit, m};
+  template <typename T, typename F,
+            typename ResultType =
+                std::optional<decltype(std::declval<F>()(std::declval<T>()))>>
+  static ResultType map(const std::optional<T> &t, F &&func) {
+    return t ? func(*t) : ResultType();
   }
 
   std::optional<IntersectionRecord>
   operator()(const TrianglePrimitive &primitive) const {
-    return unwrapWith(primitive.triangle.intersect(ray), primitive.material);
+    return map(primitive.triangle.intersect(ray), [&primitive](auto hit) {
+      return IntersectionRecord{hit, primitive.material};
+    });
   }
   std::optional<IntersectionRecord>
   operator()(const SpherePrimitive &primitive) const {
-    return unwrapWith(primitive.sphere.intersect(ray), primitive.material);
+    return map(primitive.sphere.intersect(ray), [&primitive](auto hit) {
+      return IntersectionRecord{hit, primitive.material};
+    });
   }
 };
 
@@ -179,5 +183,4 @@ ArrayOutput render(const Camera &camera, const Scene &scene,
   }
   return output;
 }
-
 }
