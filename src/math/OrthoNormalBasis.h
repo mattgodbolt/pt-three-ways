@@ -19,14 +19,14 @@ public:
     return x_ * pos.x() + y_ * pos.y() + z_ * pos.z();
   }
 
-  static OrthoNormalBasis fromXY(const Vec3 &x, const Vec3 &y);
-  static OrthoNormalBasis fromYX(const Vec3 &y, const Vec3 &x);
+  static OrthoNormalBasis fromXY(const Norm3 &x, const Norm3 &y);
+  static OrthoNormalBasis fromYX(const Norm3 &y, const Norm3 &x);
 
-  static OrthoNormalBasis fromXZ(const Vec3 &x, const Vec3 &z);
-  static OrthoNormalBasis fromZX(const Vec3 &z, const Vec3 &x);
+  static OrthoNormalBasis fromXZ(const Norm3 &x, const Norm3 &z);
+  static OrthoNormalBasis fromZX(const Norm3 &z, const Norm3 &x);
 
-  static OrthoNormalBasis fromYZ(const Vec3 &y, const Vec3 &z);
-  static OrthoNormalBasis fromZY(const Vec3 &z, const Vec3 &y);
+  static OrthoNormalBasis fromYZ(const Norm3 &y, const Norm3 &z);
+  static OrthoNormalBasis fromZY(const Norm3 &z, const Norm3 &y);
 
-  static OrthoNormalBasis fromZ(const Vec3 &z);
+  static OrthoNormalBasis fromZ(const Norm3 &z);
 };

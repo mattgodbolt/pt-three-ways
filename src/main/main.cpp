@@ -78,7 +78,7 @@ Camera createCornellScene(SB &sb, const RenderParams &renderParams) {
   Vec3 camUp(0, 1, 0);
   Vec3 camLookAt(0, 1, 0);
   double verticalFov = 50.0;
-  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+  Camera camera(camPos, camLookAt, camUp.normalised(), renderParams.width,
                 renderParams.height, verticalFov);
   camera.setFocus(Vec3(0, 0, 0), 0.01);
   return camera;
@@ -106,7 +106,7 @@ auto createSuzanneScene(SB &sb, const RenderParams &renderParams) {
   Vec3 camLookAt(1, -0.6, 0.4);
   Vec3 camUp(0, 1, 0);
   double verticalFov = 40.0;
-  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+  Camera camera(camPos, camLookAt, camUp.normalised(), renderParams.width,
                 renderParams.height, verticalFov);
   camera.setFocus(camLookAt, 0.01);
   return camera;
@@ -129,7 +129,7 @@ auto createCeScene(SB &sb, const RenderParams &renderParams) {
   Vec3 camLookAt(0, 0, 0);
   Vec3 camUp(0, 0, -1);
   double verticalFov = 40.0;
-  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+  Camera camera(camPos, camLookAt, camUp.normalised(), renderParams.width,
                 renderParams.height, verticalFov);
   camera.setFocus(camLookAt, 0.01);
   return camera;
@@ -141,7 +141,7 @@ auto createSingleSphereScene(SB &sb, const RenderParams &renderParams) {
   Vec3 camLookAt(0, 0, 0);
   Vec3 camUp(0, 1, 0);
   double verticalFov = 40.0;
-  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+  Camera camera(camPos, camLookAt, camUp.normalised(), renderParams.width,
                 renderParams.height, verticalFov);
 
   auto lightRadius = 3.0;
@@ -182,7 +182,7 @@ auto createExample1Scene(SB &sb, const RenderParams &renderParams) {
   Vec3 camLookAt(0, 0.25, 3);
   Vec3 camUp(0, 1, 0);
   double verticalFov = 45.0;
-  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+  Camera camera(camPos, camLookAt, camUp.normalised(), renderParams.width,
                 renderParams.height, verticalFov);
   camera.setFocus(Vec3(-0.75, 1, -1), 0.1);
 
@@ -246,7 +246,7 @@ auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
   Vec3 camLookAt(0, 0.5, 0);
   Vec3 camUp(0, 1, 0);
   double verticalFov = 33.0;
-  Camera camera(camPos, camLookAt, camUp, renderParams.width,
+  Camera camera(camPos, camLookAt, camUp.normalised(), renderParams.width,
                 renderParams.height, verticalFov);
   camera.setFocus(Vec3(0, 0.5, 0), 0.1);
 

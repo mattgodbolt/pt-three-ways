@@ -37,7 +37,7 @@ class Camera {
   }
 
 public:
-  Camera(const Vec3 &eye, const Vec3 &lookAt, const Vec3 &up, int width,
+  Camera(const Vec3 &eye, const Vec3 &lookAt, const Norm3 &up, int width,
          int height, double verticalFov)
       : centre_(eye),
         axis_(OrthoNormalBasis::fromZY((lookAt - eye).normalised(), up)),
