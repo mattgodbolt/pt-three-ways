@@ -6,9 +6,10 @@
 
 #include <future>
 
+using dod::IntersectionRecord;
 using dod::Scene;
 
-std::optional<dod::IntersectionRecord>
+std::optional<IntersectionRecord>
 Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
   double currentNearestDist = nearerThan;
   std::optional<size_t> nearestIndex;
@@ -46,7 +47,7 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
       sphereMaterials_[*nearestIndex]};
 }
 
-std::optional<dod::IntersectionRecord>
+std::optional<IntersectionRecord>
 Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
   double currentNearestDist = nearerThan;
   struct Nearest {
@@ -99,7 +100,7 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
                             triangleMaterials_[nearest->index]};
 }
 
-std::optional<dod::IntersectionRecord> Scene::intersect(const Ray &ray) const {
+std::optional<IntersectionRecord> Scene::intersect(const Ray &ray) const {
   auto sphereRec =
       intersectSpheres(ray, std::numeric_limits<double>::infinity());
   auto triangleRec = intersectTriangles(
