@@ -7,7 +7,7 @@ namespace dod {
 
 struct IntersectionRecord {
   Hit hit;
-  Material material;
+  const Material &material;
 };
 
 }

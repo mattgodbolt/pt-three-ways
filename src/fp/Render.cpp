@@ -12,15 +12,9 @@
 
 namespace fp {
 
-// What is functional?
-// * Immutable data structures. e.g. "SampledPixel" in arrayOutput doesn't
-//   accumulate, but some final process should. (if we do accumulation)
-// * Scene graph using variant!
-// * TMP stuff (if can find a way)
-
 struct IntersectionRecord {
   Hit hit;
-  Material material;
+  const Material &material;
 };
 
 struct IntersectVisitor {
@@ -59,7 +53,7 @@ std::optional<IntersectionRecord> intersect(const Scene &scene,
     auto thisIntersection = intersect(primitive, ray);
     if (thisIntersection
         && (!nearest || thisIntersection->hit.distance < nearest->hit.distance))
-      nearest = thisIntersection;
+      nearest.emplace(*thisIntersection);
   }
   return nearest;
 }
