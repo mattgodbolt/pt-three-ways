@@ -7,7 +7,7 @@
 namespace {
 
 Norm3 N(double x, double y, double z) {
-  return Norm3::fromNormal(Vec3(x, y, z));
+  return Vec3(x, y, z).normalised();
 }
 
 TEST_CASE("OrthoNormalBasis", "[OrthoNormalBasis]") {
