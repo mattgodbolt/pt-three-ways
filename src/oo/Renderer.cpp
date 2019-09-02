@@ -2,6 +2,7 @@
 #include "util/WorkQueue.h"
 
 #include <thread>
+#include <util/Metrics.h>
 
 using oo::Renderer;
 
@@ -44,6 +45,7 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
 }
 
 Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
+  Metrics::the().numRadianceCalls++;
   if (depth >= renderParams_.maxDepth)
     return Vec3();
   int numUSamples = depth == 0 ? renderParams_.firstBounceUSamples : 1;

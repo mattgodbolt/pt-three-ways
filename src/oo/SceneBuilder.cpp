@@ -2,6 +2,7 @@
 #include "Primitive.h"
 #include "Sphere.h"
 #include "Triangle.h"
+#include "util/Metrics.h"
 
 using oo::SceneBuilder;
 
@@ -16,8 +17,11 @@ struct SpherePrimitive : Primitive {
   [[nodiscard]] bool intersect(const Ray &ray,
                                IntersectionRecord &rec) const override {
     Hit hit;
-    if (!sphere.intersect(ray, hit))
+    if (!sphere.intersect(ray, hit)) {
+      Metrics::the().numSphereMisses++;
       return false;
+    }
+    Metrics::the().numSphereHits++;
     rec = IntersectionRecord{hit, material};
     return true;
   }
@@ -32,8 +36,11 @@ struct TrianglePrimitive : Primitive {
   intersect(const Ray &ray,
             IntersectionRecord &intersectionRecord) const override {
     Hit hit;
-    if (!triangle.intersect(ray, hit))
+    if (!triangle.intersect(ray, hit)) {
+      Metrics::the().numTriMisses++;
       return false;
+    }
+    Metrics::the().numTriHits++;
     intersectionRecord = IntersectionRecord{hit, material};
     return true;
   }

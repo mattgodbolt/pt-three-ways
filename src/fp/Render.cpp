@@ -6,6 +6,7 @@
 #include "math/Samples.h"
 #include "util/ArrayOutput.h"
 #include "util/Progressifier.h"
+#include "util/Metrics.h"
 
 #include <future>
 #include <range/v3/all.hpp>
@@ -29,13 +30,17 @@ struct IntersectVisitor {
 
   std::optional<IntersectionRecord>
   operator()(const TrianglePrimitive &primitive) const {
-    return map(primitive.triangle.intersect(ray), [&primitive](auto hit) {
+    auto hit = primitive.triangle.intersect(ray);
+    if (hit) Metrics::the().numTriHits++; else Metrics::the().numTriMisses++;
+    return map(hit, [&primitive](auto hit) {
       return IntersectionRecord{hit, primitive.material};
     });
   }
   std::optional<IntersectionRecord>
   operator()(const SpherePrimitive &primitive) const {
-    return map(primitive.sphere.intersect(ray), [&primitive](auto hit) {
+    auto hit = primitive.sphere.intersect(ray);
+    if (hit) Metrics::the().numSphereHits++; else Metrics::the().numSphereMisses++;
+    return map(hit, [&primitive](auto hit) {
       return IntersectionRecord{hit, primitive.material};
     });
   }
@@ -91,6 +96,7 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
 
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               const RenderParams &renderParams) {
+  Metrics::the().numRadianceCalls++;
   using namespace ranges;
   const auto numUSamples = depth == 0 ? renderParams.firstBounceUSamples : 1;
   const auto numVSamples = depth == 0 ? renderParams.firstBounceVSamples : 1;

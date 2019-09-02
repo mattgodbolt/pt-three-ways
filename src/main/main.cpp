@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <util/Metrics.h>
 #include <util/RenderParams.h>
 #include <utility>
 
@@ -428,4 +429,10 @@ int main(int argc, const char *argv[]) {
       / std::chrono::duration_cast<std::chrono::milliseconds>(timeTaken)
             .count();
   std::cout << "Samples/ms: " << samplesPerSec << "\n";
+
+  std::cout << "numSphereMisses: " << Metrics::the().numSphereMisses << "\n";
+  std::cout << "numSphereHits: " << Metrics::the().numSphereHits << "\n";
+  std::cout << "numTriMisses: " << Metrics::the().numTriMisses << "\n";
+  std::cout << "numTriHits: " << Metrics::the().numTriHits << "\n";
+  std::cout << "numRadiance: " << Metrics::the().numRadianceCalls << "\n";
 }

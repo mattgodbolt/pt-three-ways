@@ -3,6 +3,7 @@
 #include "math/OrthoNormalBasis.h"
 #include "math/Samples.h"
 #include "util/Progressifier.h"
+#include "util/Metrics.h"
 
 #include <future>
 
@@ -19,14 +20,20 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
     auto b = op.dot(ray.direction());
     auto determinant =
         b * b - op.lengthSquared() + spheres_[sphereIndex].radiusSquared;
-    if (determinant < 0)
+    if (determinant < 0) {
+      Metrics::the().numSphereMisses++;
       continue;
+    }
 
     determinant = sqrt(determinant);
     auto minusT = b - determinant;
     auto plusT = b + determinant;
-    if (minusT < Epsilon && plusT < Epsilon)
+    if (minusT < Epsilon && plusT < Epsilon) {
+      Metrics::the().numSphereMisses++;
       continue;
+    }
+
+    Metrics::the().numSphereHits++;
 
     auto t = minusT > Epsilon ? minusT : plusT;
     if (t < currentNearestDist) {
@@ -63,23 +70,35 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
     auto pVec = ray.direction().cross(tv.vVector());
     auto det = tv.uVector().dot(pVec);
     // ray and triangle are parallel if det is close to 0
-    if (fabs(det) < Epsilon)
+    if (fabs(det) < Epsilon) {
+      Metrics::the().numTriMisses++;
       continue;
+    }
 
     auto invDet = 1.0 / det;
     auto tVec = ray.origin() - tv.vertex(0);
     auto u = tVec.dot(pVec) * invDet;
-    if (u < 0.0 || u > 1.0)
+    if (u < 0.0 || u > 1.0) {
+      Metrics::the().numTriMisses++;
       continue;
+    }
 
     auto qVec = tVec.cross(tv.uVector());
     auto v = ray.direction().dot(qVec) * invDet;
-    if (v < 0 || u + v > 1)
+    if (v < 0 || u + v > 1) {
+      Metrics::the().numTriMisses++;
       continue;
+    }
 
     auto t = tv.vVector().dot(qVec) * invDet;
+    if (t < Epsilon) {
+      Metrics::the().numTriMisses++;
+      continue;
+    }
 
-    if (t > Epsilon && t < currentNearestDist) {
+    Metrics::the().numTriHits++;
+
+    if (t < currentNearestDist) {
       nearest = Nearest{i, det < Epsilon, u, v};
       currentNearestDist = t;
     }
@@ -111,6 +130,7 @@ std::optional<IntersectionRecord> Scene::intersect(const Ray &ray) const {
 
 Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
                      const RenderParams &renderParams) const {
+  Metrics::the().numRadianceCalls++;
   int numUSamples = depth == 0 ? renderParams.firstBounceUSamples : 1;
   int numVSamples = depth == 0 ? renderParams.firstBounceVSamples : 1;
   if (depth >= renderParams.maxDepth)
