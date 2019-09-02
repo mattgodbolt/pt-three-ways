@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <random>
+#include <util/Metric.h>
 #include <util/RenderParams.h>
 
 namespace oo {
@@ -14,6 +15,13 @@ class Renderer {
   const Scene &scene_;
   const Camera &camera_;
   const RenderParams &renderParams_;
+
+  struct ThreadMetrics {
+    Metric pixelsRendered{"pixelsRendered"};
+    Metric samplesRendered{"samplesRendered"};
+    Metric radianceCalled{"radianceCalls"};
+    Metric radianceCalled{"sceneMisses"};
+  };
 
 public:
   Renderer(const Scene &scene, const Camera &camera,
@@ -37,7 +45,8 @@ public:
     }
   };
 
-  Vec3 radiance(std::mt19937 &rng, const Ray &ray, int depth) const;
+  Vec3 radiance(std::mt19937 &rng, const Ray &ray, int depth,
+                ThreadMetrics &metrics) const;
   [[nodiscard]] std::vector<Renderer::Tile>
   generateTiles(int xTileSize, int yTileSize, int numSamples,
                 int samplesPerTile, int seed) const;

@@ -7,7 +7,9 @@
 #include "oo/Renderer.h"
 #include "oo/SceneBuilder.h"
 #include "util/ArrayOutput.h"
+#include "util/Metric.h"
 #include "util/ObjLoader.h"
+#include "util/RenderParams.h"
 
 #include <clara.hpp>
 #include <date/chrono_io.h>
@@ -19,7 +21,6 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <util/RenderParams.h>
 #include <utility>
 
 namespace {
@@ -334,6 +335,7 @@ int main(int argc, const char *argv[]) {
 
   bool help = false;
   bool raw = false;
+  bool metrics = false;
   RenderParams renderParams;
   std::string way = "oo";
   std::string sceneName = "cornell";
@@ -359,6 +361,7 @@ int main(int argc, const char *argv[]) {
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
       | Opt(sceneName, "scene")["--scene"]("which scene to render")
       | Opt(raw)["--raw"]("output in raw form")
+      | Opt(metrics)["--metrics"]("print detailed metrics")
       | Arg(outputName, "output")("output filename").required() | Help(help);
 
   auto result = cli.parse(Args(argc, argv));
@@ -428,4 +431,9 @@ int main(int argc, const char *argv[]) {
       / std::chrono::duration_cast<std::chrono::milliseconds>(timeTaken)
             .count();
   std::cout << "Samples/ms: " << samplesPerSec << "\n";
+  if (metrics) {
+    for (auto &&rec : Metric::all()) {
+      std::cout << rec.name << ": " << rec.count << "\n";
+    }
+  }
 }

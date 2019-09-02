@@ -2,6 +2,7 @@
 #include "util/WorkQueue.h"
 
 #include <thread>
+#include <util/Metric.h>
 
 using oo::Renderer;
 
@@ -43,7 +44,9 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
   return tiles;
 }
 
-Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
+Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth,
+                        ThreadMetrics &metrics) const {
+  metrics.radianceCalled.increment();
   if (depth >= renderParams_.maxDepth)
     return Vec3();
   int numUSamples = depth == 0 ? renderParams_.firstBounceUSamples : 1;
@@ -82,11 +85,13 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
   ArrayOutput output(renderParams_.width, renderParams_.height);
 
   auto renderPixel = [this](std::mt19937 &rng, int pixelX, int pixelY,
-                            int numSamples) {
+                            int numSamples, ThreadMetrics &metrics) {
     Vec3 colour;
+    metrics.pixelsRendered.increment();
     for (int sample = 0; sample < numSamples; ++sample) {
+      metrics.samplesRendered.increment();
       auto ray = camera_.randomRay(pixelX, pixelY, rng);
-      colour += radiance(rng, ray, 0);
+      colour += radiance(rng, ray, 0, metrics);
     }
     return colour;
   };
@@ -95,6 +100,7 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
                                       renderParams_.seed));
 
   auto worker = [&] {
+    ThreadMetrics metrics;
     for (;;) {
       auto tileOpt = queue.pop([&] { updateFunc(output); });
       if (!tileOpt)
@@ -105,7 +111,7 @@ Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
           output.addSamples(x, y, renderPixel(rng, x, y, tile.samples),
-                            tile.samples);
+                            tile.samples, metrics);
         }
       }
     }
