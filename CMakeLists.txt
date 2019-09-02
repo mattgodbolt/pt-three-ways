@@ -11,6 +11,8 @@ include(${CMAKE_SOURCE_DIR}/scripts/conan.cmake)
 conan_check(VERSION 1.14.4 REQUIRED)
 conan_add_remote(NAME bincrafters INDEX 1
         URL https://api.bintray.com/conan/bincrafters/public-conan)
+conan_add_remote(NAME mpusz INDEX 2
+        URL https://api.bintray.com/conan/mpusz/conan-mpusz)
 conan_cmake_run(CONANFILE conanfile.txt
         BASIC_SETUP CMAKE_TARGETS
         BUILD missing)
@@ -19,10 +21,14 @@ set(CMAKE_CXX_STANDARD 17)
 enable_testing()
 
 add_compile_options(-Wall -Werror -Wextra -march=native -g -funsafe-math-optimizations)
-find_package(Threads)
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(benchmarks)
 
 if (NOT ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug"))
     include(CheckIPOSupported)

@@ -5,3 +5,4 @@ CTRE/v2.6.4@ctre/stable
 libpng/1.6.37@bincrafters/stable
 date/2.4.1@bincrafters/stable
 range-v3/0.5.0@ericniebler/stable
+google-benchmark/1.4.1@mpusz/stable
