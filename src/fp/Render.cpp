@@ -120,9 +120,9 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
   };
 
   const auto incomingLight = accumulate(
-      view::cartesian_product(view::ints(0, numVSamples),
-                              view::ints(0, numUSamples))
-          | view::transform(toUVSample) | view::transform([&](auto s) {
+      views::cartesian_product(views::ints(0, numVSamples),
+                              views::ints(0, numUSamples))
+          | views::transform(toUVSample) | views::transform([&](auto s) {
               return singleRay(scene, rng, *intersectionRecord, ray, basis,
                                s.first, s.second, depth + 1, renderParams);
             }),
@@ -140,9 +140,9 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
     return radiance(scene, rng, camera.randomRay(x, y, rng), 0, renderParams);
   };
   auto renderedPixelsView =
-      view::cartesian_product(view::ints(0, renderParams.height),
-                              view::ints(0, renderParams.width))
-      | view::transform(renderOnePixel);
+      views::cartesian_product(views::ints(0, renderParams.height),
+                              views::ints(0, renderParams.width))
+      | views::transform(renderOnePixel);
   return ArrayOutput(renderParams.width, renderParams.height,
                      renderedPixelsView);
 }
