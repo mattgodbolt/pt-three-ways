@@ -59,7 +59,8 @@ before_install:
 install:
   - pip install conan
   - conan user
+  - conan profile update settings.compiler.libcxx=libstdc++11 default
 script:
   - cmake . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
   - cmake --build . -j $(nproc)
-  - ctest .
+  - ctest -V .
