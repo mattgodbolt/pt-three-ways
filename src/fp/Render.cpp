@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include "math/Camera.h"
 #include "math/Samples.h"
+#include "optional.hpp"
 #include "util/ArrayOutput.h"
 #include "util/Progressifier.h"
 
@@ -27,28 +28,27 @@ struct IntersectVisitor {
     return t ? func(*t) : ResultType();
   }
 
-  std::optional<IntersectionRecord>
+  tl::optional<IntersectionRecord>
   operator()(const TrianglePrimitive &primitive) const {
-    return map(primitive.triangle.intersect(ray), [&primitive](auto hit) {
-      return IntersectionRecord{hit, primitive.material};
+    return primitive.triangle.intersect(ray).and_then([&primitive](auto hit) {
+      return tl::make_optional(IntersectionRecord{hit, primitive.material});
     });
   }
-  std::optional<IntersectionRecord>
+  tl::optional<IntersectionRecord>
   operator()(const SpherePrimitive &primitive) const {
-    return map(primitive.sphere.intersect(ray), [&primitive](auto hit) {
-      return IntersectionRecord{hit, primitive.material};
+    return primitive.sphere.intersect(ray).and_then([&primitive](auto hit) {
+      return tl::make_optional(IntersectionRecord{hit, primitive.material});
     });
   }
 };
 
-std::optional<IntersectionRecord> intersect(const Primitive &primitive,
-                                            const Ray &ray) {
+tl::optional<IntersectionRecord> intersect(const Primitive &primitive,
+                                           const Ray &ray) {
   return std::visit(IntersectVisitor{ray}, primitive);
 }
 
-std::optional<IntersectionRecord> intersect(const Scene &scene,
-                                            const Ray &ray) {
-  std::optional<IntersectionRecord> nearest;
+tl::optional<IntersectionRecord> intersect(const Scene &scene, const Ray &ray) {
+  tl::optional<IntersectionRecord> nearest;
   for (auto &primitive : scene.primitives) {
     auto thisIntersection = intersect(primitive, ray);
     if (thisIntersection
@@ -119,7 +119,7 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
 
   const auto incomingLight = accumulate(
       views::cartesian_product(views::ints(0, numVSamples),
-                              views::ints(0, numUSamples))
+                               views::ints(0, numUSamples))
           | views::transform(toUVSample) | views::transform([&](auto s) {
               return singleRay(scene, rng, *intersectionRecord, ray, basis,
                                s.first, s.second, depth + 1, renderParams);
@@ -139,7 +139,7 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
   };
   auto renderedPixelsView =
       views::cartesian_product(views::ints(0, renderParams.height),
-                              views::ints(0, renderParams.width))
+                               views::ints(0, renderParams.width))
       | views::transform(renderOnePixel);
   return ArrayOutput(renderParams.width, renderParams.height,
                      renderedPixelsView);

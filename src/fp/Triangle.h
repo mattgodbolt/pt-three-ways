@@ -3,9 +3,9 @@
 #include "math/Hit.h"
 #include "math/Ray.h"
 #include "math/Vec3.h"
+#include "optional.hpp"
 
 #include <array>
-#include <optional>
 
 namespace fp {
 
@@ -44,7 +44,7 @@ public:
   [[nodiscard]] Norm3 faceNormal() const {
     return uVector().cross(vVector()).normalised();
   }
-  [[nodiscard]] std::optional<Hit> intersect(const Ray &ray) const noexcept;
+  [[nodiscard]] tl::optional<Hit> intersect(const Ray &ray) const noexcept;
 };
 
 }

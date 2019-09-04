@@ -4,7 +4,7 @@
 #include "math/Ray.h"
 #include "math/Vec3.h"
 
-#include <optional>
+#include "optional.hpp"
 
 namespace fp {
 
@@ -21,7 +21,7 @@ public:
   }
   [[nodiscard]] constexpr double radius() const noexcept { return radius_; }
 
-  [[nodiscard]] std::optional<Hit> intersect(const Ray &ray) const noexcept;
+  [[nodiscard]] tl::optional<Hit> intersect(const Ray &ray) const noexcept;
 };
 
 }

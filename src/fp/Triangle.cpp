@@ -4,7 +4,8 @@
 using fp::Triangle;
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-std::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
+tl::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
+  // TODO tl-ify
   auto pVec = ray.direction().cross(vVector());
   auto det = uVector().dot(pVec);
   // ray and triangle are parallel if det is close to 0
