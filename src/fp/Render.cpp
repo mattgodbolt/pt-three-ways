@@ -112,10 +112,8 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
 
   auto toUVSample = [&rng, &unit, numUSamples, numVSamples](auto vu) {
     auto [v, u] = vu;
-    const auto sampleU =
-        (static_cast<double>(u) + unit(rng)) / static_cast<double>(numUSamples);
-    const auto sampleV =
-        (static_cast<double>(v) + unit(rng)) / static_cast<double>(numVSamples);
+    const auto sampleU = (u + unit(rng)) / numUSamples;
+    const auto sampleV = (v + unit(rng)) / numVSamples;
     return std::make_pair(sampleU, sampleV);
   };
 
