@@ -18,14 +18,14 @@ tl::optional<Hit> Sphere::intersect(const Ray &ray) const noexcept {
   const auto op = centre_ - ray.origin();
   const auto b = op.dot(ray.direction());
   return safeSqrt(b * b - op.lengthSquared() + radius_ * radius_)
-      .and_then([&](double determinant) -> tl::optional<double> {
+      .and_then([&b, &ray](double determinant) -> tl::optional<double> {
         const auto minusT = b - determinant;
         const auto plusT = b + determinant;
         if (minusT < Epsilon && plusT < Epsilon)
           return tl::nullopt;
         return minusT > Epsilon ? minusT : plusT;
       })
-      .and_then([&](double t) {
+      .and_then([this, &ray](double t) {
         const auto hitPosition = ray.positionAlong(t);
         const auto normal = (hitPosition - centre_).normalised();
         const bool inside = normal.dot(ray.direction()) > 0;
