@@ -18,7 +18,7 @@ tl::optional<Hit> Sphere::intersect(const Ray &ray) const noexcept {
   const auto op = centre_ - ray.origin();
   const auto b = op.dot(ray.direction());
   return safeSqrt(b * b - op.lengthSquared() + radius_ * radius_)
-      .and_then([&b, &ray](double determinant) -> tl::optional<double> {
+      .and_then([&b](double determinant) -> tl::optional<double> {
         const auto minusT = b - determinant;
         const auto plusT = b + determinant;
         if (minusT < Epsilon && plusT < Epsilon)
