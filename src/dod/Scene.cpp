@@ -52,7 +52,7 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
   double currentNearestDist = nearerThan;
   struct Nearest {
     size_t index;
-    bool backfacing;
+    double det;
     double u;
     double v;
   };
@@ -60,27 +60,27 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
   std::optional<Nearest> nearest;
   for (size_t i = 0; i < triangleVerts_.size(); ++i) {
     const auto &tv = triangleVerts_[i];
-    auto pVec = ray.direction().cross(tv.vVector());
-    auto det = tv.uVector().dot(pVec);
+    const auto pVec = ray.direction().cross(tv.vVector());
+    const auto det = tv.uVector().dot(pVec);
     // ray and triangle are parallel if det is close to 0
     if (fabs(det) < Epsilon)
       continue;
 
-    auto invDet = 1.0 / det;
-    auto tVec = ray.origin() - tv.vertex(0);
-    auto u = tVec.dot(pVec) * invDet;
+    const auto invDet = 1.0 / det;
+    const auto tVec = ray.origin() - tv.vertex(0);
+    const auto u = tVec.dot(pVec) * invDet;
     if (u < 0.0 || u > 1.0)
       continue;
 
-    auto qVec = tVec.cross(tv.uVector());
-    auto v = ray.direction().dot(qVec) * invDet;
+    const auto qVec = tVec.cross(tv.uVector());
+    const auto v = ray.direction().dot(qVec) * invDet;
     if (v < 0 || u + v > 1)
       continue;
 
-    auto t = tv.vVector().dot(qVec) * invDet;
+    const auto t = tv.vVector().dot(qVec) * invDet;
 
     if (t > Epsilon && t < currentNearestDist) {
-      nearest = Nearest{i, det < Epsilon, u, v};
+      nearest = Nearest{i, det, u, v};
       currentNearestDist = t;
     }
   }
@@ -90,13 +90,13 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
   auto normalUdelta = tn[1] - tn[0];
   auto normalVdelta = tn[2] - tn[0];
   // TODO: proper barycentric coordinates
-  auto normal =
+  const auto normal =
       ((nearest->u * normalUdelta) + (nearest->v * normalVdelta) + tn[0])
           .normalised();
-  if (nearest->backfacing)
-    normal = -normal;
-  return IntersectionRecord{Hit{currentNearestDist, nearest->backfacing,
-                                ray.positionAlong(currentNearestDist), normal},
+  bool backfacing = nearest->det < Epsilon;
+  return IntersectionRecord{Hit{currentNearestDist, backfacing,
+                                ray.positionAlong(currentNearestDist),
+                                backfacing ? -normal : normal},
                             triangleMaterials_[nearest->index]};
 }
 
