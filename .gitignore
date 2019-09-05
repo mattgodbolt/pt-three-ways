@@ -5,4 +5,4 @@
 gdb.txt
 /cmake-*
 /image*.*
-perf.data*
+perf.*
