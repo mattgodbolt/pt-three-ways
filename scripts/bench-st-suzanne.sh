@@ -10,5 +10,5 @@ for way in oo fp dod; do
     --save-every 0 \
     --width 256 --height 256 \
     --max-cpus 1 --spp 8 --scene suzanne \
-    --way $way /dev/null
+    --way $way image.png
 done
