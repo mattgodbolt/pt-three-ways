@@ -6,9 +6,7 @@
 
 namespace {
 
-Norm3 N(double x, double y, double z) {
-  return Vec3(x, y, z).normalised();
-}
+Norm3 N(double x, double y, double z) { return Vec3(x, y, z).normalised(); }
 
 TEST_CASE("OrthoNormalBasis", "[OrthoNormalBasis]") {
   SECTION("constructs") {

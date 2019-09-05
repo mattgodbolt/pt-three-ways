@@ -1,43 +1,44 @@
 #include "Triangle.h"
 #include "math/Epsilon.h"
+#include "optional.hpp"
 
 using fp::Triangle;
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 tl::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
-  // TODO tl-ify
-  auto pVec = ray.direction().cross(vVector());
-  auto det = uVector().dot(pVec);
+  const auto pVec = ray.direction().cross(vVector());
+  const auto det = uVector().dot(pVec);
+
+  tl::optional<double> a;
   // ray and triangle are parallel if det is close to 0
   if (fabs(det) < Epsilon)
     return {};
 
-  auto backfacing = det < Epsilon;
+  const auto backfacing = det < Epsilon;
 
-  auto invDet = 1.0 / det;
-  auto tVec = ray.origin() - vertices_[0];
-  auto u = tVec.dot(pVec) * invDet;
+  const auto invDet = 1.0 / det;
+  const auto tVec = ray.origin() - vertices_[0];
+  const auto u = tVec.dot(pVec) * invDet;
   if (u < 0.0 || u > 1.0)
     return {};
 
-  auto qVec = tVec.cross(uVector());
-  auto v = ray.direction().dot(qVec) * invDet;
+  const auto qVec = tVec.cross(uVector());
+  const auto v = ray.direction().dot(qVec) * invDet;
   if (v < 0 || u + v > 1)
     return {};
 
-  auto t = vVector().dot(qVec) * invDet;
+  const auto t = vVector().dot(qVec) * invDet;
 
   if (t < Epsilon)
     return {};
 
-  auto normalUdelta = normals_[1] - normals_[0];
-  auto normalVdelta = normals_[2] - normals_[0];
+  const auto normalUdelta = normals_[1] - normals_[0];
+  const auto normalVdelta = normals_[2] - normals_[0];
   // TODO: proper barycentric coordinates
-  auto normal =
+  const auto normal =
       ((u * normalUdelta) + (v * normalVdelta) + normals_[0]).normalised();
-  if (backfacing)
-    normal = -normal;
-  return Hit{t, backfacing, ray.positionAlong(t), normal};
+  return Hit{t, backfacing, ray.positionAlong(t),
+             backfacing ? -normal : normal};
 }
 
 Triangle::Triangle(const Triangle::Vertices &vertices) : vertices_(vertices) {

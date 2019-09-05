@@ -21,23 +21,15 @@ struct IntersectionRecord {
 struct IntersectVisitor {
   const Ray &ray;
 
-  template <typename T, typename F,
-            typename ResultType =
-                std::optional<decltype(std::declval<F>()(std::declval<T>()))>>
-  static ResultType map(const std::optional<T> &t, F &&func) {
-    return t ? func(*t) : ResultType();
-  }
-
-  tl::optional<IntersectionRecord>
-  operator()(const TrianglePrimitive &primitive) const {
-    return primitive.triangle.intersect(ray).and_then([&primitive](auto hit) {
-      return tl::make_optional(IntersectionRecord{hit, primitive.material});
+  auto operator()(const TrianglePrimitive &primitive) const {
+    return primitive.triangle.intersect(ray).map([&primitive](auto hit) {
+      return IntersectionRecord{hit, primitive.material};
     });
   }
-  tl::optional<IntersectionRecord>
-  operator()(const SpherePrimitive &primitive) const {
-    return primitive.sphere.intersect(ray).and_then([&primitive](auto hit) {
-      return tl::make_optional(IntersectionRecord{hit, primitive.material});
+
+  auto operator()(const SpherePrimitive &primitive) const {
+    return primitive.sphere.intersect(ray).map([&primitive](auto hit) {
+      return IntersectionRecord{hit, primitive.material};
     });
   }
 };
