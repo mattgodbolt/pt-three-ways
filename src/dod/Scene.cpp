@@ -72,7 +72,7 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
     const auto qVec = tVec.cross(tv.uVector());
     const auto v = ray.direction().dot(qVec) * invDet;
 
-    if (v < 0 || u + v > 1 || u < 0.0 || u > 1.0)
+    if (u < 0.0 || u > 1.0 || v < 0.0 || u + v > 1)
       continue;
 
     const auto t = tv.vVector().dot(qVec) * invDet;
