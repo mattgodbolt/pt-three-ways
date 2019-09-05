@@ -20,7 +20,10 @@ public:
            const RenderParams &renderParams)
       : scene_(scene), camera_(camera), renderParams_(renderParams) {}
 
-  ArrayOutput render(std::function<void(const ArrayOutput &)> updateFunc) const;
+  ArrayOutput
+  renderTiled(std::function<void(const ArrayOutput &)> updateFunc) const;
+  ArrayOutput
+  render(const std::function<void(const ArrayOutput &)> &updateFunc) const;
 
   // Visible for testing
   struct Tile {

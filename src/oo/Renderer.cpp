@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "util/WorkQueue.h"
 
+#include <future>
 #include <thread>
 
 using oo::Renderer;
@@ -74,11 +75,58 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
   return material.totalEmission(result / (numUSamples * numVSamples));
 }
 
-// TODO: OO-ify more. Maybe hold rng as member variable, and use that as a
-// non-OO Type thing? "render context" ? maybe?
-// TODO: non-threaded version?
-ArrayOutput
-Renderer::render(std::function<void(const ArrayOutput &)> updateFunc) const {
+ArrayOutput Renderer::render(
+    const std::function<void(const ArrayOutput &)> &updateFunc) const {
+  int curSample = 0;
+  auto launch = [&] {
+    return std::async(std::launch::async, [&] {
+      ArrayOutput output(renderParams_.width, renderParams_.height);
+      std::mt19937 rng(renderParams_.seed + curSample++);
+      for (auto y = 0; y < renderParams_.height; ++y) {
+        for (auto x = 0; x < renderParams_.width; ++x) {
+          auto ray = camera_.randomRay(x, y, rng);
+          output.addSamples(x, y, radiance(rng, ray, 0), 1);
+        }
+      }
+      return output;
+    });
+  };
+
+  std::vector<std::future<ArrayOutput>> futures;
+  auto ensureMaxCpus = [&] {
+    auto numLeft = renderParams_.samplesPerPixel - curSample;
+    auto numSpareCpus = renderParams_.maxCpus - futures.size();
+    auto numToSpawn = std::min<size_t>(numLeft, numSpareCpus);
+    for (auto i = 0u; i < numToSpawn; ++i)
+      futures.emplace_back(launch());
+  };
+
+  size_t numDone = 0;
+  ArrayOutput output(renderParams_.width, renderParams_.height);
+  Progressifier progressifier(renderParams_.samplesPerPixel);
+  do {
+    ensureMaxCpus();
+    const auto firstDone =
+        std::find_if(futures.begin(), futures.end(), [&](auto &f) {
+          return f.wait_for(std::chrono::milliseconds(1))
+                 == std::future_status ::ready;
+        });
+    if (firstDone != futures.end()) {
+      output += firstDone->get();
+      numDone++;
+      progressifier.update(numDone);
+      updateFunc(output);
+      futures.erase(firstDone);
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+
+  } while (curSample < renderParams_.samplesPerPixel);
+  return output;
+}
+
+ArrayOutput Renderer::renderTiled(
+    std::function<void(const ArrayOutput &)> updateFunc) const {
   ArrayOutput output(renderParams_.width, renderParams_.height);
 
   auto renderPixel = [this](std::mt19937 &rng, int pixelX, int pixelY,
