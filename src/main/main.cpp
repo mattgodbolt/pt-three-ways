@@ -288,11 +288,13 @@ struct StatsSceneBuilder {
 
 ArrayOutput doRender(const std::string &way, const std::string &sceneName,
                      const RenderParams &renderParams,
+                     std::chrono::seconds saveEvery,
                      std::function<void(const ArrayOutput &)> save) {
   using namespace std::chrono_literals;
-  static constexpr auto saveEvery = 10s;
   auto nextSave = std::chrono::system_clock::now() + saveEvery;
   auto throttledSave = [&](const ArrayOutput &output) {
+    if (saveEvery == 0s)
+      return;
     // TODO: save is not thread safe even slightly, and yet it still blocks
     // the threads. this is terrible. Should have a thread safe result queue
     // and a single thread reading from it.
@@ -334,6 +336,7 @@ int main(int argc, const char *argv[]) {
 
   bool help = false;
   bool raw = false;
+  int saveEvery = 30;
   RenderParams renderParams;
   std::string way = "oo";
   std::string sceneName = "cornell";
@@ -356,6 +359,8 @@ int main(int argc, const char *argv[]) {
       | Opt(renderParams.seed,
             "seed")["--seed"]("set rendering seed (0 to use random seed)")
       | Opt(renderParams.preview)["--preview"]("super quick preview")
+      | Opt(saveEvery, "secs")["--save-every"](
+          "periodically save (every secs), 0 to disable")
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
       | Opt(sceneName, "scene")["--scene"]("which scene to render")
       | Opt(raw)["--raw"]("output in raw form")
@@ -411,7 +416,8 @@ int main(int argc, const char *argv[]) {
   }
 
   auto startTime = std::chrono::system_clock::now();
-  auto output = doRender(way, sceneName, renderParams, save);
+  auto output = doRender(way, sceneName, renderParams,
+                         std::chrono::seconds(saveEvery), save);
   auto endTime = std::chrono::system_clock::now();
 
   save(output);
