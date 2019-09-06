@@ -47,6 +47,17 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
       sphereMaterials_[*nearestIndex]};
 }
 
+namespace {
+
+// Takes unpredictable boolean-producing values, each unpredicatble in itself,
+// and returns a single ORred bool if any are true.
+template <typename... Args>
+bool anyUnpredictable(Args &&... args) {
+  return (static_cast<unsigned>(!!args) | ...);
+}
+
+}
+
 std::optional<IntersectionRecord>
 Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
   double currentNearestDist = nearerThan;
@@ -72,7 +83,20 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
     const auto qVec = tVec.cross(tv.uVector());
     const auto v = ray.direction().dot(qVec) * invDet;
 
-    if (u < 0.0 || u > 1.0 || v < 0.0 || u + v > 1)
+    // This is an important optimisation:
+    // The overall chance of the ray intersecting this triangle is likely to be
+    // extremely small: so this comparison is almost always "true". HOWEVER, if
+    // the compiler implements this as a sequence of compare-and-branches, one
+    // for each continue, then each individual branch is essentially random and
+    // unpredictable. If the compiler is forced to emit only one branch (on the
+    // total result of the expression), then the branch is predictable. This
+    // makes a huge performance difference!
+    // I found GCC (9.1) very sensitive to the ordering of comparisons if I used
+    // regular logical or here: this bitwise or pretty much guarantees a single
+    // branch.
+    // (extra parens around variables are to prevent clang-format from getting
+    // confused).
+    if (anyUnpredictable((u) < 0.0, u > 1.0), (v) < 0.0, u + v > 1)
       continue;
 
     const auto t = tv.vVector().dot(qVec) * invDet;
