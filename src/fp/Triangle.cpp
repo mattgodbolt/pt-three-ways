@@ -9,7 +9,6 @@ tl::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
   const auto pVec = ray.direction().cross(vVector());
   const auto det = uVector().dot(pVec);
 
-  tl::optional<double> a;
   // ray and triangle are parallel if det is close to 0
   if (fabs(det) < Epsilon)
     return {};
