@@ -96,7 +96,7 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
     // branch.
     // (extra parens around variables are to prevent clang-format from getting
     // confused).
-    if (anyUnpredictable((u) < 0.0, u > 1.0), (v) < 0.0, u + v > 1)
+    if (anyUnpredictable((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1))
       continue;
 
     const auto t = tv.vVector().dot(qVec) * invDet;
