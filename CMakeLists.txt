@@ -31,10 +31,6 @@ if (CCACHE_PROGRAM)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif ()
 
-add_subdirectory(src)
-add_subdirectory(test)
-add_subdirectory(benchmarks)
-
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     include(CheckIPOSupported)
     check_ipo_supported(RESULT LTOAvailable)
@@ -43,6 +39,17 @@ endif ()
 if (LTOAvailable)
     message("Link-time optimization enabled")
 
+    add_link_options(-Wl,--no-as-needed) # Magic found here: https://gcc.gnu.org/ml/gcc-help/2017-03/msg00081.html
+else ()
+    message("Link-time optimization disabled")
+endif ()
+
+
+add_subdirectory(src)
+add_subdirectory(test)
+add_subdirectory(benchmarks)
+
+if (LTOAvailable)
     # Clang doesn't support a mix of LTO and non-LTO, so specify everything here
     # Probably a better way to do this but GLOBAL setting didn't work.
     set_property(TARGET oo PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
@@ -57,6 +64,4 @@ if (LTOAvailable)
     set_property(TARGET dod_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
     set_property(TARGET util_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
     set_property(TARGET math_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
-else ()
-    message("Link-time optimization disabled")
 endif ()
