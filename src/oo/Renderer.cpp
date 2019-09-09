@@ -44,6 +44,19 @@ Renderer::generateTiles(int width, int height, int xTileSize, int yTileSize,
   return tiles;
 }
 
+class Renderer::Sampler : public oo::Material::RadianceSampler {
+  const Renderer &renderer_;
+  std::mt19937 &rng_;
+  int depth_;
+
+public:
+  Sampler(const Renderer &renderer, std::mt19937 &rng, int depth)
+      : renderer_(renderer), rng_(rng), depth_(depth) {}
+  Vec3 sample(const Ray &ray) const override {
+    return renderer_.radiance(rng_, ray, depth_);
+  }
+};
+
 Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
   if (depth >= renderParams_.maxDepth)
     return Vec3();
@@ -59,6 +72,7 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
   const auto &hit = intersectionRecord.hit;
 
   Vec3 result;
+  Sampler sampler(*this, rng, depth + 1);
 
   // Sample evenly with random offset.
   std::uniform_real_distribution<> unit(0, 1.0);
@@ -68,8 +82,7 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
       auto v = (vSample + unit(rng)) / numVSamples;
       auto p = unit(rng);
 
-      auto nextPath = material.bounce(hit, ray, u, v, p);
-      result += nextPath.colour * radiance(rng, nextPath.bounced, depth + 1);
+      result += material.sample(hit, ray, sampler, u, v, p);
     }
   }
   return material.totalEmission(result / (numUSamples * numVSamples));

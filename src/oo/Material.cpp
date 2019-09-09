@@ -4,8 +4,9 @@
 
 namespace oo {
 
-Material::Bounce Material::bounce(const Hit &hit, const Ray &incoming, double u,
-                                  double v, double p) const {
+Vec3 Material::sample(const Hit &hit, const Ray &incoming,
+                      const RadianceSampler &radianceSampler, double u,
+                      double v, double p) const {
   double iorFrom = 1.0;
   double iorTo = mat_.indexOfRefraction;
   auto reflectivity = mat_.reflectivity;
@@ -16,14 +17,14 @@ Material::Bounce Material::bounce(const Hit &hit, const Ray &incoming, double u,
     reflectivity = hit.normal.reflectance(incoming.direction(), iorFrom, iorTo);
   }
   if (p < reflectivity) {
-    return Bounce{
-        Vec3(1, 1, 1),
+    return radianceSampler.sample(
         Ray(hit.position, coneSample(hit.normal.reflect(incoming.direction()),
-                                     mat_.reflectionConeAngleRadians, u, v))};
+                                     mat_.reflectionConeAngleRadians, u, v)));
   } else {
     auto basis = OrthoNormalBasis::fromZ(hit.normal);
-    return Bounce{mat_.diffuse,
-                  Ray(hit.position, hemisphereSample(basis, u, v))};
+    return mat_.diffuse
+           * radianceSampler.sample(
+               Ray(hit.position, hemisphereSample(basis, u, v)));
   }
 }
 

@@ -47,6 +47,9 @@ public:
   [[nodiscard]] static std::vector<Tile>
   generateTiles(int width, int height, int xTileSize, int yTileSize,
                 int numSamples, int samplesPerTile, int seed);
+
+private:
+  class Sampler;
 };
 
 }
