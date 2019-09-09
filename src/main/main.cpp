@@ -118,10 +118,10 @@ auto createCeScene(SB &sb, const RenderParams &renderParams) {
   auto in = opener.open("ce.obj");
   loadObjFile(*in, opener, sb);
 
-  auto brightLight = Material::makeLight(Vec3(1, 1, 1) * 200);
-  sb.addSphere(Vec3(0, 1.6, 0), 0.1, brightLight);
-  auto dullLight = Material::makeLight(Vec3(2.27, 3, 2.97) * 0.5);
-  sb.addSphere(Vec3(-0.2, 5.9, -0.3), 1.0, dullLight);
+  auto brightLight = Material::makeLight(Vec3(1, 1, 1) * 10);
+  sb.addSphere(Vec3(0, 1.6, 0), 1.0, brightLight);
+  auto dullLight = Material::makeLight(Vec3(2.27, 3, 2.97) * 0.25);
+  sb.addSphere(Vec3(-0.2, 5.9, -0.3), 5.0, dullLight);
 
   sb.addSphere(Vec3(), 10, Material::makeDiffuse(Vec3(0.2, 0.2, 0.2)));
 
