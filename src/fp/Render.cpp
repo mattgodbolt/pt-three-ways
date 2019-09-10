@@ -50,18 +50,14 @@ tl::optional<IntersectionRecord> intersect(const Scene &scene, const Ray &ray) {
   return nearest;
 }
 
-// TODO rephrase as a function that curries the depth etc
-Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
-              const RenderParams &renderParams);
-
-Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
-               const IntersectionRecord &intersectionRecord, const Ray &ray,
-               const OrthoNormalBasis &basis, double u, double v, int depth,
-               const RenderParams &renderParams) {
+template <typename RadianceFunc>
+Vec3 radianceAtIntersection(RadianceFunc &&radiance,
+                            const IntersectionRecord &intersectionRecord,
+                            const Ray &ray, const OrthoNormalBasis &basis,
+                            double u, double v, double p) {
   std::uniform_real_distribution<> unit(0, 1.0);
   const auto &mat = intersectionRecord.material;
   const auto &hit = intersectionRecord.hit;
-  const auto p = unit(rng);
 
   const auto [iorFrom, iorTo] =
       hit.inside ? std::make_pair(mat.indexOfRefraction, 1.0)
@@ -75,10 +71,10 @@ Vec3 singleRay(const Scene &scene, std::mt19937 &rng,
     const auto newRay =
         Ray(hit.position, coneSample(hit.normal.reflect(ray.direction()),
                                      mat.reflectionConeAngleRadians, u, v));
-    return radiance(scene, rng, newRay, depth, renderParams);
+    return radiance(newRay);
   } else {
     const auto newRay = Ray(hit.position, hemisphereSample(basis, u, v));
-    return mat.diffuse * radiance(scene, rng, newRay, depth, renderParams);
+    return mat.diffuse * radiance(newRay);
   }
 }
 
@@ -110,12 +106,17 @@ Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
     return std::make_pair(sampleU, sampleV);
   };
 
+  auto radianceForRay = [&](const Ray &ray) {
+    return radiance(scene, rng, ray, depth + 1, renderParams);
+  };
+
   const auto incomingLight = accumulate(
       views::cartesian_product(views::ints(0, numVSamples),
                                views::ints(0, numUSamples))
           | views::transform(toUVSample) | views::transform([&](auto s) {
-              return singleRay(scene, rng, *intersectionRecord, ray, basis,
-                               s.first, s.second, depth + 1, renderParams);
+              return radianceAtIntersection(radianceForRay, *intersectionRecord,
+                                            ray, basis, s.first, s.second,
+                                            unit(rng));
             }),
       Vec3());
   return mat.emission + incomingLight / (numUSamples * numVSamples);

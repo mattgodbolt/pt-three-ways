@@ -83,7 +83,7 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
       auto p = unit(rng);
 
       // TODO point out this is how we deal with "recursion" or encapsulation
-      // between material and renderer. use std function for equivalent in FP?
+      // between material and renderer.
       result += material.sample(hit, ray, sampler, u, v, p);
     }
   }
