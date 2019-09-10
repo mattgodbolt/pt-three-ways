@@ -189,7 +189,7 @@ Vec3 Scene::radiance(std::mt19937 &rng, const Ray &ray, int depth,
 }
 
 void Scene::addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
-                        const Material &material) {
+                        const MaterialSpec &material) {
   auto &tv = triangleVerts_.emplace_back(TriangleVertices{v0, v1, v2});
   triangleNormals_.emplace_back(
       TriangleNormals{tv.faceNormal(), tv.faceNormal(), tv.faceNormal()});
@@ -197,7 +197,7 @@ void Scene::addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
 }
 
 void Scene::addSphere(const Vec3 &centre, double radius,
-                      const Material &material) {
+                      const MaterialSpec &material) {
   spheres_.emplace_back(centre, radius);
   sphereMaterials_.emplace_back(material);
 }

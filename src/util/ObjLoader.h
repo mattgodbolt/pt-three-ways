@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Material.h"
+#include "MaterialSpec.h"
 
 #include <iosfwd>
 #include <memory>

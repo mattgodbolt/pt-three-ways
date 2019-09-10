@@ -2,7 +2,7 @@
 
 #include "Sphere.h"
 #include "Triangle.h"
-#include "util/Material.h"
+#include "util/MaterialSpec.h"
 
 #include <variant>
 
@@ -10,12 +10,12 @@ namespace fp {
 
 struct TrianglePrimitive {
   Triangle triangle;
-  Material material;
+  MaterialSpec material;
 };
 
 struct SpherePrimitive {
   Sphere sphere;
-  Material material;
+  MaterialSpec material;
 };
 
 using Primitive = std::variant<TrianglePrimitive, SpherePrimitive>;

@@ -1,13 +1,13 @@
 #pragma once
 
 #include "math/Hit.h"
-#include "util/Material.h"
+#include "util/MaterialSpec.h"
 
 namespace dod {
 
 struct IntersectionRecord {
   Hit hit;
-  const Material &material;
+  const MaterialSpec &material;
 };
 
 }

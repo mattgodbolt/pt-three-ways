@@ -14,7 +14,7 @@ int asInt(std::string_view sv);
 size_t asIndex(std::string_view sv, size_t max);
 
 // Visible for tests
-[[nodiscard]] std::unordered_map<std::string, Material>
+[[nodiscard]] std::unordered_map<std::string, MaterialSpec>
 loadMaterials(std::istream &in);
 
 static constexpr auto tokenRe =
@@ -61,8 +61,8 @@ void loadObjFile(std::istream &in, ObjLoaderOpener &opener, SceneBuilder &sb) {
   in.exceptions(std::ios_base::badbit);
 
   std::vector<Vec3> vertices;
-  std::unordered_map<std::string, Material> materials;
-  Material curMat;
+  std::unordered_map<std::string, MaterialSpec> materials;
+  MaterialSpec curMat;
 
   parse(in, [&](std::string_view command,
                 const std::vector<std::string_view> &params) {

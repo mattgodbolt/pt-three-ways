@@ -16,11 +16,11 @@ struct CaptureSceneBuilder {
     Vec3 v0;
     Vec3 v1;
     Vec3 v2;
-    Material material;
+    MaterialSpec material;
   };
   std::vector<Triangle> triangles;
   void addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
-                   const Material &material) {
+                   const MaterialSpec &material) {
     triangles.emplace_back(Triangle{v0, v1, v2, material});
   }
 };

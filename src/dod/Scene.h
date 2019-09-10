@@ -7,7 +7,7 @@
 #include "math/Ray.h"
 #include "math/Vec3.h"
 #include "util/ArrayOutput.h"
-#include "util/Material.h"
+#include "util/MaterialSpec.h"
 #include "util/RenderParams.h"
 
 #include <array>
@@ -23,10 +23,10 @@ class Scene {
 
   std::vector<TriangleVertices> triangleVerts_;
   std::vector<TriangleNormals> triangleNormals_;
-  std::vector<Material> triangleMaterials_;
+  std::vector<MaterialSpec> triangleMaterials_;
 
   std::vector<Sphere> spheres_;
-  std::vector<Material> sphereMaterials_;
+  std::vector<MaterialSpec> sphereMaterials_;
 
   Vec3 environment_;
 
@@ -35,8 +35,8 @@ public:
                               const RenderParams &renderParams) const;
 
   void addTriangle(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2,
-                   const Material &material);
-  void addSphere(const Vec3 &centre, double radius, const Material &material);
+                   const MaterialSpec &material);
+  void addSphere(const Vec3 &centre, double radius, const MaterialSpec &material);
 
   void setEnvironmentColour(const Vec3 &colour);
 

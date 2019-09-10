@@ -1,7 +1,7 @@
 #pragma once
 
 #include "math/Vec3.h"
-#include "util/Material.h"
+#include "util/MaterialSpec.h"
 #include <array>
 
 namespace dod {

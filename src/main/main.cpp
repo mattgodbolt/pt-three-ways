@@ -44,7 +44,7 @@ Vec3 hexColour(uint32_t hex) {
 
 template <typename SB>
 void addCube(SB &sb, const Vec3 &low, const Vec3 &high,
-             const Material &material) {
+             const MaterialSpec &material) {
   auto T = [&](unsigned bit) {
     bool x = bit & 4u;
     bool y = bit & 2u;
@@ -72,7 +72,7 @@ Camera createCornellScene(SB &sb, const RenderParams &renderParams) {
   auto in = opener.open("CornellBox-Original.obj");
   loadObjFile(*in, opener, sb);
   sb.addSphere(Vec3(-0.38, 0.281, 0.38), 0.28,
-               Material::makeReflective(Vec3(0.999, 0.999, 0.999), 0.95, 5));
+      MaterialSpec::makeReflective(Vec3(0.999, 0.999, 0.999), 0.95, 5));
   sb.setEnvironmentColour(Vec3(0.725, 0.71, 0.68) * 0.1);
   Vec3 camPos(0, 1, 3);
   Vec3 camUp(0, 1, 0);
@@ -90,11 +90,11 @@ auto createSuzanneScene(SB &sb, const RenderParams &renderParams) {
   auto in = opener.open("suzanne.obj");
   loadObjFile(*in, opener, sb);
 
-  auto lightMat = Material::makeLight(Vec3(4, 4, 4));
+  auto lightMat = MaterialSpec::makeLight(Vec3(4, 4, 4));
   sb.addSphere(Vec3(0.5, 1, 3), 1, lightMat);
   sb.addSphere(Vec3(1, 1, 3), 1, lightMat);
 
-  auto boxMat = Material::makeDiffuse(Vec3(0.20, 0.30, 0.36));
+  auto boxMat = MaterialSpec::makeDiffuse(Vec3(0.20, 0.30, 0.36));
   auto tl = Vec3(-5, -5, -1);
   auto tr = Vec3(5, -5, -1);
   auto bl = Vec3(-5, 5, -1);
@@ -118,12 +118,12 @@ auto createCeScene(SB &sb, const RenderParams &renderParams) {
   auto in = opener.open("ce.obj");
   loadObjFile(*in, opener, sb);
 
-  auto brightLight = Material::makeLight(Vec3(1, 1, 1) * 10);
+  auto brightLight = MaterialSpec::makeLight(Vec3(1, 1, 1) * 10);
   sb.addSphere(Vec3(0, 1.6, 0), 1.0, brightLight);
-  auto dullLight = Material::makeLight(Vec3(2.27, 3, 2.97) * 0.25);
+  auto dullLight = MaterialSpec::makeLight(Vec3(2.27, 3, 2.97) * 0.25);
   sb.addSphere(Vec3(-0.2, 5.9, -0.3), 5.0, dullLight);
 
-  sb.addSphere(Vec3(), 10, Material::makeDiffuse(Vec3(0.2, 0.2, 0.2)));
+  sb.addSphere(Vec3(), 10, MaterialSpec::makeDiffuse(Vec3(0.2, 0.2, 0.2)));
 
   Vec3 camPos(0.27, 1.15, 0.36);
   Vec3 camLookAt(0, 0, 0);
@@ -146,16 +146,16 @@ auto createSingleSphereScene(SB &sb, const RenderParams &renderParams) {
 
   auto lightRadius = 3.0;
   auto lightOffset = Vec3(6, 6, 0);
-  auto lightMat = Material::makeLight(Vec3(1, 1, 1) * 8);
+  auto lightMat = MaterialSpec::makeLight(Vec3(1, 1, 1) * 8);
   sb.addSphere(camPos + lightOffset - Vec3(0, 0, lightRadius), lightRadius,
                lightMat);
 
-  auto sphereMat = Material::makeDiffuse(Vec3(0.2, 0.2, 0.2));
+  auto sphereMat = MaterialSpec::makeDiffuse(Vec3(0.2, 0.2, 0.2));
   sphereMat.indexOfRefraction = 1.3;
   sphereMat.reflectionConeAngleRadians = 0.05;
   sb.addSphere(Vec3(), 1, sphereMat);
 
-  auto worldMat = Material::makeDiffuse(Vec3(0.2, 0.2, 0.5));
+  auto worldMat = MaterialSpec::makeDiffuse(Vec3(0.2, 0.2, 0.5));
   sb.addSphere(Vec3(), 10, worldMat);
 
   return camera;
@@ -165,18 +165,19 @@ template <typename SB>
 auto createExample1Scene(SB &sb, const RenderParams &renderParams) {
   // From @fogleman's pt example1.go
   sb.addSphere(Vec3(1.5, 1.25, 0), 1.25,
-               Material::makeSpecular(hexColour(0x004358), 1.3));
+               MaterialSpec::makeSpecular(hexColour(0x004358), 1.3));
   sb.addSphere(Vec3(-1, 1, 2), 1.0,
-               Material::makeSpecular(hexColour(0xffe11a), 1.3));
+               MaterialSpec::makeSpecular(hexColour(0xffe11a), 1.3));
   sb.addSphere(Vec3(-2.5, 0.75, 0), 0.75,
-               Material::makeSpecular(hexColour(0xfd7400), 1.3));
+               MaterialSpec::makeSpecular(hexColour(0xfd7400), 1.3));
   // TODO: clear materials...
   sb.addSphere(Vec3(-0.75, 0.5, -1), 0.5,
-               Material::makeSpecular(hexColour(0), 1.3));
+               MaterialSpec::makeSpecular(hexColour(0), 1.3));
   addCube(sb, Vec3(-10, -1, -10), Vec3(10, 0, 10),
-          Material::makeGlossy(Vec3(1, 1, 1), 1.1, 10.0));
+          MaterialSpec::makeGlossy(Vec3(1, 1, 1), 1.1, 10.0));
 
-  sb.addSphere(Vec3(-1.5, 4, 0), 0.5, Material::makeLight(Vec3(1, 1, 1) * 30));
+  sb.addSphere(Vec3(-1.5, 4, 0), 0.5,
+               MaterialSpec::makeLight(Vec3(1, 1, 1) * 30));
 
   Vec3 camPos(0, 2, -5);
   Vec3 camLookAt(0, 0.25, 3);
@@ -227,18 +228,18 @@ auto createBbcOwlScene(SB &sb, const RenderParams &renderParams) {
     for (auto c : line) {
       if (c == '*') {
         sb.addSphere(Vec3(x, y, 0), sphereSize,
-                     Material::makeSpecular(hexColour(0xfeffd5), 1.3));
+                     MaterialSpec::makeSpecular(hexColour(0xfeffd5), 1.3));
       }
       x -= sphereSpacing;
     }
     y -= sphereSpacing;
   }
-  auto planeMat = Material::makeReflective(Vec3(0.2, 0.2, 0.2), 0.75, 3.0);
+  auto planeMat = MaterialSpec::makeReflective(Vec3(0.2, 0.2, 0.2), 0.75, 3.0);
   planeMat.indexOfRefraction = 1.5;
   addCube(sb, Vec3(-10, -1, -10), Vec3(10, 0, 10), planeMat);
 
   sb.addSphere(Vec3(-1.5, 4.0, -1), 0.75,
-               Material::makeLight(Vec3(1, 1, 1) * 30));
+               MaterialSpec::makeLight(Vec3(1, 1, 1) * 30));
 
   sb.setEnvironmentColour(Vec3(0.2, 0.2, 0.5) * 0.05);
 

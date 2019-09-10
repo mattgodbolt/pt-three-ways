@@ -15,7 +15,7 @@ namespace fp {
 
 struct IntersectionRecord {
   Hit hit;
-  const Material &material;
+  const MaterialSpec &material;
 };
 
 struct IntersectVisitor {

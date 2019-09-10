@@ -2,7 +2,7 @@
 
 #include "math/Hit.h"
 #include "math/Ray.h"
-#include "util/Material.h"
+#include "util/MaterialSpec.h"
 
 #include <memory>
 
@@ -31,7 +31,7 @@ public:
   [[nodiscard]] virtual Vec3 totalEmission(const Vec3 &inbound) const
       noexcept = 0;
 
-  static std::unique_ptr<Material> from(const ::Material &mat);
+  static std::unique_ptr<Material> from(const MaterialSpec &mat);
 };
 
 }

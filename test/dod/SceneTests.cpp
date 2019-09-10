@@ -15,7 +15,7 @@ TEST_CASE("Scenes", "[Scene]") {
 
   SECTION("intersects spheres") {
     Scene s;
-    auto material = Material::makeDiffuse(Vec3(1, 1, 1));
+    auto material = MaterialSpec::makeDiffuse(Vec3(1, 1, 1));
     s.addSphere(Vec3(10, 20, 30), 15, material);
     CHECK(!s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 0), Vec3(0, 1, 0))));
     CHECK(!s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 0), Vec3(-10, -20, -30))));
@@ -30,7 +30,7 @@ TEST_CASE("Scenes", "[Scene]") {
 
   SECTION("intersect with spheres at known intersection point") {
     Scene s;
-    auto material = Material::makeDiffuse(Vec3(1, 1, 1));
+    auto material = MaterialSpec::makeDiffuse(Vec3(1, 1, 1));
     s.addSphere(Vec3(0, 0, 30), 10, material);
     auto ir = s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 0), Vec3(0, 0, 2)));
     REQUIRE(ir);
@@ -42,7 +42,7 @@ TEST_CASE("Scenes", "[Scene]") {
 
   SECTION("intersect from within spheres at known intersection point") {
     Scene s;
-    auto material = Material::makeDiffuse(Vec3(1, 1, 1));
+    auto material = MaterialSpec::makeDiffuse(Vec3(1, 1, 1));
     s.addSphere(Vec3(0, 0, 30), 10, material);
     auto ir = s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 30), Vec3(0, 0, 2)));
     REQUIRE(ir);
@@ -54,8 +54,8 @@ TEST_CASE("Scenes", "[Scene]") {
 
   SECTION("picks nearer of two spheres (first nearer)") {
     Scene s;
-    auto material1 = Material::makeDiffuse(Vec3(1, 1, 1));
-    auto material2 = Material::makeDiffuse(Vec3(1, 0, 0));
+    auto material1 = MaterialSpec::makeDiffuse(Vec3(1, 1, 1));
+    auto material2 = MaterialSpec::makeDiffuse(Vec3(1, 0, 0));
     s.addSphere(Vec3(0, 0, 30), 10, material1);
     s.addSphere(Vec3(0, 0, 90), 10, material2);
     auto ir = s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 0), Vec3(0, 0, 2)));
@@ -67,8 +67,8 @@ TEST_CASE("Scenes", "[Scene]") {
 
   SECTION("picks nearer of two spheres (second nearer)") {
     Scene s;
-    auto material1 = Material::makeDiffuse(Vec3(1, 1, 1));
-    auto material2 = Material::makeDiffuse(Vec3(1, 0, 0));
+    auto material1 = MaterialSpec::makeDiffuse(Vec3(1, 1, 1));
+    auto material2 = MaterialSpec::makeDiffuse(Vec3(1, 0, 0));
     s.addSphere(Vec3(0, 0, 90), 10, material1);
     s.addSphere(Vec3(0, 0, 30), 10, material2);
     auto ir = s.intersect(Ray::fromTwoPoints(Vec3(0, 0, 0), Vec3(0, 0, 2)));

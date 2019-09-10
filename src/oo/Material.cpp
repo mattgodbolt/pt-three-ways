@@ -6,10 +6,10 @@ namespace oo {
 
 class ConcreteMaterial : public Material {
 protected:
-  ::Material mat_;
+  MaterialSpec mat_;
 
 public:
-  explicit ConcreteMaterial(const ::Material &mat) : mat_(mat) {}
+  explicit ConcreteMaterial(const MaterialSpec &mat) : mat_(mat) {}
 
   [[nodiscard]] Vec3 previewColour() const noexcept override {
     return mat_.diffuse;
@@ -66,7 +66,7 @@ public:
   }
 };
 
-std::unique_ptr<Material> Material::from(const ::Material &mat) {
+std::unique_ptr<Material> Material::from(const MaterialSpec &mat) {
   if (mat.reflectivity >= 0) {
     return std::make_unique<ShinyMaterial>(mat);
   } else {

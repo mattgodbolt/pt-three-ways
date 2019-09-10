@@ -17,15 +17,15 @@ size_t impl::asIndex(std::string_view sv, size_t max) {
   return res < 0 ? res + max : res - 1;
 }
 
-std::unordered_map<std::string, Material>
+std::unordered_map<std::string, MaterialSpec>
 impl::loadMaterials(std::istream &in) {
   using namespace std::literals;
   if (!in)
     throw std::runtime_error("Bad input stream");
   in.exceptions(std::ios_base::badbit);
-  std::unordered_map<std::string, Material> result;
+  std::unordered_map<std::string, MaterialSpec> result;
 
-  Material *curMat{};
+  MaterialSpec *curMat{};
   int illum = 2;
   Vec3 ambientColour;
 
@@ -45,7 +45,7 @@ impl::loadMaterials(std::istream &in) {
       if (params.size() != 1)
         throw std::runtime_error("Wrong number of params for newmtl");
       curMat =
-          &result.emplace(std::string(params[0]), Material{}).first->second;
+          &result.emplace(std::string(params[0]), MaterialSpec{}).first->second;
       return true;
     } else if (command == "Ke"sv) {
       if (!curMat)

@@ -10,7 +10,7 @@ namespace {
 
 TEST_CASE("Spheres", "[Sphere]") {
   dod::Scene scene;
-  Material mat;
+  MaterialSpec mat;
   auto inf = std::numeric_limits<double>::infinity();
   SECTION("intersects") {
     scene.addSphere(Vec3(10, 20, 30), 15, mat);

@@ -10,7 +10,7 @@ namespace {
 
 TEST_CASE("Triangles", "[Triangles]") {
   dod::Scene scene;
-  Material mat;
+  MaterialSpec mat;
   auto inf = std::numeric_limits<double>::infinity();
   SECTION("intersects clockwise") {
     scene.addTriangle(Vec3(0, 0, 3), Vec3(0, 1, 3), Vec3(1, 1, 3), mat);
