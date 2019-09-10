@@ -50,6 +50,7 @@ tl::optional<IntersectionRecord> intersect(const Scene &scene, const Ray &ray) {
   return nearest;
 }
 
+// TODO rephrase as a function that curries the depth etc
 Vec3 radiance(const Scene &scene, std::mt19937 &rng, const Ray &ray, int depth,
               const RenderParams &renderParams);
 
@@ -165,6 +166,8 @@ ArrayOutput render(const Camera &camera, const Scene &scene,
       updateFunc(output);
     }
   }
+  progressifier.update(numDone);
   return output;
 }
+
 }

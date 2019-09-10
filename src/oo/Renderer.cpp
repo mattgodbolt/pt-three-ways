@@ -52,7 +52,7 @@ class Renderer::Sampler : public oo::Material::RadianceSampler {
 public:
   Sampler(const Renderer &renderer, std::mt19937 &rng, int depth)
       : renderer_(renderer), rng_(rng), depth_(depth) {}
-  Vec3 sample(const Ray &ray) const override {
+  [[nodiscard]] Vec3 sample(const Ray &ray) const override {
     return renderer_.radiance(rng_, ray, depth_);
   }
 };
@@ -66,7 +66,7 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
   if (!scene_.intersect(ray, intersectionRecord))
     return scene_.environment(ray);
 
-  const auto &material = intersectionRecord.material;
+  const auto &material = *intersectionRecord.material;
   if (renderParams_.preview)
     return material.previewColour();
   const auto &hit = intersectionRecord.hit;
@@ -82,6 +82,8 @@ Vec3 Renderer::radiance(std::mt19937 &rng, const Ray &ray, int depth) const {
       auto v = (vSample + unit(rng)) / numVSamples;
       auto p = unit(rng);
 
+      // TODO point out this is how we deal with "recursion" or encapsulation
+      // between material and renderer. use std function for equivalent in FP?
       result += material.sample(hit, ray, sampler, u, v, p);
     }
   }
@@ -110,7 +112,7 @@ ArrayOutput Renderer::render(
     auto numLeft = renderParams_.samplesPerPixel - curSample;
     auto numSpareCpus = renderParams_.maxCpus - futures.size();
     auto numToSpawn = std::min<size_t>(numLeft, numSpareCpus);
-    for (auto i = 0u; i < numToSpawn; ++i)
+    for (size_t i = 0u; i < numToSpawn; ++i)
       futures.emplace_back(launch());
   };
 

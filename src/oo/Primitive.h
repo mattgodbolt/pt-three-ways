@@ -11,7 +11,7 @@ public:
   virtual ~Primitive() = default;
   struct IntersectionRecord {
     Hit hit;
-    Material material;
+    const Material *material{};
   };
 
   [[nodiscard]] virtual bool
