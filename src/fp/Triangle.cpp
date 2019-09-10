@@ -31,15 +31,18 @@ tl::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
   if (t < Epsilon)
     return {};
 
-  const auto normalUdelta = normals_[1] - normals_[0];
-  const auto normalVdelta = normals_[2] - normals_[0];
+  const auto normalUdelta = normals_[1].toVec3() - normals_[0].toVec3();
+  const auto normalVdelta = normals_[2].toVec3() - normals_[0].toVec3();
   // TODO: proper barycentric coordinates
   const auto normal =
-      ((u * normalUdelta) + (v * normalVdelta) + normals_[0]).normalised();
+      ((u * normalUdelta) + (v * normalVdelta) + normals_[0].toVec3())
+          .normalised();
   return Hit{t, backfacing, ray.positionAlong(t),
              backfacing ? -normal : normal};
 }
 
-Triangle::Triangle(const Triangle::Vertices &vertices) : vertices_(vertices) {
+Triangle::Triangle(const Triangle::Vertices &vertices)
+    : vertices_(vertices), normals_{Norm3::xAxis(), Norm3::xAxis(),
+                                    Norm3::xAxis()} {
   normals_[0] = normals_[1] = normals_[2] = faceNormal();
 }

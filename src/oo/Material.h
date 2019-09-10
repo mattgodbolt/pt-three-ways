@@ -19,7 +19,7 @@ public:
   public:
     virtual ~RadianceSampler() = default;
 
-    virtual Vec3 sample(const Ray &ray) const = 0;
+    [[nodiscard]] virtual Vec3 sample(const Ray &ray) const = 0;
   };
 
   [[nodiscard]] virtual Vec3 sample(const Hit &hit, const Ray &incoming,

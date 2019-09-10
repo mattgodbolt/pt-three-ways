@@ -16,7 +16,7 @@ tl::optional<double> sqrtOptional(double value) {
 tl::optional<Hit> Sphere::intersect(const Ray &ray) const noexcept {
   // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
   const auto op = centre_ - ray.origin();
-  const auto b = op.dot(ray.direction());
+  const auto b = op.dot(ray.direction().toVec3());
   return sqrtOptional(b * b - op.lengthSquared() + radius_ * radius_)
       .and_then([&b](double determinant) -> tl::optional<double> {
         const auto minusT = b - determinant;

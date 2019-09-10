@@ -29,17 +29,19 @@ bool Triangle::intersect(const Ray &ray, Hit &hit) const noexcept {
   if (t < Epsilon)
     return false;
 
-  auto normalUdelta = normals_[1] - normals_[0];
-  auto normalVdelta = normals_[2] - normals_[0];
+  auto normalUdelta = normals_[1].toVec3() - normals_[0].toVec3();
+  auto normalVdelta = normals_[2].toVec3() - normals_[0].toVec3();
   // TODO: proper barycentric coordinates
-  auto normal =
-      ((u * normalUdelta) + (v * normalVdelta) + normals_[0]).normalised();
+  auto normal = ((u * normalUdelta) + (v * normalVdelta) + normals_[0].toVec3())
+                    .normalised();
   if (backfacing)
     normal = -normal;
   hit = Hit{t, backfacing, ray.positionAlong(t), normal};
   return true;
 }
 
-Triangle::Triangle(const Triangle::Vertices &vertices) : vertices_(vertices) {
+Triangle::Triangle(const Triangle::Vertices &vertices)
+    : vertices_(vertices), normals_{Norm3::xAxis(), Norm3::xAxis(),
+                                    Norm3::xAxis()} {
   normals_[0] = normals_[1] = normals_[2] = faceNormal();
 }

@@ -21,5 +21,5 @@ public:
 
   void addRow(const uint8_t *rowData);
 
-  bool ok() const { return pngStruct_ && info_; }
+  [[nodiscard]] bool ok() const { return pngStruct_ && info_; }
 };

@@ -1,5 +1,9 @@
 #include "Norm3.h"
 
+std::ostream &operator<<(std::ostream &o, const Norm3 &v) {
+  return o << v.toVec3();
+}
+
 double Norm3::reflectance(const Norm3 &incoming, double iorFrom,
                           double iorTo) const noexcept {
   // For details, see:

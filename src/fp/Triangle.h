@@ -12,7 +12,7 @@ namespace fp {
 class Triangle {
 public:
   using Vertices = std::array<Vec3, 3>;
-  using Normals = std::array<Vec3, 3>;
+  using Normals = std::array<Norm3, 3>;
 
 private:
   Vertices vertices_;
@@ -29,7 +29,7 @@ public:
     return vertices_[index];
   }
 
-  [[nodiscard]] constexpr const Vec3 &normal(int index) const {
+  [[nodiscard]] constexpr const Norm3 &normal(int index) const {
     return normals_[index];
   }
 

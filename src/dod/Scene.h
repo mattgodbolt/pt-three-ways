@@ -19,7 +19,7 @@
 namespace dod {
 
 class Scene {
-  using TriangleNormals = std::array<Vec3, 3>;
+  using TriangleNormals = std::array<Norm3, 3>;
 
   std::vector<TriangleVertices> triangleVerts_;
   std::vector<TriangleNormals> triangleNormals_;

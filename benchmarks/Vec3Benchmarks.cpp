@@ -27,7 +27,7 @@ BENCHMARK(BM_Vec3LengthLatency);
 static void BM_Vec3NormaliseLatency(benchmark::State &state) {
   auto v = Vec3(1.2, -2.3, -12.4);
   for (auto _ : state) {
-    v += v.normalised();
+    v += v.normalised().toVec3();
   }
   benchmark::DoNotOptimize(v);
 }

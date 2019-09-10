@@ -11,7 +11,7 @@ class Vec3 {
 public:
   constexpr Vec3() noexcept = default;
   constexpr Vec3(double x, double y, double z) noexcept : x_(x), y_(y), z_(z) {}
-  constexpr Vec3(const Norm3 &norm); // NOLINT(google-explicit-constructor)
+  constexpr explicit Vec3(const Norm3 &norm);
 
   constexpr Vec3 operator+(const Vec3 &b) const noexcept {
     return Vec3(x_ + b.x_, y_ + b.y_, z_ + b.z_);

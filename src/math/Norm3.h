@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iosfwd>
+
 class Vec3;
 
 class Norm3 {
@@ -45,5 +47,7 @@ public:
   [[nodiscard]] static constexpr Norm3 yAxis() { return Norm3(0, 1, 0); }
   [[nodiscard]] static constexpr Norm3 zAxis() { return Norm3(0, 0, 1); }
 };
+
+std::ostream &operator<<(std::ostream &o, const Norm3 &v);
 
 #include "Norm3.impl.h"

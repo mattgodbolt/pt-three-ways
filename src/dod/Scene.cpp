@@ -16,7 +16,7 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
   for (size_t sphereIndex = 0; sphereIndex < spheres_.size(); ++sphereIndex) {
     // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
     auto op = spheres_[sphereIndex].centre - ray.origin();
-    auto b = op.dot(ray.direction());
+    auto b = op.dot(ray.direction().toVec3());
     auto determinant =
         b * b - op.lengthSquared() + spheres_[sphereIndex].radiusSquared;
     if (determinant < 0)
@@ -109,12 +109,12 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
   if (!nearest)
     return {};
   auto &tn = triangleNormals_[nearest->index];
-  auto normalUdelta = tn[1] - tn[0];
-  auto normalVdelta = tn[2] - tn[0];
+  auto normalUdelta = tn[1].toVec3() - tn[0].toVec3();
+  auto normalVdelta = tn[2].toVec3() - tn[0].toVec3();
   // TODO: proper barycentric coordinates
-  const auto normal =
-      ((nearest->u * normalUdelta) + (nearest->v * normalVdelta) + tn[0])
-          .normalised();
+  const auto normal = ((nearest->u * normalUdelta) + (nearest->v * normalVdelta)
+                       + tn[0].toVec3())
+                          .normalised();
   bool backfacing = nearest->det < Epsilon;
   return IntersectionRecord{Hit{currentNearestDist, backfacing,
                                 ray.positionAlong(currentNearestDist),

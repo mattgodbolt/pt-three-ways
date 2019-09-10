@@ -21,11 +21,20 @@ public:
                                    const ApproxVec3 &rhs) noexcept {
     return (lhs - rhs.vec_).lengthSquared() < (rhs.epsilon_ * rhs.epsilon_);
   }
+  friend constexpr bool operator==(const Norm3 &lhs,
+                                   const ApproxVec3 &rhs) noexcept {
+    return (lhs.toVec3() - rhs.vec_).lengthSquared()
+           < (rhs.epsilon_ * rhs.epsilon_);
+  }
   friend constexpr bool operator!=(const ApproxVec3 &lhs,
                                    const Vec3 &rhs) noexcept {
     return !(lhs == rhs);
   }
   friend constexpr bool operator!=(const Vec3 &lhs,
+                                   const ApproxVec3 &rhs) noexcept {
+    return !(lhs == rhs);
+  }
+  friend constexpr bool operator!=(const Norm3 &lhs,
                                    const ApproxVec3 &rhs) noexcept {
     return !(lhs == rhs);
   }
