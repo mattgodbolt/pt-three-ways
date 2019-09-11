@@ -71,7 +71,8 @@ Camera createCornellScene(SB &sb, const RenderParams &renderParams) {
   DirRelativeOpener opener("scenes");
   auto in = opener.open("CornellBox-Original.obj");
   loadObjFile(*in, opener, sb);
-  sb.addSphere(Vec3(-0.38, 0.281, 0.38), 0.28,
+  sb.addSphere(
+      Vec3(-0.38, 0.281, 0.38), 0.28,
       MaterialSpec::makeReflective(Vec3(0.999, 0.999, 0.999), 0.95, 5));
   sb.setEnvironmentColour(Vec3(0.725, 0.71, 0.68) * 0.1);
   Vec3 camPos(0, 1, 3);
@@ -154,6 +155,39 @@ auto createSingleSphereScene(SB &sb, const RenderParams &renderParams) {
   sphereMat.indexOfRefraction = 1.3;
   sphereMat.reflectionConeAngleRadians = 0.05;
   sb.addSphere(Vec3(), 1, sphereMat);
+
+  auto worldMat = MaterialSpec::makeDiffuse(Vec3(0.2, 0.2, 0.5));
+  sb.addSphere(Vec3(), 10, worldMat);
+
+  return camera;
+}
+
+template <typename SB>
+auto createMultiSphereScene(SB &sb, const RenderParams &renderParams) {
+  Vec3 camPos(0, 0, -3.2);
+  Vec3 camLookAt(0, 0, 0);
+  Vec3 camUp(0, 1, 0);
+  double verticalFov = 40.0;
+  Camera camera(camPos, camLookAt, camUp.normalised(), renderParams.width,
+                renderParams.height, verticalFov);
+
+  auto lightRadius = 3.0;
+  auto lightOffset = Vec3(6, 6, 0);
+  auto lightMat = MaterialSpec::makeLight(Vec3(1, 1, 1) * 8);
+  sb.addSphere(camPos + lightOffset - Vec3(0, 0, lightRadius), lightRadius,
+               lightMat);
+
+  const auto sphereRadius = 1.0 / 5.0;
+  const auto sphereGap = sphereRadius * 2.15;
+  for (int y = -2; y <= 2; ++y) {
+    for (int x = -2; x <= 2; ++x) {
+      auto sphereMat = MaterialSpec::makeDiffuse(Vec3(0.7, 0.7, 0.7));
+      sphereMat.indexOfRefraction = 1.0 + 0.2 * (x+2);
+      sphereMat.reflectionConeAngleRadians = 0.25 * (y+2);
+      sb.addSphere(Vec3(x * sphereGap, y * sphereGap, 0), sphereRadius,
+                   sphereMat);
+    }
+  }
 
   auto worldMat = MaterialSpec::makeDiffuse(Vec3(0.2, 0.2, 0.5));
   sb.addSphere(Vec3(), 10, worldMat);
@@ -265,6 +299,8 @@ auto createScene(SB &sb, const std::string &sceneName,
     return createCeScene(sb, renderParams);
   if (sceneName == "single-sphere")
     return createSingleSphereScene(sb, renderParams);
+  if (sceneName == "multi-sphere")
+    return createMultiSphereScene(sb, renderParams);
   if (sceneName == "example1")
     return createExample1Scene(sb, renderParams);
   if (sceneName == "bbc-owl")
