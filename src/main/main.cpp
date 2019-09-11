@@ -180,10 +180,10 @@ auto createMultiSphereScene(SB &sb, const RenderParams &renderParams) {
   const auto sphereRadius = 1.0 / 5.0;
   const auto sphereGap = sphereRadius * 2.15;
   for (int y = -2; y <= 2; ++y) {
-    for (int x = -2; x <= 2; ++x) {
-      auto sphereMat = MaterialSpec::makeDiffuse(Vec3(0.7, 0.7, 0.7));
-      sphereMat.indexOfRefraction = 1.0 + 0.2 * (x+2);
-      sphereMat.reflectionConeAngleRadians = 0.25 * (y+2);
+    for (int x = -4; x <= 4; ++x) {
+      auto sphereMat = MaterialSpec::makeDiffuse(Vec3(0.90, 0.91, 0.92));
+      sphereMat.reflectionConeAngleRadians = 0.075 * (x + 4);
+      sphereMat.indexOfRefraction = 1.0 + 0.15 * (y + 2);
       sb.addSphere(Vec3(x * sphereGap, y * sphereGap, 0), sphereRadius,
                    sphereMat);
     }
