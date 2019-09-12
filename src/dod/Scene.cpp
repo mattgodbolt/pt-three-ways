@@ -49,7 +49,7 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
 
 namespace {
 
-// Takes unpredictable boolean-producing values, each unpredicatble in itself,
+// Takes unpredictable boolean-producing values, each unpredictable in itself,
 // and returns a single ORred bool if any are true.
 template <typename... Args>
 bool anyUnpredictable(Args &&... args) {
