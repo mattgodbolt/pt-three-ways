@@ -21,14 +21,9 @@ struct IntersectionRecord {
 struct IntersectVisitor {
   const Ray &ray;
 
-  auto operator()(const TrianglePrimitive &primitive) const {
-    return primitive.triangle.intersect(ray).map([&primitive](auto hit) {
-      return IntersectionRecord{hit, primitive.material};
-    });
-  }
-
-  auto operator()(const SpherePrimitive &primitive) const {
-    return primitive.sphere.intersect(ray).map([&primitive](auto hit) {
+  template <typename Primitive>
+  auto operator()(const Primitive &primitive) const {
+    return primitive.shape.intersect(ray).map([&primitive](auto hit) {
       return IntersectionRecord{hit, primitive.material};
     });
   }

@@ -9,12 +9,12 @@
 namespace fp {
 
 struct TrianglePrimitive {
-  Triangle triangle;
+  Triangle shape;
   MaterialSpec material;
 };
 
 struct SpherePrimitive {
-  Sphere sphere;
+  Sphere shape;
   MaterialSpec material;
 };
 
