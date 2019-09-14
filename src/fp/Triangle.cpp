@@ -1,7 +1,7 @@
 #include "Triangle.h"
 #include "math/Epsilon.h"
 #include "optional.hpp"
-#include <util/Unpredicatable.h>
+#include "util/Unpredictable.h"
 
 using fp::Triangle;
 
@@ -22,7 +22,8 @@ tl::optional<Hit> Triangle::intersect(const Ray &ray) const noexcept {
   const auto qVec = tVec.cross(uVector());
   const auto v = ray.direction().dot(qVec) * invDet;
 
-  if (Unpredictable::any(u<0.0, u> 1.0, v<0.0, u + v> 1.0))
+  // extra parens to keep clang-format happy...
+  if (Unpredictable::any((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1.0))
     return {};
 
   const auto t = vVector().dot(qVec) * invDet;

@@ -1,6 +1,6 @@
 #include "Triangle.h"
 #include "math/Epsilon.h"
-#include <util/Unpredicatable.h>
+#include "util/Unpredictable.h"
 
 using oo::Triangle;
 
@@ -21,7 +21,8 @@ bool Triangle::intersect(const Ray &ray, Hit &hit) const noexcept {
   auto qVec = tVec.cross(uVector());
   auto v = ray.direction().dot(qVec) * invDet;
 
-  if (Unpredictable::any(u < 0.0, u > 1.0, v < 0.0, u + v > 1.0))
+  // extra parens to keep clang-format happy...
+  if (Unpredictable::any((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1.0))
     return false;
 
   auto t = vVector().dot(qVec) * invDet;

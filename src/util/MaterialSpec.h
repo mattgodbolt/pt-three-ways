@@ -21,14 +21,14 @@ struct MaterialSpec {
     return MaterialSpec{colour, Vec3()};
   }
   static MaterialSpec makeGlossy(const Vec3 &colour, double index,
-                             double reflectionConeAngleDegrees) {
+                                 double reflectionConeAngleDegrees) {
     return MaterialSpec{Vec3(), colour, index, -1,
-                    toRadians(reflectionConeAngleDegrees)};
+                        toRadians(reflectionConeAngleDegrees)};
   }
   static MaterialSpec makeReflective(const Vec3 &colour, double reflectivity,
-                                 double reflectionConeAngleDegrees) {
+                                     double reflectionConeAngleDegrees) {
     return MaterialSpec{Vec3(), colour, 1.0, reflectivity,
-                    toRadians(reflectionConeAngleDegrees)};
+                        toRadians(reflectionConeAngleDegrees)};
   }
   bool operator==(const MaterialSpec &rhs) const {
     return emission == rhs.emission && diffuse == rhs.diffuse

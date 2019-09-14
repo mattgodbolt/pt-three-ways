@@ -3,10 +3,10 @@
 #include "Scene.h"
 #include "math/Camera.h"
 #include "util/ArrayOutput.h"
+#include "util/RenderParams.h"
 
 #include <functional>
 #include <random>
-#include <util/RenderParams.h>
 
 namespace oo {
 

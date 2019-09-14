@@ -1,5 +1,6 @@
 #include "PngWriter.h"
 
+#include "dod/Scene.h"
 #include "fp/Render.h"
 #include "fp/SceneBuilder.h"
 #include "math/Camera.h"
@@ -8,18 +9,17 @@
 #include "oo/SceneBuilder.h"
 #include "util/ArrayOutput.h"
 #include "util/ObjLoader.h"
+#include "util/RenderParams.h"
 
 #include <clara.hpp>
 #include <date/chrono_io.h>
 
 #include <algorithm>
 #include <chrono>
-#include <dod/Scene.h>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <util/RenderParams.h>
 #include <utility>
 
 namespace {
