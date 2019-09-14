@@ -5,6 +5,7 @@
 #include "util/Progressifier.h"
 
 #include <future>
+#include <util/Unpredicatable.h>
 
 using dod::IntersectionRecord;
 using dod::Scene;
@@ -47,17 +48,6 @@ Scene::intersectSpheres(const Ray &ray, double nearerThan) const {
       sphereMaterials_[*nearestIndex]};
 }
 
-namespace {
-
-// Takes unpredictable boolean-producing values, each unpredictable in itself,
-// and returns a single ORred bool if any are true.
-template <typename... Args>
-bool anyUnpredictable(Args &&... args) {
-  return (static_cast<unsigned>(!!args) | ...);
-}
-
-}
-
 std::optional<IntersectionRecord>
 Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
   double currentNearestDist = nearerThan;
@@ -96,7 +86,7 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
     // branch.
     // (extra parens around variables are to prevent clang-format from getting
     // confused).
-    if (anyUnpredictable((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1))
+    if (Unpredictable::any((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1))
       continue;
 
     const auto t = tv.vVector().dot(qVec) * invDet;
