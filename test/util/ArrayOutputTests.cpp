@@ -1,7 +1,19 @@
 #include <catch2/catch.hpp>
 
 #include <cstdio>
+#ifdef __GNUC__
+#if __GNUC__ < 8
+#include <experimental/filesystem>
+using std_filesystem = std::experimental::filesystem;
+#else
 #include <filesystem>
+using std_filesystem = std::filesystem;
+#endif
+#else
+#include <filesystem>
+using std_filesystem = std::filesystem;
+#endif
+
 #include <string>
 #include <random>
 
@@ -18,7 +30,7 @@ TEST_CASE("ArrayOutput", "[ArrayOutput]") {
   SECTION("Roundtrips through a file") {
     const std::string tempBuf = []() {
       std::string tempBuf =
-          (std::filesystem::temp_directory_path() / "arrayoutputtest")
+          (std_filesystem::temp_directory_path() / "arrayoutputtest")
               .string();
       FILE *f = fopen(tempBuf.c_str(), "wx");
       if (f == nullptr) {
