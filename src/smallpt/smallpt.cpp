@@ -1,3 +1,4 @@
+#include <climits>
 #include <math.h> // smallpt, a Path Tracer by Kevin Beason, 2008
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
