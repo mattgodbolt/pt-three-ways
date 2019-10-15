@@ -56,7 +56,7 @@ ArrayOutput &ArrayOutput::operator+=(const ArrayOutput &rhs) {
 }
 
 size_t ArrayOutput::totalSamples() const noexcept {
-  return std::accumulate(begin(output_), end(output_), 0ULL,
+  return std::accumulate(begin(output_), end(output_), static_cast<size_t>(0ULL),
                          [](size_t lhs, const SampledPixel &pixel) {
                            return lhs + pixel.numSamples();
                          });

@@ -6,6 +6,9 @@
 #include <iomanip>
 #include <iostream>
 
+#include <optional>
+#include <memory>
+
 int main(int argc, const char *argv[]) {
   using namespace clara;
 
@@ -69,13 +72,13 @@ int main(int argc, const char *argv[]) {
     exit(1);
   }
 
+  std::unique_ptr<uint8_t[]> row{new uint8_t[accumulator->width() * 3]};
   for (int y = 0; y < accumulator->height(); ++y) {
-    std::uint8_t row[accumulator->width() * 3];
     for (int x = 0; x < accumulator->width(); ++x) {
       auto colour = accumulator->pixelAt(x, y);
       for (int component = 0; component < 3; ++component)
         row[x * 3 + component] = colour[component];
     }
-    pw.addRow(row);
+    pw.addRow(row.get());
   }
 }

@@ -1,3 +1,8 @@
 add_executable(util_tests util_tests.cpp ObjLoaderTests.cpp ArrayOutputTests.cpp)
 target_link_libraries(util_tests util CONAN_PKG::Catch2)
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  target_link_libraries(util_tests c++fs)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  target_link_libraries(util_tests stdc++fs)
+endif()
 add_test(NAME util_tests COMMAND $<TARGET_FILE:util_tests>)

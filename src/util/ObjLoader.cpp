@@ -4,6 +4,10 @@
 #include <fstream>
 #include <string>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 double impl::asDouble(std::string_view sv) {
   return std::stod(std::string(sv)); // This is dreadful
 }

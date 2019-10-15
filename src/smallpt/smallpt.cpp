@@ -1,6 +1,28 @@
-#include <math.h>   // smallpt, a Path Tracer by Kevin Beason, 2008
+#include <math.h> // smallpt, a Path Tracer by Kevin Beason, 2008
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include <stdio.h>  //        Remove "-fopenmp" for g++ version < 4.2
 #include <stdlib.h> // Make : g++ -O3 -fopenmp smallpt.cpp -o smallpt
+
+//define erand48 if it isn't already defined
+template<bool = false>
+double erand48(unsigned short xseed[3]) {
+  unsigned short temp[2];
+
+  unsigned long accu = 0xe66dul * xseed[0] + 0x000bul;
+  temp[0] = static_cast<unsigned short>(accu); /* lower 16 bits */
+  accu >>= sizeof(unsigned short) * CHAR_BIT;
+  accu += 0xe66dul * xseed[1] + 0xdeecul * xseed[0];
+  temp[1] = (unsigned short)accu; /* middle 16 bits */
+  accu >>= sizeof(unsigned short) * CHAR_BIT;
+  accu += 0xe66dul * xseed[2] + 0xdeecul * xseed[1] + 0x0005ul * xseed[0];
+  xseed[0] = temp[0];
+  xseed[1] = temp[1];
+  xseed[2] = (unsigned short)accu;
+  return ldexp((double)xseed[0], -48) + ldexp((double)xseed[1], -32)
+         + ldexp((double)xseed[2], -16);
+}
 
 struct Vec {      // Usage: time ./smallpt 5000 && xv image.ppm
   double x, y, z; // position, also color (r,g,b)

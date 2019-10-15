@@ -164,7 +164,7 @@ ArrayOutput Renderer::renderTiled(
         break;
       auto &tile = *tileOpt;
 
-      std::mt19937 rng(tile.randomPrio);
+      std::mt19937 rng(static_cast<std::mt19937::result_type>(tile.randomPrio));
       for (int y = tile.yBegin; y < tile.yEnd; ++y) {
         for (int x = tile.xBegin; x < tile.xEnd; ++x) {
           output.addSamples(x, y, renderPixel(rng, x, y, tile.samples),
