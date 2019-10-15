@@ -4,14 +4,14 @@
 #ifdef __GNUC__
 #if __GNUC__ < 8
 #include <experimental/filesystem>
-using std_filesystem = std::experimental::filesystem;
+namespace std_filesystem = std::experimental::filesystem;
 #else
 #include <filesystem>
-using std_filesystem = std::filesystem;
+namespace std_filesystem = std::filesystem;
 #endif
 #else
 #include <filesystem>
-using std_filesystem = std::filesystem;
+namespace std_filesystem = std::filesystem;
 #endif
 
 #include <string>
