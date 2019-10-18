@@ -440,7 +440,7 @@ int main(int argc, const char *argv[]) {
         return;
       }
 
-	  std::unique_ptr<uint8_t[]> row{new uint8_t[output.width() * 3]};
+	  auto row = std::make_unique<uint8_t[]>(output.width() * 3);
       for (int y = 0; y < output.height(); ++y) {
         for (int x = 0; x < output.width(); ++x) {
           auto colour = output.pixelAt(x, y);
