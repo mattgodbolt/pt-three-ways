@@ -122,8 +122,9 @@ ArrayOutput renderWholeScreen(const Camera &camera, const Scene &scene,
   using namespace ranges;
   auto renderOnePixel = [seed, &renderParams, &camera, &scene](auto tuple) {
     auto [y, x] = tuple;
-    std::mt19937 rng(static_cast<std::mt19937::result_type>(renderParams.height * renderParams.width * seed
-                     + x * renderParams.width + y));
+    std::mt19937 rng(static_cast<std::mt19937::result_type>(
+        renderParams.height * renderParams.width * seed + x * renderParams.width
+        + y));
     return radiance(scene, rng, camera.randomRay(x, y, rng), 0, renderParams);
   };
   auto renderedPixelsView =

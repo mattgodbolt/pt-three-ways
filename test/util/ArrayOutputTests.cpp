@@ -14,8 +14,8 @@ namespace std_filesystem = std::filesystem;
 namespace std_filesystem = std::filesystem;
 #endif
 
-#include <string>
 #include <random>
+#include <string>
 
 #include "util/ArrayOutput.h"
 
@@ -30,8 +30,7 @@ TEST_CASE("ArrayOutput", "[ArrayOutput]") {
   SECTION("Roundtrips through a file") {
     const std::string tempBuf = []() {
       std::string tempBuf =
-          (std_filesystem::temp_directory_path() / "arrayoutputtest")
-              .string();
+          (std_filesystem::temp_directory_path() / "arrayoutputtest").string();
       FILE *f = fopen(tempBuf.c_str(), "wx");
       if (f == nullptr) {
         std::random_device random_device;
@@ -39,7 +38,8 @@ TEST_CASE("ArrayOutput", "[ArrayOutput]") {
         std::uniform_int_distribution<char> distribution(0, 35);
         do {
           const char value = distribution(random_engine);
-          tempBuf.push_back(value < 10 ? '0' + value : 'a' + static_cast<char>(value - 10));
+          tempBuf.push_back(value < 10 ? '0' + value
+                                       : 'a' + static_cast<char>(value - 10));
           f = fopen(tempBuf.c_str(), "wx");
         } while (f == nullptr);
       }

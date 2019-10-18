@@ -6,8 +6,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include <optional>
 #include <memory>
+#include <optional>
 
 int main(int argc, const char *argv[]) {
   using namespace clara;

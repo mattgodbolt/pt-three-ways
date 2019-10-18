@@ -6,8 +6,8 @@
 #include <stdio.h>  //        Remove "-fopenmp" for g++ version < 4.2
 #include <stdlib.h> // Make : g++ -O3 -fopenmp smallpt.cpp -o smallpt
 
-//define erand48 if it isn't already defined
-template<bool = false>
+// define erand48 if it isn't already defined
+template <bool = false>
 double erand48(unsigned short xseed[3]) {
   unsigned short temp[2];
 
