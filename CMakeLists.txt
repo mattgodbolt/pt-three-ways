@@ -20,7 +20,13 @@ conan_cmake_run(CONANFILE conanfile.txt
 set(CMAKE_CXX_STANDARD 17)
 enable_testing()
 
-add_compile_options(-Wall -Werror -Wextra -march=native -g -funsafe-math-optimizations)
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  add_compile_options(-Wall -Werror -Wextra -march=native -g -funsafe-math-optimizations)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  add_compile_options(/W4 /fp:fast /permissive- /experimental:preprocessor /wd5105)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+endif()
+
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)

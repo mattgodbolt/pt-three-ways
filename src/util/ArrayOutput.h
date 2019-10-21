@@ -7,8 +7,9 @@
 #include <vector>
 
 class ArrayOutput {
-  const int width_;
-  const int height_;
+  int width_; // can't be const because std::future requires a move constructor
+              // when using MSVC
+  int height_;
   std::vector<SampledPixel> output_;
 
   [[nodiscard]] constexpr int indexOf(int x, int y) const noexcept {
@@ -20,6 +21,9 @@ public:
   ArrayOutput(int width, int height) : width_(width), height_(height) {
     output_.resize(width * height);
   }
+
+  ArrayOutput()
+      : width_(0), height_(0) {} // needed for std::future when using MSVC
 
   template <typename Source>
   ArrayOutput(int width, int height, Source &&source)

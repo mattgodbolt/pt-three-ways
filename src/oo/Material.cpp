@@ -42,7 +42,7 @@ public:
       auto basis = OrthoNormalBasis::fromZ(hit.normal);
       return mat_.diffuse
              * radianceSampler.sample(
-                 Ray(hit.position, hemisphereSample(basis, u, v)));
+                   Ray(hit.position, hemisphereSample(basis, u, v)));
     }
   }
 };
@@ -61,7 +61,7 @@ public:
       auto basis = OrthoNormalBasis::fromZ(hit.normal);
       return mat_.diffuse
              * radianceSampler.sample(
-                 Ray(hit.position, hemisphereSample(basis, u, v)));
+                   Ray(hit.position, hemisphereSample(basis, u, v)));
     }
   }
 };

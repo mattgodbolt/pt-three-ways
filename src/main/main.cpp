@@ -397,7 +397,7 @@ int main(int argc, const char *argv[]) {
             "seed")["--seed"]("set rendering seed (0 to use random seed)")
       | Opt(renderParams.preview)["--preview"]("super quick preview")
       | Opt(saveEvery, "secs")["--save-every"](
-          "periodically save (every secs), 0 to disable")
+            "periodically save (every secs), 0 to disable")
       | Opt(way, "way")["--way"]("which way, oo (the default), fp or dod")
       | Opt(sceneName, "scene")["--scene"]("which scene to render")
       | Opt(raw)["--raw"]("output in raw form")
@@ -440,14 +440,14 @@ int main(int argc, const char *argv[]) {
         return;
       }
 
+      auto row = std::make_unique<uint8_t[]>(output.width() * 3);
       for (int y = 0; y < output.height(); ++y) {
-        std::uint8_t row[output.width() * 3];
         for (int x = 0; x < output.width(); ++x) {
           auto colour = output.pixelAt(x, y);
           for (int component = 0; component < 3; ++component)
             row[x * 3 + component] = colour[component];
         }
-        pw.addRow(row);
+        pw.addRow(row.get());
       }
     };
   }

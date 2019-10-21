@@ -2,6 +2,9 @@
 #include "Epsilon.h"
 
 #include <cmath>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 Norm3 coneSample(const Norm3 &direction, double coneTheta, double u,
                  double v) noexcept {
