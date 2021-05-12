@@ -14,12 +14,16 @@ jobs:
         os: [ ubuntu-18.04, ubuntu-20.04 ]
         build_type: [ debug, release ]
     steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
       - uses: actions/checkout@v1
       - name: install-compiler
         run : sudo apt-get update && sudo apt-get install g++-${{ matrix.gcc_version }} -y
       - name: install conan
-        script: |
-          pip install conan
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install conan
+          pip3 install conan_package_tools
           conan user
           conan profile new default --detect --force
           conan profile update settings.compiler.libcxx=libstdc++11 default
