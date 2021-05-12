@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
+set(CMAKE_C_COMPILER /opt/compiler-explorer/gcc-11.1.0/bin/gcc CACHE PATH "" FORCE)
+set(CMAKE_CXX_COMPILER /opt/compiler-explorer/gcc-11.1.0/bin/g++ CACHE PATH "" FORCE)
 project(pt_three_ways)
 
 find_program(CONAN conan)
