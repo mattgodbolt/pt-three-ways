@@ -70,6 +70,8 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
     const auto invDet = 1.0 / det;
     const auto tVec = ray.origin() - tv.vertex(0);
     const auto u = tVec.dot(pVec) * invDet;
+    if (fabs(u - 0.5) > 0.5)
+      continue;
     const auto qVec = tVec.cross(tv.uVector());
     const auto v = ray.direction().dot(qVec) * invDet;
 
@@ -86,7 +88,7 @@ Scene::intersectTriangles(const Ray &ray, double nearerThan) const {
     // branch.
     // (extra parens around variables are to prevent clang-format from getting
     // confused).
-    if (Unpredictable::any((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1))
+    if (Unpredictable::any((v) < 0.0, u + v > 1))
       continue;
 
     const auto t = tv.vVector().dot(qVec) * invDet;
