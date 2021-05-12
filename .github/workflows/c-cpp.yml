@@ -1,0 +1,25 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    env:
+      CC: gcc-${{ matrix.gcc_version }}
+      CXX: g++-${{ matrix.gcc_version }}
+    strategy:
+      matrix:
+        gcc_version: [ 8, 9, 10 ]
+        os: [ ubuntu-18.04, ubuntu-20.04 ]
+        build_type: [ debug, release ]
+    steps:
+      - uses: actions/checkout@v1
+      - name: install-compiler
+        run : sudo apt-get update && sudo apt-get install g++-${{ matrix.gcc_version }} -y
+      - name: configure
+        run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -S . -B cmake-build-${{ matrix.build_type }}
+      - name: build
+        run: cmake --build cmake-build-${{ matrix.build_type }}
+      - name: test
+        run: cd cmake-build-${{ matrix.build_type }} && ctest --verbose
