@@ -30,6 +30,6 @@ jobs:
       - name: configure
         run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -S . -B cmake-build-${{ matrix.build_type }}
       - name: build
-        run: cmake --build cmake-build-${{ matrix.build_type }}
+        run: cmake --build cmake-build-${{ matrix.build_type }} --parallel
       - name: test
         run: cd cmake-build-${{ matrix.build_type }} && ctest --verbose
