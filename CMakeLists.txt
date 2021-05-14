@@ -13,8 +13,6 @@ include(${CMAKE_SOURCE_DIR}/scripts/conan.cmake)
 conan_check(VERSION 1.14.4 REQUIRED)
 conan_add_remote(NAME bincrafters INDEX 1
         URL https://api.bintray.com/conan/bincrafters/public-conan)
-conan_add_remote(NAME mpusz INDEX 2
-        URL https://api.bintray.com/conan/mpusz/conan-mpusz)
 conan_cmake_run(CONANFILE conanfile.txt
         BASIC_SETUP CMAKE_TARGETS
         BUILD missing)
