@@ -15,8 +15,8 @@ public:
     return mat_.diffuse;
   }
 
-  [[nodiscard]] Vec3 totalEmission(const Vec3 &inbound) const
-      noexcept override {
+  [[nodiscard]] Vec3
+  totalEmission(const Vec3 &inbound) const noexcept override {
     return mat_.emission + inbound;
   }
 };

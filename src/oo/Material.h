@@ -28,8 +28,8 @@ public:
 
   [[nodiscard]] virtual Vec3 previewColour() const noexcept = 0;
 
-  [[nodiscard]] virtual Vec3 totalEmission(const Vec3 &inbound) const
-      noexcept = 0;
+  [[nodiscard]] virtual Vec3
+  totalEmission(const Vec3 &inbound) const noexcept = 0;
 
   static std::unique_ptr<Material> from(const MaterialSpec &mat);
 };
