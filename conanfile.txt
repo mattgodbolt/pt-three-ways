@@ -5,4 +5,4 @@ ctre/3.3.4
 libpng/1.6.37
 date/3.0.0
 range-v3/0.11.0
-benchmark/1.5.2
+benchmark/1.5.3
