@@ -6,6 +6,7 @@
 #include "util/Unpredictable.h"
 
 #include <future>
+#include <thread>
 
 using dod::IntersectionRecord;
 using dod::Scene;
