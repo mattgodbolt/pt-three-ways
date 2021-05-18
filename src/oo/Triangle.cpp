@@ -17,13 +17,17 @@ bool Triangle::intersect(const Ray &ray, Hit &hit) const noexcept {
   auto invDet = 1.0 / det;
   auto tVec = ray.origin() - vertices_[0];
   auto u = tVec.dot(pVec) * invDet;
+  if (Unpredictable::any2((u) < 0.0, u > 1.0))
+    return false;
 
   auto qVec = tVec.cross(uVector());
   auto v = ray.direction().dot(qVec) * invDet;
+  if (Unpredictable::any2((v) < 0.0, u + v > 1.0))
+    return false;
 
   // extra parens to keep clang-format happy...
-  if (Unpredictable::any((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1.0))
-    return false;
+  //  if (Unpredictable::any((u) < 0.0, u > 1.0, (v) < 0.0, u + v > 1.0))
+  //    return false;
 
   auto t = vVector().dot(qVec) * invDet;
   if (t < Epsilon)
