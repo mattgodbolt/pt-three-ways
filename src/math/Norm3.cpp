@@ -18,7 +18,7 @@ double Norm3::reflectance(const Norm3 &incoming, double iorFrom,
   auto cosThetaT = sqrt(1 - sinThetaTSquared);
   auto rPerpendicular = (iorFrom * cosThetaI - iorTo * cosThetaT)
                         / (iorFrom * cosThetaI + iorTo * cosThetaT);
-  auto rParallel = (iorFrom * cosThetaI - iorTo * cosThetaT)
-                   / (iorFrom * cosThetaI + iorTo * cosThetaT);
+  auto rParallel = (iorTo * cosThetaI - iorFrom * cosThetaT)
+                   / (iorTo * cosThetaI + iorFrom * cosThetaT);
   return (rPerpendicular * rPerpendicular + rParallel * rParallel) / 2;
 }
